@@ -1,0 +1,67 @@
+diff -urN tpop3d-1.4.2.org/authswitch.c tpop3d-1.4.2/authswitch.c
+--- tpop3d-1.4.2.org/authswitch.c	Fri Jun 28 15:22:05 2002
++++ tpop3d-1.4.2/authswitch.c	Fri Jun 28 15:43:36 2002
+@@ -48,6 +48,10 @@
+ #include "auth_passwd.h"
+ #endif /* AUTH_PASSWD */
+ 
++#ifdef USE_WHOSON
++#include "whoson.h"
++#endif
++
+ #include "authswitch.h"
+ #include "config.h"
+ #include "stringmap.h"
+@@ -288,6 +292,12 @@
+ void authswitch_onlogin(const authcontext A, const char *clienthost, const char *serverhost) {
+     const struct authdrv *aa;
+     int *aar;
++
++#ifdef USE_WHOSON
++    char buf[128];
++    /* Notify whoson server the user has loged in correctly */
++    wso_login(clienthost, A->user,buf,sizeof(buf));
++#endif /* USE_WHOSON */
+     
+ #ifdef USE_DRAC
+     /* Optionally, notify a DRAC -- dynamic relay authentication control -- 
+diff -urN tpop3d-1.4.2.org/configure.in tpop3d-1.4.2/configure.in
+--- tpop3d-1.4.2.org/configure.in	Fri Jun 28 15:22:05 2002
++++ tpop3d-1.4.2/configure.in	Fri Jun 28 15:39:20 2002
+@@ -198,6 +198,12 @@
+     [enable_drac=$enableval],
+     [enable_drac=no])
+ 
++AC_ARG_ENABLE(whoson,
++	[  --enable-whoson=DIR                  Enable whoson support], [
++	 			      [default=no]],
++    [enable_whoson=$enableval],
++    [enable_whoson=no])
++
+ dnl Some options mainly useful for development/debugging.
+ 
+ dnl Note the ugliness I've used to put a note in the output of
+@@ -331,6 +337,11 @@
+     AC_DEFINE(USE_DRAC,1,[Enables notification of a DRAC daemon.])
+ fi
+ 
++if test x"$enable_whoson" = x"yes" 
++then
++    AC_DEFINE(USE_WHOSON,1,[Enables notification of a WHOSON daemon.])
++fi
++    
+ if test x"$enable_backtrace" = x"yes"
+ then
+     AC_DEFINE(APPALLING_BACKTRACE_HACK,1,[Produce a backtrace if the program crashes.])
+@@ -437,6 +448,11 @@
+     AC_CHECK_LIB(drac, dracauth, [], AC_MSG_ERROR([[DRAC support enabled, but no dracauth(3)]]))
+ fi
+ 
++if test x"$enable_whoson" = x"yes"
++then
++    AC_CHECK_LIB(whoson, wso_login, [], AC_MSG_ERROR([[WHOSON support enabled, but no wso_login(3)]]))
++fi
++    
+ dnl Checks for header files.
+ AC_HEADER_STDC
+ AC_HEADER_SYS_WAIT
