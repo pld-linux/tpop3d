@@ -25,6 +25,7 @@ Patch0:		%{name}-ac_am_fixes.patch
 Patch1:		%{name}-cvs20041005.patch
 Patch2:		%{name}-resolv.patch
 Patch3:		%{name}-pam-vdomain.patch
+Patch4:		%{name}-disable-dotfile-locking.patch
 URL:		http://www.ex-parrot.com/~chris/tpop3d/
 BuildRequires:	autoconf
 BuildRequires:	automake
@@ -111,6 +112,7 @@ pomiêdzy sesjami.
 %patch1 -p1
 %patch2 -p1
 %patch3 -p1
+%patch4 -p1
 
 %build
 %{__aclocal}
