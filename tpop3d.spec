@@ -1,8 +1,8 @@
 Summary:	POP3 server
 Summary(pl):	Serwer POP3
 Name:		tpop3d
-Version:	1.3.5
-Release:	2
+Version:	1.4.1
+Release:	1
 License:	GPL
 Group:		Networking/Daemons
 Source0:	http://www.ex-parrot.com/~chris/tpop3d/%{name}-%{version}.tar.gz
@@ -13,6 +13,7 @@ URL:		http://www.ex-parrot.com/~chris/tpop3d/
 BuildRequires:	autoconf
 BuildRequires:	automake
 BuildRequires:	mysql-devel
+BuildRequires:	openldap-devel
 BuildRequires:	pam-devel
 BuildRequires:	perl-devel
 Prereq:		rc-scripts
@@ -84,12 +85,13 @@ pomiêdzy sesjami.
 %build
 aclocal
 autoconf
-automake -a -c -f
 autoheader
+automake -a -c -f
 %configure \
 	--with-mailspool-directory=/var/mail \
 	--enable-shadow-passwords \
 	--enable-auth-pam \
+	--enable-auth-ldap \
 	--enable-auth-mysql \
 	--enable-auth-perl \
 	--enable-auth-other \
