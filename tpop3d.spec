@@ -26,7 +26,7 @@ Patch1:		%{name}-cvs20040819.patch
 Patch2:		%{name}-resolv.patch
 Patch3:		%{name}-pam-vdomain.patch
 Patch4:		%{name}-mysql-pgsql.patch
-Patch5: 	%{name}-netloop.patch
+Patch5:		%{name}-netloop.patch
 URL:		http://www.ex-parrot.com/~chris/tpop3d/
 BuildRequires:	autoconf
 BuildRequires:	automake
