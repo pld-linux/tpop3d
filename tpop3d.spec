@@ -2,7 +2,7 @@ Summary:	POP3 server
 Summary(pl):	Serwer POP3
 Name:		tpop3d
 Version:	1.4.2
-Release:	2
+Release:	3
 License:	GPL
 Group:		Networking/Daemons
 Source0:	http://www.ex-parrot.com/~chris/tpop3d/%{name}-%{version}.tar.gz
@@ -142,7 +142,7 @@ fi
 
 %files
 %defattr(644,root,root,755)
-%doc README README.auth_mysql TPOP3D-AuthDriver scripts
+%doc README* TPOP3D-AuthDriver scripts FAQ CHANGES CREDITS TODO PORTABILITY
 %attr(640,root,root) %config(noreplace) %verify(not size mtime md5) /etc/pam.d/tpop3d
 %attr(640,root,root) %config(noreplace) %verify(not size mtime md5) /etc/security/blacklist.pop3
 %attr(754,root,root) /etc/rc.d/init.d/tpop3d
