@@ -1,3 +1,9 @@
+#
+# Conditional build:
+# _without_mysql	- without MySQL support
+# _without_ldap		- without LDAP support
+# _without_whoson	- without WHOSON protocol support
+#
 Summary:	POP3 server
 Summary(pl):	Serwer POP3
 Name:		tpop3d
@@ -9,16 +15,16 @@ Source0:	http://www.ex-parrot.com/~chris/tpop3d/%{name}-%{version}.tar.gz
 Source1:	%{name}.pamd
 Source2:	%{name}.init
 Patch0:		%{name}-ac_am_fixes.patch
-Patch1:		%{name}-whoson.patch
+%{!?_without_whoson:Patch1:		%{name}-whoson.patch}
 Patch2:		http://www.ex-parrot.com/~chris/tpop3d/%{name}-1.4.2-auth-flatfile-broken.patch
 URL:		http://www.ex-parrot.com/~chris/tpop3d/
 BuildRequires:	autoconf
 BuildRequires:	automake
-BuildRequires:	mysql-devel
-BuildRequires:	openldap-devel
+%{!?_without_mysql:BuildRequires:	mysql-devel}
+%{!?_without_ldap:BuildRequires:	openldap-devel}
 BuildRequires:	pam-devel
 BuildRequires:	perl-devel
-BuildRequires:	whoson-devel
+%{!?_without_whoson:BuildRequires:	whoson-devel}
 Prereq:		/sbin/chkconfig
 Provides:	pop3daemon
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -87,7 +93,7 @@ pomiêdzy sesjami.
 %prep
 %setup -q
 %patch0 -p1
-%patch1 -p1
+%{!?_without_whoson:	%patch1 -p1}
 %patch2 -p1
 
 %build
@@ -100,12 +106,12 @@ rm -f missing
 	--with-mailspool-directory=/var/mail \
 	--enable-shadow-passwords \
 	--enable-auth-pam \
-	--enable-auth-ldap \
-	--enable-auth-mysql \
+%{!?_without_ldap:	--enable-auth-ldap} \
+%{!?_without_mysql:	--enable-auth-mysql} \
 	--enable-auth-perl \
 	--enable-auth-other \
 	--enable-mbox-maildir \
-	--enable-whoson
+%{!?_without_whoson:	--enable-whoson}
 
 %{__make}
 
