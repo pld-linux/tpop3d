@@ -27,7 +27,7 @@ case "$1" in
 	# Check if the service is already running?
 	if [ ! -f /var/lock/subsys/tpop3d ]; then
 		msg_starting tpop3d
-		daemon /usr/sbin/tpop3d -f /etc/tpop3d.conf
+		daemon /usr/sbin/tpop3d -p /var/run/tpop3d.pid -f /etc/tpop3d.conf
 		RETVAL=$?
 		[ $RETVAL -eq 0 ] && touch /var/lock/subsys/tpop3d
 	else
