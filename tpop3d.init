@@ -38,7 +38,7 @@ case "$1" in
 	if [ -f /var/lock/subsys/tpop3d ]; then
 		msg_stopping tpop3d
 		killproc tpop3d
-		rm -f /var/lock/subsys/tpop3d
+		rm -f /var/lock/subsys/tpop3d /var/run/tpop3d.pid
 	else
 		msg_not_running tpop3d
 	fi
