@@ -109,6 +109,7 @@ rm -f missing
 %{__autoheader}
 %{__automake}
 %configure \
+	--enable-mbox-bsd-save-indices \
 	--with-mailspool-directory=/var/mail \
 	--enable-shadow-passwords \
 %{?_without_pam:	--disable-auth-pam} \
