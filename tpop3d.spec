@@ -2,7 +2,7 @@ Summary:	POP3 server
 Summary(pl):	Serwer POP3
 Name:		tpop3d
 Version:	1.4.2
-Release:	1
+Release:	2
 License:	GPL
 Group:		Networking/Daemons
 Source0:	http://www.ex-parrot.com/~chris/tpop3d/%{name}-%{version}.tar.gz
@@ -10,6 +10,7 @@ Source1:	%{name}.pamd
 Source2:	%{name}.init
 Patch0:		%{name}-ac_am_fixes.patch
 Patch1:		%{name}-whoson.patch
+Patch2:		http://www.ex-parrot.com/~chris/tpop3d/%{name}-1.4.2-auth-flatfile-broken.patch
 URL:		http://www.ex-parrot.com/~chris/tpop3d/
 BuildRequires:	autoconf
 BuildRequires:	automake
@@ -87,6 +88,7 @@ pomiêdzy sesjami.
 %setup -q
 %patch0 -p1
 %patch1 -p1
+%patch2 -p1
 
 %build
 rm -f missing
