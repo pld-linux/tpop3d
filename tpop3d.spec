@@ -10,26 +10,59 @@ Group(pl):	Sieciowe/Serwery
 Source0:	http://www.ex-parrot.com/~chris/tpop3d/%{name}-%{version}.tar.gz
 Source1:	%{name}.pamd
 Source2:	%{name}.init
+Patch0:		%{name}-ac_am_fixes.patch
+URL:		http://www.ex-parrot.com/~chris/tpop3d/
 Provides:	pop3daemon
+BuildRequires:	autoconf
+BuildRequires:	automake
+BuildRequires:	mysql-devel
+BuildRequires:	pam-devel
+BuildRequires:	perl-devel
+Requires:	rc-scripts
+BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 Obsoletes:	pop3daemon
 Obsoletes:	qpopper
 Obsoletes:	qpopper6
 Obsoletes:	imap-pop
 Obsoletes:	solid-pop3d-ssl
-BuildRequires:	mysql-devel
-BuildRequires:	pam-devel
-BuildRequires:	perl-devel
-BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 %define		_sysconfdir	/etc
 
 %description
-POP3 server
+tpop3d is yet-another-pop3-server. The intention has been to write a
+server which is fast, extensible, and secure. `Extensible' is used
+specifically in the context of new authentication mechanisms and
+mailbox formats. Presently the distribution supports the following
+authentication mechanisms:
+- auth_pam - uses Pluggable Authentication Modules
+- auth_passwd - /etc/passwd (and optionally /etc/shadow)
+- auth_mysql - a vmail-sql style MySQL database; see
+  http://www.ex-parrot.com/~chris/vmail-sql/
+- auth_other - an external program
+- auth_perl - embedded perl subroutines
+
+The latter three options provide virtual domain support; the first two
+are designed to authenticate local (Unix) users.
+
+The following mailbox formats are supported:
+- bsd - for BSD (`Unix') mailspools
+- maildir - Qmail-style maildirs
+- empty - null driver
+
+tpop3d implements an optional metadata caching scheme for BSD
+mailspools, which offers improved performance in cases where many
+users leave large numbers of messages on the server between sessions.
 
 %prep
 %setup -q
+%patch0 -p1
+
 %build
-%configure2_13 \
+aclocal
+autoconf
+automake -a -c
+autoheader
+%configure \
 	--with-mailspool-directory=/var/mail \
 	--enable-auth-pam \
 	--enable-auth-mysql \
