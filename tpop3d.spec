@@ -92,9 +92,9 @@ pomiêdzy sesjami.
 
 %build
 rm -f missing
-aclocal
+%{__aclocal}
 %{__autoconf}
-autoheader
+%{__autoheader}
 %{__automake}
 %configure \
 	--with-mailspool-directory=/var/mail \
