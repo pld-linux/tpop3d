@@ -90,7 +90,7 @@ wspiera nastêpuj±ce mechanizmy autentykacji:
 - auth_perl - zakorzenione podprogramy Perla
 
 Ostatnie cztery opcje pozwalaj± wspieraæ wirtualne domeny; pierwsze dwie
-za¶ s± stworzone by autentykowaæ lokalnych (Unixowych) u¿ytkowników.
+za¶ s± stworzone by autentykowaæ lokalnych (Uniksowych) u¿ytkowników.
 
 Wspierane s± nastêpuj±ce formaty skrzynek:
 - bsd - dla kolejkowych skrzynek w stylu BSD (`Unix')
