@@ -1,0 +1,11 @@
+diff -u -r1.22 maildir.c
+--- maildir.c   26 Nov 2003 19:36:02 -0000      1.22
++++ maildir.c   27 Nov 2003 11:51:59 -0000
+@@ -213,7 +213,7 @@
+     mailbox M, failM = NULL;
+     struct timeval tv1, tv2;
+     float f;
+-    int locked;
++    int locked = 0;
+  
+     alloc_struct(_mailbox, M);
