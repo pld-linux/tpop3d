@@ -1,32 +1,36 @@
 #
 # Conditional build:
+# _without_authother	- without auth other support
 # _without_mysql	- without MySQL support
 # _without_ldap		- without LDAP support
+# _without_perl		- without perl support
+# _without_pam		- without pam support
+# _without_ssl		- without ssl support
 # _without_whoson	- without WHOSON protocol support
 #
 Summary:	POP3 server
 Summary(pl):	Serwer POP3
 Name:		tpop3d
-Version:	1.4.2
-Release:	5
+Version:	1.5.1
+Release:	0.030718.1
 License:	GPL
 Group:		Networking/Daemons
-Source0:	http://www.ex-parrot.com/~chris/tpop3d/%{name}-%{version}.tar.gz
-# Source0-md5:	30d6d7956a0bedb9f99a1b1c24585a02
+#Source0:	http://www.ex-parrot.com/~chris/tpop3d/%{name}-%{version}.tar.gz
+Source0:	tpop3d-1.5.1.030718.tar.bz2
+# Source0-md5:	e9e5f9abef3626a2c6c26059db733695
 Source1:	%{name}.pamd
 Source2:	%{name}.init
 Source3:	%{name}.conf
 Patch0:		%{name}-ac_am_fixes.patch
-%{!?_without_whoson:Patch1:		%{name}-whoson.patch}
-Patch2:		http://www.ex-parrot.com/~chris/tpop3d/%{name}-1.4.2-auth-flatfile-broken.patch
 URL:		http://www.ex-parrot.com/~chris/tpop3d/
 BuildRequires:	autoconf
 BuildRequires:	automake
 %{!?_without_mysql:BuildRequires:	mysql-devel}
 %{!?_without_ldap:BuildRequires:	openldap-devel}
-BuildRequires:	pam-devel
-BuildRequires:	perl-devel
+%{!?_without_pam:BuildRequires:		pam-devel}
+%{!?_without_perl:BuildRequires:	perl-devel}
 %{!?_without_whoson:BuildRequires:	whoson-devel}
+%{!?_without_ssl:BuildRequires:		openssl-devel}
 Prereq:		/sbin/chkconfig
 Provides:	pop3daemon
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -40,6 +44,7 @@ Obsoletes:	solid-pop3d
 Obsoletes:	solid-pop3d-ssl
 
 %description
+
 tpop3d is yet-another-pop3-server. The intention has been to write a
 server which is fast, extensible, and secure. `Extensible' is used
 specifically in the context of new authentication mechanisms and
@@ -93,8 +98,6 @@ pomiêdzy sesjami.
 %prep
 %setup -q
 %patch0 -p1
-%{!?_without_whoson:%patch1 -p1}
-%patch2 -p1
 
 %build
 rm -f missing
@@ -105,13 +108,14 @@ rm -f missing
 %configure \
 	--with-mailspool-directory=/var/mail \
 	--enable-shadow-passwords \
-	--enable-auth-pam \
+%{?_without_pam:	--disable-auth-pam} \
 %{!?_without_ldap:	--enable-auth-ldap} \
 %{!?_without_mysql:	--enable-auth-mysql} \
 %{!?_without_whoson:	--enable-whoson} \
-	--enable-auth-perl \
-	--enable-auth-other \
+%{!?_without_perl:	--enable-auth-perl} \
+%{!?_without_authother:	--enable-auth-other} \
 	--enable-mbox-maildir \
+%{!?_without_ssl:	--enable-tls} \
 	--enable-auth-flatfile
 
 %{__make}
@@ -151,8 +155,8 @@ fi
 %files
 %defattr(644,root,root,755)
 %doc README* TPOP3D-AuthDriver scripts FAQ CHANGES CREDITS TODO PORTABILITY
-%attr(640,root,root) %config(noreplace) %verify(not size mtime md5) /etc/pam.d/tpop3d
-%attr(640,root,root) %config(noreplace) %verify(not size mtime md5) /etc/security/blacklist.pop3
+%{!?_without_pam:%attr(640,root,root) %config(noreplace) %verify(not size mtime md5) /etc/pam.d/tpop3d}
+%{!?_without_pam:%attr(640,root,root) %config(noreplace) %verify(not size mtime md5) /etc/security/blacklist.pop3}
 %attr(640,root,root) %config(noreplace) %verify(not size mtime md5) %{_sysconfdir}/tpop3d.conf
 %attr(754,root,root) /etc/rc.d/init.d/tpop3d
 %attr(755,root,root) %{_sbindir}/*
