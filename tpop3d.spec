@@ -1,35 +1,42 @@
 #
 # Conditional build:
-# _without_mysql	- without MySQL support
-# _without_ldap		- without LDAP support
-# _without_whoson	- without WHOSON protocol support
+%bcond_without	authother	# without auth other support
+%bcond_without	mysql		# without MySQL support
+%bcond_without	ldap		# without LDAP support
+%bcond_without	perl		# without perl support
+%bcond_without	pam		# without pam support
+%bcond_without	ssl		# without ssl support
+%bcond_without	whoson		# without WHOSON protocol support
 #
 Summary:	POP3 server
 Summary(pl):	Serwer POP3
 Name:		tpop3d
-Version:	1.4.2
-Release:	5
+Version:	1.5.3
+Release:	7
 License:	GPL
 Group:		Networking/Daemons
 Source0:	http://www.ex-parrot.com/~chris/tpop3d/%{name}-%{version}.tar.gz
-# Source0-md5:	30d6d7956a0bedb9f99a1b1c24585a02
+# Source0-md5:	dd920c49f4e5879eb3caf7ea047622e9
 Source1:	%{name}.pamd
 Source2:	%{name}.init
 Source3:	%{name}.conf
 Patch0:		%{name}-ac_am_fixes.patch
-Patch1:		%{name}-whoson.patch
-Patch2:		http://www.ex-parrot.com/~chris/tpop3d/%{name}-1.4.2-auth-flatfile-broken.patch
+Patch1:		%{name}-cvs20040409.patch
+Patch2:		%{name}-resolv.patch
+Patch3:		%{name}-pam-vdomain.patch
 URL:		http://www.ex-parrot.com/~chris/tpop3d/
 BuildRequires:	autoconf
 BuildRequires:	automake
-%{!?_without_mysql:BuildRequires:	mysql-devel}
-%{!?_without_ldap:BuildRequires:	openldap-devel}
-BuildRequires:	pam-devel
-BuildRequires:	perl-devel
-%{!?_without_whoson:BuildRequires:	whoson-devel}
-Prereq:		/sbin/chkconfig
+%{?with_mysql:BuildRequires:	mysql-devel}
+%{?with_ldap:BuildRequires:	openldap-devel}
+%{?with_pam:BuildRequires:		pam-devel}
+%{?with_perl:BuildRequires:	perl-devel}
+%{?with_whoson:BuildRequires:	whoson-devel}
+%{?with_ssl:BuildRequires:		openssl-devel >= 0.9.6k}
+PreReq:		rc-scripts
+Requires(post,preun):	/sbin/chkconfig
+Requires:	pam >= 0.77.3
 Provides:	pop3daemon
-BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 Obsoletes:	courier-imap-pop3
 Obsoletes:	imap-pop
 Obsoletes:	imap-pop3
@@ -38,6 +45,7 @@ Obsoletes:	qpopper
 Obsoletes:	qpopper6
 Obsoletes:	solid-pop3d
 Obsoletes:	solid-pop3d-ssl
+BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 %description
 tpop3d is yet-another-pop3-server. The intention has been to write a
@@ -93,25 +101,27 @@ pomiêdzy sesjami.
 %prep
 %setup -q
 %patch0 -p1
-%{!?_without_whoson:%patch1 -p1}
+%patch1 -p1
 %patch2 -p1
+%patch3 -p1
 
 %build
-rm -f missing
 %{__aclocal}
 %{__autoconf}
 %{__autoheader}
 %{__automake}
 %configure \
+	--enable-mbox-bsd-save-indices \
 	--with-mailspool-directory=/var/mail \
 	--enable-shadow-passwords \
-	--enable-auth-pam \
-%{!?_without_ldap:	--enable-auth-ldap} \
-%{!?_without_mysql:	--enable-auth-mysql} \
-%{!?_without_whoson:	--enable-whoson} \
-	--enable-auth-perl \
-	--enable-auth-other \
+%{!?with_pam:	--disable-auth-pam} \
+%{?with_ldap:	--enable-auth-ldap} \
+%{?with_mysql:	--enable-auth-mysql} \
+%{?with_whoson:	--enable-whoson} \
+%{?with_perl:	--enable-auth-perl} \
+%{?with_authother:	--enable-auth-other} \
 	--enable-mbox-maildir \
+%{?with_ssl:	--enable-tls} \
 	--enable-auth-flatfile
 
 %{__make}
@@ -120,7 +130,8 @@ rm -f missing
 rm -rf $RPM_BUILD_ROOT
 install -d $RPM_BUILD_ROOT{/etc/{pam.d,security,rc.d/init.d},%{_sysconfdir}}
 
-%{__make} install DESTDIR=$RPM_BUILD_ROOT
+%{__make} install \
+	DESTDIR=$RPM_BUILD_ROOT
 
 install %{SOURCE1} $RPM_BUILD_ROOT/etc/pam.d/tpop3d
 install %{SOURCE2} $RPM_BUILD_ROOT/etc/rc.d/init.d/tpop3d
@@ -151,8 +162,8 @@ fi
 %files
 %defattr(644,root,root,755)
 %doc README* TPOP3D-AuthDriver scripts FAQ CHANGES CREDITS TODO PORTABILITY
-%attr(640,root,root) %config(noreplace) %verify(not size mtime md5) /etc/pam.d/tpop3d
-%attr(640,root,root) %config(noreplace) %verify(not size mtime md5) /etc/security/blacklist.pop3
+%{?with_pam:%attr(640,root,root) %config(noreplace) %verify(not size mtime md5) /etc/pam.d/tpop3d}
+%{?with_pam:%attr(640,root,root) %config(noreplace) %verify(not size mtime md5) /etc/security/blacklist.pop3}
 %attr(640,root,root) %config(noreplace) %verify(not size mtime md5) %{_sysconfdir}/tpop3d.conf
 %attr(754,root,root) /etc/rc.d/init.d/tpop3d
 %attr(755,root,root) %{_sbindir}/*
