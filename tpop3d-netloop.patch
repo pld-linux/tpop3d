@@ -1,0 +1,20 @@
+--- tpop3d-1.5.3/netloop.c.orig	Mon Nov 24 21:58:28 2003
++++ tpop3d-1.5.3/netloop.c	Tue May 25 01:08:39 2004
+@@ -463,7 +463,17 @@
+             /* We should now log the closure of the connection and ending
+              * of any authenticated session. */
+             if (c->a)
++	    {
++		pop3command p;
++		if((p = connection_parsecommand(c)))
++		    if(p->cmd == QUIT)
++		    {
++	    		mailbox curmbox;
++			curmbox=c->m;
++			(curmbox)->apply_changes(curmbox);
++		    }
+                 log_print(LOG_INFO, _("connections_post_select: client %s: finished session for `%s' with %s"), c->idstr, c->a->user, c->a->auth);
++	    }
+             log_print(LOG_INFO, _("connections_post_select: client %s: disconnected; %d/%d bytes read/written"), c->idstr, c->nrd, c->nwr);
+ 
+ /*            remove_connection(c);*/
