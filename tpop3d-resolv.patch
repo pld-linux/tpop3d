@@ -1,0 +1,11 @@
+--- tpop3d-1.5.3/configure.in.orig	2003-11-24 20:59:13.000000000 +0100
++++ tpop3d-1.5.3/configure.in	2004-04-15 21:36:28.730022382 +0200
+@@ -550,7 +550,7 @@
+ # LDAP client libraries.
+ if test x"$enable_auth_ldap" = x"yes"
+ then
+-    AC_SEARCH_LIBS(res_query, resolv, [], AC_MSG_ERROR([[auth-ldap enabled, but no res_query(3)]]) )
++    AC_SEARCH_LIBS(res_query, resolv, [], [AC_SEARCH_LIBS(__res_query, resolv, [], [AC_MSG_ERROR([[auth-ldap enabled, but no res_query(3)]])])] )
+     AC_CHECK_LIB(lber, main, [], AC_MSG_ERROR([[auth-ldap enabled, but can't find liblber]]) )
+     AC_CHECK_LIB(ldap, main, [], AC_MSG_ERROR([[auth-ldap enabled, but can't find libldap]]) )
+ fi
