@@ -12,7 +12,7 @@ Summary:	POP3 server
 Summary(pl):	Serwer POP3
 Name:		tpop3d
 Version:	1.5.3
-Release:	5
+Release:	6
 License:	GPL
 Group:		Networking/Daemons
 Source0:	http://www.ex-parrot.com/~chris/tpop3d/%{name}-%{version}.tar.gz
@@ -22,6 +22,7 @@ Source2:	%{name}.init
 Source3:	%{name}.conf
 Patch0:		%{name}-ac_am_fixes.patch
 Patch1:		%{name}-cvs20040409.patch
+Patch2:		%{name}-resolv.patch
 URL:		http://www.ex-parrot.com/~chris/tpop3d/
 BuildRequires:	autoconf
 BuildRequires:	automake
@@ -100,9 +101,9 @@ pomiêdzy sesjami.
 %setup -q
 %patch0 -p1
 %patch1 -p1
+%patch2 -p1
 
 %build
-rm -f missing
 %{__aclocal}
 %{__autoconf}
 %{__autoheader}
@@ -127,7 +128,8 @@ rm -f missing
 rm -rf $RPM_BUILD_ROOT
 install -d $RPM_BUILD_ROOT{/etc/{pam.d,security,rc.d/init.d},%{_sysconfdir}}
 
-%{__make} install DESTDIR=$RPM_BUILD_ROOT
+%{__make} install \
+	DESTDIR=$RPM_BUILD_ROOT
 
 install %{SOURCE1} $RPM_BUILD_ROOT/etc/pam.d/tpop3d
 install %{SOURCE2} $RPM_BUILD_ROOT/etc/rc.d/init.d/tpop3d
