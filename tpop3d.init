@@ -23,6 +23,7 @@ case "$1" in
 	if [ ! -f /var/lock/subsys/tpop3d ]; then
 		msg_starting "tpop3d"
 		daemon /usr/sbin/tpop3d -f /etc/tpop3d.conf
+		RETVAL=$?
 		[ $RETVAL -eq 0 ] && touch /var/lock/subsys/tpop3d
 	else
 		msg_Already_Running "tpop3d"
@@ -53,4 +54,3 @@ case "$1" in
 esac
 
 exit $RETVAL
-
