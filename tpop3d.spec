@@ -12,13 +12,13 @@ Source1:	%{name}.pamd
 Source2:	%{name}.init
 Patch0:		%{name}-ac_am_fixes.patch
 URL:		http://www.ex-parrot.com/~chris/tpop3d/
-Provides:	pop3daemon
 BuildRequires:	autoconf
 BuildRequires:	automake
 BuildRequires:	mysql-devel
 BuildRequires:	pam-devel
 BuildRequires:	perl-devel
-Requires:	rc-scripts
+Prereq:		rc-scripts
+Provides:	pop3daemon
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 Obsoletes:	pop3daemon
 Obsoletes:	qpopper
