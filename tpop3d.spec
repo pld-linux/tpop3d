@@ -29,16 +29,14 @@ BuildRequires:	perl-devel
 Prereq:		/sbin/chkconfig
 Provides:	pop3daemon
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
-Obsoletes:	pop3daemon
 Obsoletes:	courier-imap-pop3
 Obsoletes:	imap-pop
 Obsoletes:	imap-pop3
+Obsoletes:	pop3daemon
 Obsoletes:	qpopper
 Obsoletes:	qpopper6
 Obsoletes:	solid-pop3d
 Obsoletes:	solid-pop3d-ssl
-
-%define		_sysconfdir	/etc
 
 %description
 tpop3d is yet-another-pop3-server. The intention has been to write a
@@ -119,13 +117,13 @@ rm -f missing
 
 %install
 rm -rf $RPM_BUILD_ROOT
-install -d $RPM_BUILD_ROOT/etc/{pam.d,security,rc.d/init.d}
+install -d $RPM_BUILD_ROOT{/etc/{pam.d,security,rc.d/init.d},%{_sysconfdir}}
 
 %{__make} install DESTDIR=$RPM_BUILD_ROOT
 
 install %{SOURCE1} $RPM_BUILD_ROOT/etc/pam.d/tpop3d
 install %{SOURCE2} $RPM_BUILD_ROOT/etc/rc.d/init.d/tpop3d
-install %{SOURCE3} $RPM_BUILD_ROOT/etc/
+install %{SOURCE3} $RPM_BUILD_ROOT%{_sysconfdir}
 
 touch $RPM_BUILD_ROOT/etc/security/blacklist.pop3
 
@@ -154,7 +152,7 @@ fi
 %doc README* TPOP3D-AuthDriver scripts FAQ CHANGES CREDITS TODO PORTABILITY
 %attr(640,root,root) %config(noreplace) %verify(not size mtime md5) /etc/pam.d/tpop3d
 %attr(640,root,root) %config(noreplace) %verify(not size mtime md5) /etc/security/blacklist.pop3
-%attr(640,root,root) %config(noreplace) %verify(not size mtime md5) /etc/tpop3d.conf
+%attr(640,root,root) %config(noreplace) %verify(not size mtime md5) %{_sysconfdir}/tpop3d.conf
 %attr(754,root,root) /etc/rc.d/init.d/tpop3d
 %attr(755,root,root) %{_sbindir}/*
 %{_mandir}/man*/*
