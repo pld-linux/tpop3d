@@ -17,7 +17,7 @@ Source1:	%{name}.pamd
 Source2:	%{name}.init
 Source3:	%{name}.conf
 Patch0:		%{name}-ac_am_fixes.patch
-%{!?_without_whoson:Patch1:		%{name}-whoson.patch}
+Patch1:		%{name}-whoson.patch
 Patch2:		http://www.ex-parrot.com/~chris/tpop3d/%{name}-1.4.2-auth-flatfile-broken.patch
 URL:		http://www.ex-parrot.com/~chris/tpop3d/
 BuildRequires:	autoconf
