@@ -31,7 +31,7 @@ BuildRequires:	automake
 %{?with_pam:BuildRequires:		pam-devel}
 %{?with_perl:BuildRequires:	perl-devel}
 %{?with_whoson:BuildRequires:	whoson-devel}
-%{?with_ssl:BuildRequires:		openssl-devel >= 0.9.7c}
+%{?with_ssl:BuildRequires:		openssl-devel >= 0.9.7d}
 PreReq:		rc-scripts
 Requires(post,preun):	/sbin/chkconfig
 Requires:	pam >= 0.77.3
