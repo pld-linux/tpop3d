@@ -11,12 +11,12 @@
 Summary:	POP3 server
 Summary(pl):	Serwer POP3
 Name:		tpop3d
-Version:	1.5.2
-Release:	2
+Version:	1.5.3
+Release:	1
 License:	GPL
 Group:		Networking/Daemons
 Source0:	http://www.ex-parrot.com/~chris/tpop3d/%{name}-%{version}.tar.gz
-# Source0-md5:	1bd2fa0a8a0da9d7ee0f4c5723006631
+# Source0-md5:	dd920c49f4e5879eb3caf7ea047622e9
 Source1:	%{name}.pamd
 Source2:	%{name}.init
 Source3:	%{name}.conf
