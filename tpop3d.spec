@@ -1,8 +1,8 @@
 Summary:	POP3 server
 Summary(pl):	Serwer POP3
 Name:		tpop3d
-Version:	1.3.4
-Release:	1
+Version:	1.3.5
+Release:	2
 License:	GPL
 Group:		Networking/Daemons
 Group(de):	Netzwerkwesen/Server
@@ -53,6 +53,32 @@ tpop3d implements an optional metadata caching scheme for BSD
 mailspools, which offers improved performance in cases where many
 users leave large numbers of messages on the server between sessions.
 
+%description -l pl
+tpop3d to jeszcze-jeden-serwer-pop3. Intencj± by³o napisanie serwera,
+który jest szybki, rozszerzalny i bezpieczny. `Rozszerzalny' jest tu
+u¿yte w kontek¶cie formatów skrzynek. Obecnie pakiet dystrybucyjny
+wspiera nastêpuj±ce mechanizmy autentykacji:
+
+- auth_pam - u¿ywa Wymiennych Modu³ów Autentykacji (PAM)
+- auth_passwd - /etc/passwd (i opcjonalnie /etc/shadow)
+- auth_mysql - baza MySQL w stylu vmail-sql ; obejrzyj
+  http://www.ex-parrot.com/~chris/vmail-sql/
+- auth_other - zewnêtrzny program
+- auth_perl - zakorzenione podprogramy Perla
+
+Ostatnie trzy opcje pozwalaj± wspieraæ wirtualne domeny; pierwsze dwie
+za¶ s± stworzone by autentykowaæ lokalnych (Unixowych) u¿ytkowników.
+
+Wspierane s± nastêpuj±ce formaty skrzynek:
+- bsd - dla kolejkowych skrzynek w stylu BSD (`Unix') 
+- maildir - format maildir znany z Qmail
+- empty - pusty sterownik
+
+tpop3d implementuje opcjonalne zapamiêtywanie (caching) meta-danych
+dla skrzynek BSD, które znacznie poprawia wydajno¶æ w przypadku, gdy
+wielu u¿ytkowników zostawia du¿± liczbê wiadomo¶ci na serwerze
+pomiêdzy sesjami.
+
 %prep
 %setup -q
 %patch0 -p1
@@ -64,6 +90,7 @@ automake -a -c
 autoheader
 %configure \
 	--with-mailspool-directory=/var/mail \
+	--enable-shadow-passwords \
 	--enable-auth-pam \
 	--enable-auth-mysql \
 	--enable-auth-perl \
@@ -87,6 +114,23 @@ touch $RPM_BUILD_ROOT%{_sysconfdir}/security/blacklist.pop3
 
 %clean
 rm -rf $RPM_BUILD_ROOT
+
+%post
+umask 022
+/sbin/chkconfig --add %{name}
+if [ -f /var/lock/subsys/%{name} ]; then
+	/etc/rc.d/init.d/%{name} restart >&2
+else
+	echo "Run \"/etc/rc.d/init.d/%{name} start\" to start %{name} daemon."
+fi
+
+%preun
+if [ "$1" = "0" ]; then
+	if [ -f /var/lock/subsys/%{name} ]; then
+		/etc/rc.d/init.d/%{name} stop >&2
+	fi
+	/sbin/chkconfig --del %{name}
+fi
 
 %files
 %defattr(644,root,root,755)
