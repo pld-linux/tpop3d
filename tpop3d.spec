@@ -84,7 +84,7 @@ pomiêdzy sesjami.
 %build
 aclocal
 autoconf
-automake -a -c
+automake -a -c -f
 autoheader
 %configure \
 	--with-mailspool-directory=/var/mail \
