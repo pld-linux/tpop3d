@@ -32,6 +32,7 @@ BuildRequires:	automake
 %{!?_without_ssl:BuildRequires:		openssl-devel}
 PreReq:		rc-scripts
 Requires(post,preun):	/sbin/chkconfig
+Requires:	pam >= 0.77.3
 Provides:	pop3daemon
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 Obsoletes:	courier-imap-pop3
