@@ -1,12 +1,12 @@
 #
 # Conditional build:
-# _without_authother	- without auth other support
-# _without_mysql	- without MySQL support
-# _without_ldap		- without LDAP support
-# _without_perl		- without perl support
-# _without_pam		- without pam support
-# _without_ssl		- without ssl support
-# _without_whoson	- without WHOSON protocol support
+%bcond_without	authother	# without auth other support
+%bcond_without	mysql		# without MySQL support
+%bcond_without	ldap		# without LDAP support
+%bcond_without	perl		# without perl support
+%bcond_without	pam		# without pam support
+%bcond_without	ssl		# without ssl support
+%bcond_without	whoson		# without WHOSON protocol support
 #
 Summary:	POP3 server
 Summary(pl):	Serwer POP3
@@ -26,17 +26,16 @@ Patch2:		%{name}-signal11fix.patch
 URL:		http://www.ex-parrot.com/~chris/tpop3d/
 BuildRequires:	autoconf
 BuildRequires:	automake
-%{!?_without_mysql:BuildRequires:	mysql-devel}
-%{!?_without_ldap:BuildRequires:	openldap-devel}
-%{!?_without_pam:BuildRequires:		pam-devel}
-%{!?_without_perl:BuildRequires:	perl-devel}
-%{!?_without_whoson:BuildRequires:	whoson-devel}
-%{!?_without_ssl:BuildRequires:		openssl-devel}
+%{?with_mysql:BuildRequires:	mysql-devel}
+%{?with_ldap:BuildRequires:	openldap-devel}
+%{?with_pam:BuildRequires:		pam-devel}
+%{?with_perl:BuildRequires:	perl-devel}
+%{?with_whoson:BuildRequires:	whoson-devel}
+%{?with_ssl:BuildRequires:		openssl-devel >= 0.9.7c}
 PreReq:		rc-scripts
 Requires(post,preun):	/sbin/chkconfig
 Requires:	pam >= 0.77.3
 Provides:	pop3daemon
-BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 Obsoletes:	courier-imap-pop3
 Obsoletes:	imap-pop
 Obsoletes:	imap-pop3
@@ -45,9 +44,9 @@ Obsoletes:	qpopper
 Obsoletes:	qpopper6
 Obsoletes:	solid-pop3d
 Obsoletes:	solid-pop3d-ssl
+BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 %description
-
 tpop3d is yet-another-pop3-server. The intention has been to write a
 server which is fast, extensible, and secure. `Extensible' is used
 specifically in the context of new authentication mechanisms and
@@ -114,14 +113,14 @@ rm -f missing
 	--enable-mbox-bsd-save-indices \
 	--with-mailspool-directory=/var/mail \
 	--enable-shadow-passwords \
-%{?_without_pam:	--disable-auth-pam} \
-%{!?_without_ldap:	--enable-auth-ldap} \
-%{!?_without_mysql:	--enable-auth-mysql} \
-%{!?_without_whoson:	--enable-whoson} \
-%{!?_without_perl:	--enable-auth-perl} \
-%{!?_without_authother:	--enable-auth-other} \
+%{!?with_pam:	--disable-auth-pam} \
+%{?with_ldap:	--enable-auth-ldap} \
+%{?with_mysql:	--enable-auth-mysql} \
+%{?with_whoson:	--enable-whoson} \
+%{?with_perl:	--enable-auth-perl} \
+%{?with_authother:	--enable-auth-other} \
 	--enable-mbox-maildir \
-%{!?_without_ssl:	--enable-tls} \
+%{?with_ssl:	--enable-tls} \
 	--enable-auth-flatfile
 
 %{__make}
@@ -161,8 +160,8 @@ fi
 %files
 %defattr(644,root,root,755)
 %doc README* TPOP3D-AuthDriver scripts FAQ CHANGES CREDITS TODO PORTABILITY
-%{!?_without_pam:%attr(640,root,root) %config(noreplace) %verify(not size mtime md5) /etc/pam.d/tpop3d}
-%{!?_without_pam:%attr(640,root,root) %config(noreplace) %verify(not size mtime md5) /etc/security/blacklist.pop3}
+%{?with_pam:%attr(640,root,root) %config(noreplace) %verify(not size mtime md5) /etc/pam.d/tpop3d}
+%{?with_pam:%attr(640,root,root) %config(noreplace) %verify(not size mtime md5) /etc/security/blacklist.pop3}
 %attr(640,root,root) %config(noreplace) %verify(not size mtime md5) %{_sysconfdir}/tpop3d.conf
 %attr(754,root,root) /etc/rc.d/init.d/tpop3d
 %attr(755,root,root) %{_sbindir}/*
