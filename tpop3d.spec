@@ -23,6 +23,7 @@ Source3:	%{name}.conf
 Patch0:		%{name}-ac_am_fixes.patch
 Patch1:		%{name}-cvs20040409.patch
 Patch2:		%{name}-resolv.patch
+Patch3:		%{name}-pam-vdomain.patch
 URL:		http://www.ex-parrot.com/~chris/tpop3d/
 BuildRequires:	autoconf
 BuildRequires:	automake
@@ -102,6 +103,7 @@ pomiêdzy sesjami.
 %patch0 -p1
 %patch1 -p1
 %patch2 -p1
+%patch3 -p1
 
 %build
 %{__aclocal}
