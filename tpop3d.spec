@@ -93,7 +93,7 @@ pomiêdzy sesjami.
 %prep
 %setup -q
 %patch0 -p1
-%{!?_without_whoson:	%patch1 -p1}
+%{!?_without_whoson:%patch1 -p1}
 %patch2 -p1
 
 %build
