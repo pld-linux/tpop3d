@@ -2,7 +2,7 @@ Summary:	POP3 server
 Summary(pl):	Serwer POP3
 Name:		tpop3d
 Version:	1.4.1
-Release:	1
+Release:	2
 License:	GPL
 Group:		Networking/Daemons
 Source0:	http://www.ex-parrot.com/~chris/tpop3d/%{name}-%{version}.tar.gz
@@ -20,9 +20,11 @@ Prereq:		/sbin/chkconfig
 Provides:	pop3daemon
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 Obsoletes:	pop3daemon
+Obsoletes:	courier-imap-pop3
+Obsoletes:	imap-pop
+Obsoletes:	imap-pop3
 Obsoletes:	qpopper
 Obsoletes:	qpopper6
-Obsoletes:	imap-pop
 Obsoletes:	solid-pop3d
 Obsoletes:	solid-pop3d-ssl
 
@@ -110,8 +112,6 @@ install -d $RPM_BUILD_ROOT/etc/{pam.d,security,rc.d/init.d}
 install %{SOURCE1} $RPM_BUILD_ROOT/etc/pam.d/tpop3d
 install %{SOURCE2} $RPM_BUILD_ROOT/etc/rc.d/init.d/tpop3d
 
-gzip -9nf README README.auth_mysql
-
 touch $RPM_BUILD_ROOT/etc/security/blacklist.pop3
 
 %clean
@@ -136,7 +136,7 @@ fi
 
 %files
 %defattr(644,root,root,755)
-%doc *.gz TPOP3D-AuthDriver scripts
+%doc README README.auth_mysql TPOP3D-AuthDriver scripts
 %attr(640,root,root) %config(noreplace) %verify(not size mtime md5) /etc/pam.d/tpop3d
 %attr(640,root,root) %config(noreplace) %verify(not size mtime md5) /etc/security/blacklist.pop3
 %attr(754,root,root) /etc/rc.d/init.d/tpop3d
