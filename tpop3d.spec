@@ -68,7 +68,7 @@ Ostatnie trzy opcje pozwalaj± wspieraæ wirtualne domeny; pierwsze dwie
 za¶ s± stworzone by autentykowaæ lokalnych (Unixowych) u¿ytkowników.
 
 Wspierane s± nastêpuj±ce formaty skrzynek:
-- bsd - dla kolejkowych skrzynek w stylu BSD (`Unix') 
+- bsd - dla kolejkowych skrzynek w stylu BSD (`Unix')
 - maildir - format maildir znany z Qmail
 - empty - pusty sterownik
 
@@ -101,7 +101,7 @@ autoheader
 rm -rf $RPM_BUILD_ROOT
 install -d $RPM_BUILD_ROOT%{_sysconfdir}/{pam.d,security,rc.d/init.d}
 
-%{__make} install DESTDIR=$RPM_BUILD_ROOT 
+%{__make} install DESTDIR=$RPM_BUILD_ROOT
 
 install %{SOURCE1} $RPM_BUILD_ROOT%{_sysconfdir}/pam.d/tpop3d
 install %{SOURCE2} $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/tpop3d
