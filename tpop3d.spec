@@ -8,7 +8,7 @@ Summary:	POP3 server
 Summary(pl):	Serwer POP3
 Name:		tpop3d
 Version:	1.4.2
-Release:	4
+Release:	5
 License:	GPL
 Group:		Networking/Daemons
 Source0:	http://www.ex-parrot.com/~chris/tpop3d/%{name}-%{version}.tar.gz
@@ -109,10 +109,11 @@ rm -f missing
 	--enable-auth-pam \
 %{!?_without_ldap:	--enable-auth-ldap} \
 %{!?_without_mysql:	--enable-auth-mysql} \
+%{!?_without_whoson:	--enable-whoson} \
 	--enable-auth-perl \
 	--enable-auth-other \
 	--enable-mbox-maildir \
-%{!?_without_whoson:	--enable-whoson}
+	--enable-auth-flatfile
 
 %{__make}
 
