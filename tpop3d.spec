@@ -16,13 +16,14 @@ BuildRequires:	mysql-devel
 BuildRequires:	openldap-devel
 BuildRequires:	pam-devel
 BuildRequires:	perl-devel
-Prereq:		rc-scripts
+Prereq:		/sbin/chkconfig
 Provides:	pop3daemon
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 Obsoletes:	pop3daemon
 Obsoletes:	qpopper
 Obsoletes:	qpopper6
 Obsoletes:	imap-pop
+Obsoletes:	solid-pop3d
 Obsoletes:	solid-pop3d-ssl
 
 %define		_sysconfdir	/etc
@@ -83,6 +84,7 @@ pomiêdzy sesjami.
 %patch0 -p1
 
 %build
+rm -f missing
 aclocal
 autoconf
 autoheader
@@ -101,16 +103,16 @@ automake -a -c -f
 
 %install
 rm -rf $RPM_BUILD_ROOT
-install -d $RPM_BUILD_ROOT%{_sysconfdir}/{pam.d,security,rc.d/init.d}
+install -d $RPM_BUILD_ROOT/etc/{pam.d,security,rc.d/init.d}
 
 %{__make} install DESTDIR=$RPM_BUILD_ROOT
 
-install %{SOURCE1} $RPM_BUILD_ROOT%{_sysconfdir}/pam.d/tpop3d
-install %{SOURCE2} $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/tpop3d
+install %{SOURCE1} $RPM_BUILD_ROOT/etc/pam.d/tpop3d
+install %{SOURCE2} $RPM_BUILD_ROOT/etc/rc.d/init.d/tpop3d
 
 gzip -9nf README README.auth_mysql
 
-touch $RPM_BUILD_ROOT%{_sysconfdir}/security/blacklist.pop3
+touch $RPM_BUILD_ROOT/etc/security/blacklist.pop3
 
 %clean
 rm -rf $RPM_BUILD_ROOT
