@@ -8,12 +8,13 @@ Summary:	POP3 server
 Summary(pl):	Serwer POP3
 Name:		tpop3d
 Version:	1.4.2
-Release:	3
+Release:	4
 License:	GPL
 Group:		Networking/Daemons
 Source0:	http://www.ex-parrot.com/~chris/tpop3d/%{name}-%{version}.tar.gz
 Source1:	%{name}.pamd
 Source2:	%{name}.init
+Source3:	%{name}.conf
 Patch0:		%{name}-ac_am_fixes.patch
 %{!?_without_whoson:Patch1:		%{name}-whoson.patch}
 Patch2:		http://www.ex-parrot.com/~chris/tpop3d/%{name}-1.4.2-auth-flatfile-broken.patch
@@ -123,6 +124,7 @@ install -d $RPM_BUILD_ROOT/etc/{pam.d,security,rc.d/init.d}
 
 install %{SOURCE1} $RPM_BUILD_ROOT/etc/pam.d/tpop3d
 install %{SOURCE2} $RPM_BUILD_ROOT/etc/rc.d/init.d/tpop3d
+install %{SOURCE3} $RPM_BUILD_ROOT/etc/
 
 touch $RPM_BUILD_ROOT/etc/security/blacklist.pop3
 
@@ -151,6 +153,7 @@ fi
 %doc README* TPOP3D-AuthDriver scripts FAQ CHANGES CREDITS TODO PORTABILITY
 %attr(640,root,root) %config(noreplace) %verify(not size mtime md5) /etc/pam.d/tpop3d
 %attr(640,root,root) %config(noreplace) %verify(not size mtime md5) /etc/security/blacklist.pop3
+%attr(640,root,root) %config(noreplace) %verify(not size mtime md5) /etc/tpop3d.conf
 %attr(754,root,root) /etc/rc.d/init.d/tpop3d
 %attr(755,root,root) %{_sbindir}/*
 %{_mandir}/man*/*
