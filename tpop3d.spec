@@ -5,6 +5,7 @@
 %bcond_without	ldap		# without LDAP support
 %bcond_without	perl		# without perl support
 %bcond_without	pam		# without pam support
+%bcond_without	pgsql		# without PostgreSQL support
 %bcond_without	ssl		# without ssl support
 %bcond_without	whoson		# without WHOSON protocol support
 #
@@ -12,7 +13,7 @@ Summary:	POP3 server
 Summary(pl):	Serwer POP3
 Name:		tpop3d
 Version:	1.5.3
-Release:	8
+Release:	9
 License:	GPL
 Group:		Networking/Daemons
 Source0:	http://www.ex-parrot.com/~chris/tpop3d/%{name}-%{version}.tar.gz
@@ -31,6 +32,7 @@ BuildRequires:	automake
 %{?with_ldap:BuildRequires:	openldap-devel}
 %{?with_pam:BuildRequires:		pam-devel}
 %{?with_perl:BuildRequires:	perl-devel}
+%{?with_pgsql:BuildRequires:	postgresql-devel}
 %{?with_whoson:BuildRequires:	whoson-devel}
 %{?with_ssl:BuildRequires:		openssl-devel >= 0.9.7d}
 PreReq:		rc-scripts
@@ -57,10 +59,11 @@ authentication mechanisms:
 - auth_passwd - /etc/passwd (and optionally /etc/shadow)
 - auth_mysql - a vmail-sql style MySQL database; see
   http://www.ex-parrot.com/~chris/vmail-sql/
+- auth_pgsql - uses PostgreSQL database
 - auth_other - an external program
 - auth_perl - embedded perl subroutines
 
-The latter three options provide virtual domain support; the first two
+The latter four options provide virtual domain support; the first two
 are designed to authenticate local (Unix) users.
 
 The following mailbox formats are supported:
@@ -82,10 +85,11 @@ wspiera nastêpuj±ce mechanizmy autentykacji:
 - auth_passwd - /etc/passwd (i opcjonalnie /etc/shadow)
 - auth_mysql - baza MySQL w stylu vmail-sql ; obejrzyj
   http://www.ex-parrot.com/~chris/vmail-sql/
+- auth_pgsql - baza PostgreSQL
 - auth_other - zewnêtrzny program
 - auth_perl - zakorzenione podprogramy Perla
 
-Ostatnie trzy opcje pozwalaj± wspieraæ wirtualne domeny; pierwsze dwie
+Ostatnie cztery opcje pozwalaj± wspieraæ wirtualne domeny; pierwsze dwie
 za¶ s± stworzone by autentykowaæ lokalnych (Unixowych) u¿ytkowników.
 
 Wspierane s± nastêpuj±ce formaty skrzynek:
@@ -119,6 +123,7 @@ pomiêdzy sesjami.
 %{?with_mysql:	--enable-auth-mysql} \
 %{?with_whoson:	--enable-whoson} \
 %{?with_perl:	--enable-auth-perl} \
+%{?with_pgsql:	--enable-auth-pgsql} \
 %{?with_authother:	--enable-auth-other} \
 	--enable-mbox-maildir \
 %{?with_ssl:	--enable-tls} \
