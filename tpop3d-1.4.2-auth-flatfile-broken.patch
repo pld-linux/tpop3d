@@ -1,0 +1,11 @@
+--- tpop3d-1.4.2/auth_flatfile.h        Sat Jun  8 19:58:56 2002
++++ tpop3d-1.4.2-2/auth_flatfile.h      Mon Jul  1 18:41:50 2002
+@@ -18,7 +18,7 @@
+ #include "authswitch.h"
+  
+ /* auth_flatfile.c */
+-authcontext auth_flatfile_new_user_pass(const char *user, const char *local_part, const char *domain, const char *pass, const char *host);
++authcontext auth_flatfile_new_user_pass(const char *user, const char *local_part, const char *domain, const char *pass, const char *clienthost, const char *serverhost);
+ int  auth_flatfile_init(void);
+  
+ #endif /* AUTH_FLATFILE */
