@@ -1,0 +1,19 @@
+Common subdirectories: tpop3d-1.5.3-orig/TPOP3D-AuthDriver and tpop3d-1.5.3/TPOP3D-AuthDriver
+diff -u tpop3d-1.5.3-orig/auth_pam.c tpop3d-1.5.3/auth_pam.c
+--- tpop3d-1.5.3-orig/auth_pam.c	2003-09-27 09:33:57.000000000 -0600
++++ tpop3d-1.5.3/auth_pam.c	2004-07-17 14:25:12.063241752 -0600
+@@ -118,9 +118,6 @@
+     static const char *facility;
+     int authenticated = 0;
+ 
+-    /* Check the this isn't a virtual-domain user. */
+-    if (local_part) return NULL;
+-
+     /* It is possible to use PAM to authenticate users who do not exist as
+      * system users. We support this by defining an auth-pam-mail-user
+      * configuration option which is used to obtain the user information
+Only in tpop3d-1.5.3: auth_pam.c~
+Common subdirectories: tpop3d-1.5.3-orig/config and tpop3d-1.5.3/config
+Common subdirectories: tpop3d-1.5.3-orig/darwin and tpop3d-1.5.3/darwin
+Common subdirectories: tpop3d-1.5.3-orig/init.d and tpop3d-1.5.3/init.d
+Common subdirectories: tpop3d-1.5.3-orig/scripts and tpop3d-1.5.3/scripts

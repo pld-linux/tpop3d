@@ -1,0 +1,531 @@
+diff -urN tpop3d-1.5.3.org/auth_mysql.c tpop3d-1.5.3/auth_mysql.c
+--- tpop3d-1.5.3.org/auth_mysql.c	2004-04-09 12:06:53.570822464 +0200
++++ tpop3d-1.5.3/auth_mysql.c	2004-04-09 12:07:28.757473280 +0200
+@@ -11,7 +11,7 @@
+ #endif /* HAVE_CONFIG_H */
+ 
+ #ifdef AUTH_MYSQL
+-static const char rcsid[] = "$Id$";
++static const char rcsid[] = "$Id$";
+ 
+ #include <sys/types.h> /* BSD needs this here, apparently. */
+ 
+@@ -267,7 +267,7 @@
+ 
+                 /* User was not lying (about her password) */
+                 if (!parse_uid((const char*)row[2], &uid)) {
+-                    log_print(LOG_ERR, _("auth_mysql_new_apop: unix user `%s' for %s does not make sense"), row[3], who);
++                    log_print(LOG_ERR, _("auth_mysql_new_apop: unix user `%s' for %s does not make sense"), row[2], who);
+                     break;
+                 }
+ 
+@@ -367,7 +367,7 @@
+                 }
+ 
+                 if (!parse_uid((const char*)row[2], &uid)) {
+-                    log_print(LOG_ERR, _("auth_mysql_new_user_pass: unix user `%s' for %s does not make sense"), row[3], who);
++                    log_print(LOG_ERR, _("auth_mysql_new_user_pass: unix user `%s' for %s does not make sense"), row[2], who);
+                     break;
+                 }
+ 
+diff -urN tpop3d-1.5.3.org/authswitch.c tpop3d-1.5.3/authswitch.c
+--- tpop3d-1.5.3.org/authswitch.c	2004-04-09 12:06:53.574821856 +0200
++++ tpop3d-1.5.3/authswitch.c	2004-04-09 12:07:28.759472976 +0200
+@@ -6,7 +6,7 @@
+  *
+  */
+ 
+-static const char rcsid[] = "$Id$";
++static const char rcsid[] = "$Id$";
+ 
+ #ifdef HAVE_CONFIG_H
+ #include "configuration.h"
+@@ -330,7 +330,7 @@
+ #ifdef USE_WHOSON
+     char buf[128] = {0};
+     /* Notify whoson server the user has logged in correctly */
+-    if (wso_login(clienthost, A->user, buf, sizeof(buf)) == -1)
++    if (whoson_enable && wso_login(clienthost, A->user, buf, sizeof(buf)) == -1)
+         log_print(LOG_ERR, "authswitch_onlogin: wso_login: %s", buf);
+ #endif /* USE_WHOSON */
+     
+diff -urN tpop3d-1.5.3.org/cfgdirectives.c tpop3d-1.5.3/cfgdirectives.c
+--- tpop3d-1.5.3.org/cfgdirectives.c	2004-04-09 12:06:53.574821856 +0200
++++ tpop3d-1.5.3/cfgdirectives.c	2004-04-09 12:07:28.761472672 +0200
+@@ -9,7 +9,7 @@
+  *
+  */
+ 
+-static const char rcsid[] = "$Id$";
++static const char rcsid[] = "$Id$";
+ 
+ #ifdef HAVE_CONFIG_H
+ #include "configuration.h"
+@@ -25,6 +25,7 @@
+     "append-domain",
+     "strip-domain",
+     "timeout-seconds",
++    "tcp-send-buffer",
+     "log-facility",
+     "log-stderr",
+     "apop-only",
+diff -urN tpop3d-1.5.3.org/connection.c tpop3d-1.5.3/connection.c
+--- tpop3d-1.5.3.org/connection.c	2004-04-09 12:06:53.575821704 +0200
++++ tpop3d-1.5.3/connection.c	2004-04-09 12:07:28.763472368 +0200
+@@ -6,7 +6,7 @@
+  *
+  */
+ 
+-static const char rcsid[] = "$Id$";
++static const char rcsid[] = "$Id$";
+ 
+ #ifdef HAVE_CONFIG_H
+ #include "configuration.h"
+@@ -127,7 +127,7 @@
+ 
+     /* Read and write buffers */
+     c->rdb = buffer_new(1024);
+-    c->wrb = buffer_new(1024);
++    c->wrb = buffer_new(32768);
+ 
+     c->timestamp = make_timestamp(c->domain);
+     if (!c->timestamp) goto fail;
+@@ -238,7 +238,8 @@
+         } /* else IOABS_WOULDBLOCK */
+     }
+ 
+-    buffer_push_data(c->wrb, data, len);
++    if (len > 0)
++        buffer_push_data(c->wrb, data, len);
+         /* XXX should try a write from the buffer now...? */
+     return 1;
+ }
+@@ -416,7 +417,18 @@
+  * Send an arbitrary line to a connected peer. Returns 1 on success or 0 on
+  * failure. Used to send multiline responses. */
+ int connection_sendline(connection c, const char *s) {
+-    return connection_send(c, s, strlen(s)) && connection_send(c, "\r\n", 2);
++    /* Buffer copy, for reasons as given in connection_sendresponse. */
++    static char *buf;
++    static size_t buflen;
++    size_t l;
++    
++    l = strlen(s) + 2;
++    
++    if (!buf || buflen < l + 1)
++        buf = xrealloc(buf, buflen = l + 1);
++
++    sprintf(buf, "%s\r\n", s);
++    return connection_send(c, buf, l);
+ }
+ 
+ /* connection_sendmessage:
+@@ -439,7 +451,42 @@
+     char *p, *q, *r;
+     size_t length, offset;
+     ssize_t nwritten = 0;
+-    
++    /* Doing lots of small writes is bad for performance, so buffer here and
++     * only write data when we've accumulated a large chunk of data. Use our
++     * own buffer here, rather than the connection IO buffer, since we don't
++     * want to use as much memory as a single message. */
++    static char *buffer;
++    static size_t buflen;
++    char *bufptr, *msg = NULL;
++
++    if (!buffer) buffer = xmalloc(buflen = 32768);
++    bufptr = buffer;
++
++#define buffer_push(sa, na) \
++        do { \
++            char *s; \
++            size_t n; \
++            s = sa; \
++            n = na; \
++            /* Unlikely but must deal with this case. */ \
++            if (n > buflen) { \
++                if (bufptr > buffer && !connection_send(c, buffer, bufptr - buffer)) \
++                    goto write_failure; \
++                bufptr = buffer; \
++                if (!connection_send(c, s, n)) \
++                    goto write_failure; \
++            } else { \
++                if ((bufptr + n) > (buffer + buflen)) { \
++                    if (!connection_send(c, buffer, bufptr - buffer)) \
++                        goto write_failure; \
++                    bufptr = buffer; \
++                } \
++                memcpy(bufptr, s, n); \
++                bufptr += n; \
++            } \
++            nwritten += n; \
++        } while (0)
++
+     offset = msgoffset - (msgoffset % PAGESIZE);
+     length = (msgoffset + msglength + PAGESIZE) ;
+     length -= length % PAGESIZE;
+@@ -451,8 +498,9 @@
+         return -1; /* Failure before +OK sent. */
+     }
+ 
+-    connection_sendresponse(c, 1, _("Message follows"));
+-    
++    msg = _("+OK Message follows\r\n");
++    buffer_push(msg, strlen(msg));
++
+     /* Find the beginning of the message headers */
+     p = filemem + (msgoffset % PAGESIZE);
+     r = p + msglength;
+@@ -465,14 +513,12 @@
+         errno = 0;
+         
+         /* Escape a leading ., if present. */
+-        if (*p == '.' && !connection_send(c, ".", 1))
+-            goto write_failure;
+-        ++nwritten;
++        if (*p == '.')
++            buffer_push(".", 1);
+         
+         /* Send line itself. */
+-        if (!connection_send(c, p, q - p) || !connection_send(c, "\r\n", 2))
+-            goto write_failure;
+-        nwritten += q - p + 2;
++        buffer_push(p, q - p);
++        buffer_push("\r\n", 2);
+ 
+         p = q + 1;
+     }
+@@ -480,11 +526,7 @@
+     ++p;
+ 
+     errno = 0;
+-    if (!connection_send(c, "\r\n", 2)) {
+-        log_print(LOG_ERR, _("connection_sendmessage: send failure"));
+-        munmap(filemem, length);
+-        return -2;
+-    }
++    buffer_push("\r\n", 2);
+     
+     /* Now send the message itself */
+     while (p < r && n) {
+@@ -495,27 +537,31 @@
+         errno = 0;
+ 
+         /* Escape a leading ., if present. */
+-        if (*p == '.' && !connection_send(c, ".", 1))
+-            goto write_failure;
+-        ++nwritten;
++        if (*p == '.')
++            buffer_push(".", 1);
+         
+         /* Send line itself. */
+-        if (!connection_send(c, p, q - p) || !connection_send(c, "\r\n", 2))
+-            goto write_failure;
+-        nwritten += q - p + 2;
++        buffer_push(p, q - p);
++        buffer_push("\r\n", 2);
+ 
+         p = q + 1;
+     }
++
++    /* Finish up. */
++    buffer_push(".\r\n", 3);
++
++    if (bufptr > buffer && !connection_send(c, buffer, bufptr - buffer))
++        goto write_failure;
++    
+     if (munmap(filemem, length) == -1)
+         log_print(LOG_ERR, "connection_sendmessage: munmap: %m");
+     
+     errno = 0;
+ 
+-    if (!connection_send(c, ".\r\n", 3)) {
+-        log_print(LOG_ERR, _("connection_sendmessage: send failure"));
+-        return -2;
+-    } else return nwritten + 3;
++    return nwritten + 3;
+ 
++#undef buffer_push
++    
+ write_failure:
+     log_print(LOG_ERR, _("connection_sendmessage: send failure"));
+     munmap(filemem, length);
+diff -urN tpop3d-1.5.3.org/maildir.c tpop3d-1.5.3/maildir.c
+--- tpop3d-1.5.3.org/maildir.c	2004-04-09 12:06:53.589819576 +0200
++++ tpop3d-1.5.3/maildir.c	2004-04-09 12:07:28.765472064 +0200
+@@ -13,7 +13,7 @@
+ 
+ #ifdef MBOX_MAILDIR
+ 
+-static const char rcsid[] = "$Id$";
++static const char rcsid[] = "$Id$";
+ 
+ #include <sys/types.h>
+ 
+@@ -148,7 +148,7 @@
+  * Build an index of the MAILDIR; SUBDIRis one of cur, tmp or new; TIME is the
+  * time at which the operation started, used to ignore messages delivered
+  * during processes. Returns 0 on success, -1 otherwise. */
+-int maildir_build_index(mailbox M, const char *subdir, time_t time) {
++int maildir_build_index(mailbox M, const char *subdir, time_t T) {
+     DIR *dir;
+     struct dirent *d;
+ 
+@@ -156,7 +156,7 @@
+ 
+     dir = opendir(subdir);
+     if (!dir) {
+-        log_print(LOG_ERR, "maildir_build_index: opendir(%s): %m", subdir);
++        log_print(LOG_ERR, "maildir_build_index: opendir(%s/%s): %m", M->name, subdir);
+         return -1;
+     }
+     
+@@ -168,11 +168,19 @@
+         filename = xmalloc(strlen(subdir) + strlen(d->d_name) + 2);
+         sprintf(filename, "%s/%s", subdir, d->d_name);
+         if (!filename) return -1;
+-        if (stat(filename, &st) == 0 && st.st_mtime < time) {
+-            /* These get sorted by mtime later. */
++        if (0 == stat(filename, &st)) {
+             struct indexpoint pt;
++
++            /* XXX Previously, we ignored messages from the future, since
++             * that's what qmail-pop3d does. But it's not clear why this is
++             * useful, so turn the check into a warning. */
++            if (st.st_mtime > T)
++                log_print(LOG_WARNING, _("maildir_build_index: %s: mtime is %d seconds in the future; this condition may indicate that you have a clock synchronisation error, especially if you are using NFS-mounted mail directories"), filename, (int)(st.st_mtime - T));
++            
++            /* These get sorted by mtime later. */
+             maildir_make_indexpoint(&pt, filename, st.st_size, st.st_mtime);
+             mailbox_add_indexpoint(M, &pt);
++
+             /* Accumulate size of messages. */
+             M->totalsize += st.st_size;
+         }
+@@ -205,7 +213,7 @@
+     mailbox M, failM = NULL;
+     struct timeval tv1, tv2;
+     float f;
+-    int locked;
++    int locked = 0;
+  
+     alloc_struct(_mailbox, M);
+     
+diff -urN tpop3d-1.5.3.org/netloop.c tpop3d-1.5.3/netloop.c
+--- tpop3d-1.5.3.org/netloop.c	2004-04-09 12:06:53.591819272 +0200
++++ tpop3d-1.5.3/netloop.c	2004-04-09 12:07:28.768471608 +0200
+@@ -7,7 +7,7 @@
+  *
+  */
+ 
+-static const char rcsid[] = "$Id$";
++static const char rcsid[] = "$Id$";
+ 
+ #ifdef HAVE_CONFIG_H
+ #include "configuration.h"
+@@ -41,7 +41,7 @@
+ /* The socket send buffer is set to this, so that we don't end up in a
+  * position that we send so much data that the client will not have received
+  * all of it before we time them out. */
+-#define MAX_DATA_IN_FLIGHT      8192
++#define DEFAULT_TCP_SEND_BUFFER     16384
+ 
+ int max_running_children = 16;          /* How many children may exist at once. */
+ volatile int num_running_children = 0;  /* How many children are active. */
+@@ -124,9 +124,20 @@
+         if (FD_ISSET(L->s, readfds)) {
+             struct sockaddr_in sin, sinlocal;
+             size_t l = sizeof(sin);
+-            int s, a = MAX_DATA_IN_FLIGHT;
++            static int tcp_send_buf = -1;
++            int s;
+             time_t start;
+ 
++            if (tcp_send_buf == -1) {
++                int q;
++                q = config_get_int("tcp-send-buffer", &tcp_send_buf);
++                if (q <= 0 || tcp_send_buf < 0) {
++                    tcp_send_buf = DEFAULT_TCP_SEND_BUFFER;
++                    if (q == -1 || tcp_send_buf < 0)
++                        log_print(LOG_WARNING, "listeners_post_select: bad value for tcp-send-buffer; using default");
++                }
++            }
++
+             time(&start);
+             errno = 0;
+             
+@@ -144,7 +155,8 @@
+                     close(s);
+                 }
+ #endif
+-                else if (setsockopt(s, SOL_SOCKET, SO_SNDBUF, &a, sizeof(a)) == -1) {
++                else if (tcp_send_buf != 0
++                         && setsockopt(s, SOL_SOCKET, SO_SNDBUF, &tcp_send_buf, sizeof(tcp_send_buf)) == -1) {
+                     /* Set a small send buffer so that we get EAGAIN if the client
+                      * isn't acking our data. */
+                     log_print(LOG_ERR, "listeners_post_select: setsockopt: %m");
+@@ -382,12 +394,22 @@
+         if (!(c = connections[i]))
+             continue;
+ 
++        if (i > 0 && post_fork) {
++            connections[0] = c;
++            connections[i] = NULL;
++        }
++        
++
+         /* Handle all post-select I/O. */
+         r = c->io->post_select(c, readfds, writefds, exceptfds);
+ 
+         /* At this stage, the connection may be closed or closing. But we
+          * should try to interpret commands anyway, in case the client sends
+-         * QUIT and immediately closes the connection. */
++         * QUIT and immediately closes the connection.
++         * XXX That's not actually what we do. This creates a race condition
++         * with badly-behaved clients like Microsoft Outlook (cf. email of
++         * 20040203). We might want to consider an option to process remaining
++         * commands even if the connection is actually closed. */
+         if (r && !connection_isfrozen(c)) {
+             /*
+              * Handling of POP3 commands, and forking children to handle
+@@ -426,6 +448,15 @@
+                     break;
+             }
+ 
++            if (post_fork) {
++                if (i != 0) {
++                    connections[0] = connections[i];
++                    connections[i] = NULL;
++                }
++                i = 0;
++                break;
++            }
++
+             if (!c)
+                 continue; /* if connection has been destroyed, do next one */
+         }
+@@ -473,6 +504,11 @@
+             if (post_fork)
+                 _exit(0);
+         }
++
++        if (post_fork) {
++            i = 0;
++            break;
++        }
+     }
+ }
+ 
+@@ -503,12 +539,14 @@
+     /* Main select() loop */
+     while (!foad) {
+         fd_set readfds, writefds;
+-        struct timeval tv = {1, 0}; /* Must be less than IDLE_TIMEOUT and small enough that termination on receipt of SIGTERM is timely. */
++        struct timeval tv = {0};
+         int n = 0, e;
+ 
+         FD_ZERO(&readfds);
+         FD_ZERO(&writefds);
+ 
++        tv.tv_sec = 1;  /* must be smaller than timeout */
++
+         if (!post_fork) listeners_pre_select(&n, &readfds, &writefds, NULL);
+ 
+         connections_pre_select(&n, &readfds, &writefds, NULL);
+diff -urN tpop3d-1.5.3.org/pop3.c tpop3d-1.5.3/pop3.c
+--- tpop3d-1.5.3.org/pop3.c	2004-04-09 12:06:53.592819120 +0200
++++ tpop3d-1.5.3/pop3.c	2004-04-09 12:07:28.770471304 +0200
+@@ -6,7 +6,7 @@
+  *
+  */
+ 
+-static const char rcsid[] = "$Id$";
++static const char rcsid[] = "$Id$";
+ 
+ #ifdef HAVE_CONFIG_H
+ #include "configuration.h"
+@@ -295,10 +295,10 @@
+             if (verbose)
+                 log_print(LOG_DEBUG, _("do_retr: client %s: sending message %d (%d bytes)"),
+                         c->idstr, msg_num + 1, (int)curmsg->msglength);
+-        
++            
+             if ((n = c->m->sendmessage(c->m, c, msg_num, -1)) == -2)
+                 return close_connection;
+-            
++
+             /* That might have taken a long time. */
+             c->idlesince = time(NULL);
+             if (verbose) {
+@@ -583,6 +583,9 @@
+         }
+         
+         switch (p->cmd) {
++            case CAPA:
++                return do_capa(c);
++
+             case LIST:
+                 do_list(c, msg_num);
+                 break;
+diff -urN tpop3d-1.5.3.org/README tpop3d-1.5.3/README
+--- tpop3d-1.5.3.org/README	2004-04-09 12:06:53.528828848 +0200
++++ tpop3d-1.5.3/README	2004-04-09 12:07:28.753473888 +0200
+@@ -1,7 +1,7 @@
+ tpop3d, copyright (c) 2000-2003 Chris Lightfoot <chris@ex-parrot.com>
+   http://www.ex-parrot.com/~chris/tpop3d/
+ 
+-$Id$
++$Id$
+ 
+ This program is free software; you can redistribute it and/or modify it under
+ the terms of the GNU General Public License as published by the Free Software
+@@ -23,6 +23,7 @@
+     auth-mysql          a vmail-sql style MySQL database; see
+                             http://www.ex-parrot.com/~chris/vmail-sql/
+                         or another database with user-specified SQL queries
++    auth-pgsql          a PostgreSQL database
+     auth-ldap           an LDAP directory
+     auth-flatfile       /etc/passwd-style flat files
+     auth-other          an external program
+diff -urN tpop3d-1.5.3.org/TODO tpop3d-1.5.3/TODO
+--- tpop3d-1.5.3.org/TODO	2004-04-09 12:06:53.565823224 +0200
++++ tpop3d-1.5.3/TODO	2004-04-09 12:07:28.755473584 +0200
+@@ -1,5 +1,5 @@
+ Things To Do
+-$Id$
++$Id$
+ 
+ * A proper code audit
+ 
+@@ -96,3 +96,11 @@
+ 
+ * Latency vs. throughput tradeoff under high load?
+ 
++* Deferred writes in connection_sendmessage -- that should bring the cost of
++  sending messages down to the cost of substituting \r\n for \n, etc.
++
++* Configurable (or adaptive?) SO_SNDBUF
++  We probably don't have enough information to measure the necessary
++  parameters (though in principle we could measure the delay between sending
++  +OK... and receiving a new command), so just make this a config file option.
++
+diff -urN tpop3d-1.5.3.org/tpop3d.conf.5 tpop3d-1.5.3/tpop3d.conf.5
+--- tpop3d-1.5.3.org/tpop3d.conf.5	2004-04-09 12:06:53.623814408 +0200
++++ tpop3d-1.5.3/tpop3d.conf.5	2004-04-09 12:07:28.774470696 +0200
+@@ -142,6 +142,16 @@
+ timeout), then specify 600 seconds. This may be necessary with some clients
+ which pause randomly whilst downloading messages.
+ .TP
++\fBtcp-send-buffer\fp: \fInumber\fP
++This is the largest number of bytes which may be `in flight' between the server
++and a client at any time. Setting this to larger values may improve the
++performance of \fBtpop3d\fP, but at the risk of timing out clients connected by
++slow networks. You should not set this parameter to anything larger than the
++timeout multiplied by the data rate (in bytes per second) of the slowest
++network through which clients will connect to the POP3 server. This is set using
++the SO_SNDBUF socket option; see \fBsocket\fP(7) for more information. The
++default is 16,384 bytes; set this to 0 to use the system default.
++.TP
+ \fBlog-facility\fP: \fIfacility\fP
+ This selects the `facility' as which \fBtpop3d\fP emits system log messages.
+ Possible values for \fIfacility\fP are: \fBmail\fP, \fBauthpriv\fP,
