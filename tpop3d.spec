@@ -86,9 +86,9 @@ pomiêdzy sesjami.
 %build
 rm -f missing
 aclocal
-autoconf
+%{__autoconf}
 autoheader
-automake -a -c -f
+%{__automake}
 %configure \
 	--with-mailspool-directory=/var/mail \
 	--enable-shadow-passwords \
