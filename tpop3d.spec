@@ -31,14 +31,16 @@ BuildRequires:	automake
 %{?with_mysql:BuildRequires:	mysql-devel}
 %{?with_ldap:BuildRequires:	openldap-devel}
 %{?with_pam:BuildRequires:		pam-devel}
-%{?with_perl:BuildRequires:	perl-devel}
 %{?with_pgsql:BuildRequires:	postgresql-devel}
 %{?with_whoson:BuildRequires:	whoson-devel}
 %{?with_ssl:BuildRequires:		openssl-devel >= 0.9.7d}
 PreReq:		rc-scripts
 Requires(post,preun):	/sbin/chkconfig
 Requires:	pam >= 0.77.3
+%if %{with perl}
+BuildRequires:	perl-devel
 Requires:	perl(DynaLoader) = %(%{__perl} -MDynaLoader -e 'print DynaLoader->VERSION')
+%endif
 Provides:	pop3daemon
 Obsoletes:	courier-imap-pop3
 Obsoletes:	imap-pop
