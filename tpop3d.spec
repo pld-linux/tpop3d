@@ -19,6 +19,7 @@ BuildRequires:	openldap-devel
 BuildRequires:	pam-devel
 BuildRequires:	perl-devel
 BuildRequires:	whoson-devel
+BuildRequires:	kernel-headers
 Prereq:		/sbin/chkconfig
 Provides:	pop3daemon
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
