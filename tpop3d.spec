@@ -12,6 +12,7 @@ Release:	5
 License:	GPL
 Group:		Networking/Daemons
 Source0:	http://www.ex-parrot.com/~chris/tpop3d/%{name}-%{version}.tar.gz
+# Source0-md5:	30d6d7956a0bedb9f99a1b1c24585a02
 Source1:	%{name}.pamd
 Source2:	%{name}.init
 Source3:	%{name}.conf
