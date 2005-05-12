@@ -13,7 +13,7 @@ Summary:	POP3 server
 Summary(pl):	Serwer POP3
 Name:		tpop3d
 Version:	1.5.3
-Release:	14
+Release:	15
 License:	GPL
 Group:		Networking/Daemons
 Source0:	http://www.ex-parrot.com/~chris/tpop3d/%{name}-%{version}.tar.gz
@@ -37,7 +37,7 @@ BuildRequires:	automake
 %{?with_ssl:BuildRequires:		openssl-devel >= 0.9.7d}
 PreReq:		rc-scripts
 Requires(post,preun):	/sbin/chkconfig
-Requires:	pam >= 0.77.3
+Requires:	pam >= 0.79.0
 %if %{with perl}
 BuildRequires:	perl-devel
 Requires:	perl(DynaLoader) = %(%{__perl} -MDynaLoader -e 'print DynaLoader->VERSION')
