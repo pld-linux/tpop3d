@@ -9,6 +9,7 @@
 %bcond_without	ssl		# without ssl support
 %bcond_without	whoson		# without WHOSON protocol support
 %bcond_without	snide		# without snide server responses
+%bcond_with	skipgetpwcheck	# with getpwuid returned struct check ommited (see patch for details)
 #
 Summary:	POP3 server
 Summary(pl):	Serwer POP3
@@ -27,6 +28,7 @@ Patch1:		%{name}-cvs20041005.patch
 Patch2:		%{name}-resolv.patch
 Patch3:		%{name}-pam-vdomain.patch
 Patch4:		%{name}-disable-dotfile-locking.patch
+Patch5:		%{name}-sql-getpwuid-optional.patch
 URL:		http://www.ex-parrot.com/~chris/tpop3d/
 BuildRequires:	autoconf
 BuildRequires:	automake
@@ -114,6 +116,9 @@ pomiêdzy sesjami.
 %patch2 -p1
 %patch3 -p1
 %patch4 -p1
+%if %{with skipgetpwcheck}
+%patch5 -p0
+%endif
 
 %build
 %{__aclocal}
