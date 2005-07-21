@@ -1,0 +1,77 @@
+Normally tpop3d gets passwd structure for username/uid returned from SQL
+query. If getpwuid returns null (eg. if you don't have such user
+in /etc/passwd) whole authentication is failed.
+
+This patch changes that behaviour. tpop3d won't cause 'authorization failed'
+errors anymore but will fill authcontext structure with uid provided from
+SQL query and will set authcontext->home = mailbox (result column 0).
+
+You should use this patch if your virtual users using different uids
+AND ONLY IF you'll provide _UID_ in 3rd column of query (NOT USERNAME!).
+You also must provide (in SQL result) correct mailbox/maildir path.
+
+If you use this patch you can't use $(home) substitution string
+in auth-*sql-mailbox configuration.
+
+diff -ruNp auth_mysql.c.orig auth_mysql.c
+--- auth_mysql.c.orig	2005-07-21 23:48:54.000000000 +0200
++++ auth_mysql.c	2005-07-22 00:28:32.000000000 +0200
+@@ -273,12 +273,7 @@ authcontext auth_mysql_new_apop(const ch
+ 
+                 pw = getpwuid(uid);
+ 
+-                if (!pw) {
+-                    log_print(LOG_ERR, "auth_mysql_new_apop: getpwuid(%d): %m", (int)uid);
+-                    break;
+-                }
+-
+-                a = authcontext_new(pw->pw_uid, use_gid ? mail_gid : pw->pw_gid, row[3], row[0], pw->pw_dir);
++                a = authcontext_new(pw ? pw->pw_uid : uid, (use_gid || !pw ) ? mail_gid : pw->pw_gid, row[3], row[0], pw ? pw->pw_dir : row[0]);
+ 
+                 break;
+             }
+@@ -373,12 +368,7 @@ authcontext auth_mysql_new_user_pass(con
+ 
+                 pw = getpwuid(uid);
+ 
+-                if (!pw) {
+-                    log_print(LOG_ERR, "auth_mysql_new_user_pass: getpwuid(%d): %m", (int)uid);
+-                    break;
+-                }
+-
+-                a = authcontext_new(pw->pw_uid, use_gid ? mail_gid : pw->pw_gid, row[3], row[0], pw->pw_dir);
++                a = authcontext_new(pw ? pw->pw_uid : uid, (use_gid || !pw ) ? mail_gid : pw->pw_gid, row[3], row[0], pw ? pw->pw_dir : row[0]);
+                 break;
+             }
+ 
+diff -ruNp auth_pgsql.c.orig auth_pgsql.c
+--- auth_pgsql.c.orig	2005-07-21 23:49:06.000000000 +0200
++++ auth_pgsql.c	2005-07-22 00:29:09.000000000 +0200
+@@ -309,12 +309,7 @@ authcontext auth_pgsql_new_apop(const ch
+ 
+                 pw = getpwuid(uid);
+ 
+-                if (!pw) {
+-                    log_print(LOG_ERR, "auth_pgsql_apop: getpwuid(%d): %m", (int)uid);
+-                    break;
+-                }
+-
+-                a = authcontext_new(pw->pw_uid, use_gid ? mail_gid : pw->pw_gid, mboxdrv, mailbox, pw->pw_dir);
++                a = authcontext_new(pw ? pw->pw_uid : uid, (use_gid || !pw) ? mail_gid : pw->pw_gid, mboxdrv, mailbox, pw ? pw->pw_dir : mailbox);
+ 
+                 break;
+             }
+@@ -402,12 +397,7 @@ authcontext auth_pgsql_new_user_pass(con
+ 
+                 pw = getpwuid(uid);
+ 
+-                if (!pw) {
+-                    log_print(LOG_ERR, "auth_pgsql_new_user_pass: getpwuid(%d): %m", (int)uid);
+-                    break;
+-                }
+-
+-                a = authcontext_new(pw->pw_uid, use_gid ? mail_gid : pw->pw_gid, mboxdrv, mailbox, pw->pw_dir);
++                a = authcontext_new(pw ? pw->pw_uid : uid, (use_gid || !pw) ? mail_gid : pw->pw_gid, mboxdrv, mailbox, pw ? pw->pw_dir : mailbox);
+                 break;
+             }
+ 
