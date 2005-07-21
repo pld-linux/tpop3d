@@ -8,6 +8,7 @@
 %bcond_without	pgsql		# without PostgreSQL support
 %bcond_without	ssl		# without ssl support
 %bcond_without	whoson		# without WHOSON protocol support
+%bcond_without	snide		# without snide server responses
 #
 Summary:	POP3 server
 Summary(pl):	Serwer POP3
@@ -132,6 +133,7 @@ pomiêdzy sesjami.
 %{?with_authother:	--enable-auth-other} \
 	--enable-mbox-maildir \
 %{?with_ssl:	--enable-tls} \
+%{!?with_snide:	--disable-snide-comments} \
 	--enable-auth-flatfile
 
 %{__make}
