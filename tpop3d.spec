@@ -8,6 +8,7 @@
 %bcond_without	pgsql		# without PostgreSQL support
 %bcond_without	ssl		# without ssl support
 %bcond_without	whoson		# without WHOSON protocol support
+%bcond_without	gdbm		# without gdbm auth db
 %bcond_without	snide		# without snide server responses
 %bcond_with	skipgetpwcheck	# with getpwuid returned struct check ommited (see patch for details)
 #
@@ -15,7 +16,7 @@ Summary:	POP3 server
 Summary(pl):	Serwer POP3
 Name:		tpop3d
 Version:	1.5.3
-Release:	15
+Release:	16
 License:	GPL
 Group:		Networking/Daemons
 Source0:	http://www.ex-parrot.com/~chris/tpop3d/%{name}-%{version}.tar.gz
@@ -24,7 +25,7 @@ Source1:	%{name}.pamd
 Source2:	%{name}.init
 Source3:	%{name}.conf
 Patch0:		%{name}-ac_am_fixes.patch
-Patch1:		%{name}-cvs20041005.patch
+Patch1:		%{name}-cvs20050822.patch
 Patch2:		%{name}-resolv.patch
 Patch3:		%{name}-pam-vdomain.patch
 Patch4:		%{name}-disable-dotfile-locking.patch
@@ -38,6 +39,7 @@ BuildRequires:	automake
 %{?with_pgsql:BuildRequires:	postgresql-devel}
 %{?with_whoson:BuildRequires:	whoson-devel}
 %{?with_ssl:BuildRequires:		openssl-devel >= 0.9.7d}
+%{?with_gdbm:BuildRequires:	gdbm-devel}
 PreReq:		rc-scripts
 Requires(post,preun):	/sbin/chkconfig
 Requires:	pam >= 0.79.0
@@ -135,6 +137,7 @@ pomiêdzy sesjami.
 %{?with_whoson:	--enable-whoson} \
 %{?with_perl:	--enable-auth-perl} \
 %{?with_pgsql:	--enable-auth-pgsql} \
+%{?with_gdbm:	--enable-gdbm} \
 %{?with_authother:	--enable-auth-other} \
 	--enable-mbox-maildir \
 %{?with_ssl:	--enable-tls} \
