@@ -1,34 +1,8 @@
 Index: tpop3d/CHANGES
-diff -u tpop3d/CHANGES:1.83 tpop3d/CHANGES:1.93
---- tpop3d/CHANGES:1.83	Mon Nov 24 20:00:56 2003
-+++ tpop3d/CHANGES	Tue Oct  5 11:52:23 2004
-@@ -1,5 +1,21 @@
- Changes for tpop3d
--$Id$
-+$Id$
-+
-+Removed the test which ignored messages in a maildir having modification times
-+in the future, replacing it with a warning about possible clock synchronisation
-+errors, following a suggestion of Matthew Trent. Fixed a (recently-introduced)
-+bug in the maildir code which could cause a segmentation fault on misconfigured
-+systems. Made a minor change to the way multi-line responses are transmitted,
-+which may help some broken clients to work with tpop3d. Made some changes to
-+the transmission of messages which may improve performance for clients on very
-+fast networks, and added a tcp-send-buffer configuration option to control the
-+SO_SNDBUF socket parameter. Fixed a couple of memory leaks; thanks to Richard
-+Fuchs and Daniel Tiefnig from Inode for identifying those and supplying a
-+patch. The same authors also supplied code to enable recursion into subfolders
-+of a maildir mailbox (maildir-recursion config option). Added support for SHA1
-+passwords, and fixed a bug in the MD5 base64 password code. By default, commit
-+changes on close-after-QUIT (`Microsoft Outlook bug' workaround), with an
-+option to restore the previous, correct, behaviour.
- 
- 1.5.3
- 
 Index: tpop3d/INSTALL
-diff -u tpop3d/INSTALL:1.22 tpop3d/INSTALL:1.23
+diff -u tpop3d/INSTALL:1.22 tpop3d/INSTALL:1.24
 --- tpop3d/INSTALL:1.22	Thu Jan  9 23:25:59 2003
-+++ tpop3d/INSTALL	Wed Sep 29 20:57:59 2004
++++ tpop3d/INSTALL	Sun May 22 11:54:12 2005
 @@ -1,5 +1,5 @@
  Installation instructions for tpop3d
 -$Id$
@@ -36,6 +10,15 @@ diff -u tpop3d/INSTALL:1.22 tpop3d/INSTALL:1.23
  
  Thanks to the efforts of Mark Longair, tpop3d can now be configured and built
  using the standard GNU autoconf approach. For most users, it should be
+@@ -19,7 +19,7 @@
+ also review the contents of README.darwin.
+ 
+ NB that tpop3d now obeys the --sysconfdir of configure, so you will need to
+-set --sysconfidr=/etc if you already have a /etc/tpop3d.conf and do not wish to
++set --sysconfdir=/etc if you already have a /etc/tpop3d.conf and do not wish to
+ move it.
+ 
+ * Authentication
 @@ -56,6 +56,7 @@
            {plaintext}...    plain text password used for APOP
            {mysql}...        password hashed using MySQL's PASSWORD()
@@ -44,6 +27,34 @@ diff -u tpop3d/INSTALL:1.22 tpop3d/INSTALL:1.23
  
        Note that to use APOP, the plaintext password type must be specified for
        a user, but this does not stop them logging in via any other method with
+Index: tpop3d/Makefile.am
+diff -u tpop3d/Makefile.am:1.41 tpop3d/Makefile.am:1.42
+--- tpop3d/Makefile.am:1.41	Mon Nov 24 19:58:28 2003
++++ tpop3d/Makefile.am	Fri Aug  5 14:48:22 2005
+@@ -4,12 +4,12 @@
+ #
+ # Copyright (c) 2001 Chris Lightfoot, Mark Longair. All rights reserved.
+ #
+-# $Id$
++# $Id$
+ #
+ 
+ sbin_PROGRAMS = tpop3d
+ 
+-tpop3d_SOURCES = auth_mysql.c auth_pgsql.c auth_ldap.c auth_other.c \
++tpop3d_SOURCES = auth_mysql.c auth_pgsql.c auth_ldap.c auth_other.c auth_gdbm.c \
+                  auth_perl.c auth_pam.c auth_passwd.c auth_flatfile.c \
+                  authcache.c authswitch.c buffer.c cfgdirectives.c config.c \
+                  connection.c ioabs_tcp.c ioabs_tls.c listener.c locks.c \
+@@ -21,7 +21,7 @@
+                  auth_passwd.h auth_flatfile.h auth_pgsql.h authswitch.h \
+                  buffer.h config.h connection.h listener.h locks.h mailbox.h \
+                  md5.h password.h pidfile.h signals.h stringmap.h tls.h \
+-                 tokenise.h vector.h util.h
++                 tokenise.h vector.h util.h auth_gdbm.h
+ 
+ CFLAGS += -Wall -g -O2 -DCONFIG_DIR='"@sysconfdir@"' # -Wstrict-prototypes
+ 
 Index: tpop3d/README
 diff -u tpop3d/README:1.22 tpop3d/README:1.23
 --- tpop3d/README:1.22	Mon Nov 24 19:59:13 2003
@@ -170,6 +181,247 @@ diff -u tpop3d/auth_flatfile.c:1.2 tpop3d/auth_flatfile.c:1.3
  }
  
  /* auth_flatfile_new_user_pass:
+Index: tpop3d/auth_gdbm.c
+diff -u /dev/null tpop3d/auth_gdbm.c:1.1
+--- /dev/null	Mon Aug 22 19:57:08 2005
++++ tpop3d/auth_gdbm.c	Fri Aug  5 14:48:22 2005
+@@ -0,0 +1,196 @@
++/*
++ * auth_gdbm.c:
++ * Authenticate users using a GNU dbm file
++ *
++ * Based on auth_flatfile.h by Angel Marin, designed for tpop3d by
++ * Daniel Tiefnig at Inode, Austria. <d.tiefnig@inode.at>
++ *
++ * Copyright (c) 2004 Daniel Tiefnig. All rights reserved. This
++ * software is free software, you can modify and/or redistribute
++ * it as tpop3d itself. See the file COPYING in the base directory
++ * of your tpop3d distribution.
++ */
++
++#ifdef HAVE_CONFIG_H
++#include "configuration.h"
++#endif /* HAVE_CONFIG_H */
++
++#ifdef AUTH_GDBM
++
++#include <sys/types.h>
++
++#ifdef HAVE_CRYPT_H /* XXX */
++#include <crypt.h>
++#endif
++
++#include <unistd.h>
++#include <grp.h>
++#include <pwd.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#include <syslog.h>
++#include <gdbm.h>
++
++#include "auth_gdbm.h"
++#include "authswitch.h"
++#include "password.h"
++#include "config.h"
++#include "util.h"
++
++static gid_t virtual_gid;
++static uid_t virtual_uid;
++static char *user_passwd_file;
++GDBM_FILE dbf;
++int persistent;
++
++/* auth_gdbm_init:
++ * Initialise the driver. Reads the config directives. */
++int auth_gdbm_init() {
++    char *s;
++
++    /* Obtain uid to use */
++    if ((s = config_get_string("auth-gdbm-mail-user"))) {
++        if (!parse_uid(s, &virtual_uid)) {
++            log_print(LOG_ERR, _("auth_gdbm_init: auth-gdbm-mail-user directive `%s' does not make sense"), s);
++            return 0;
++        }
++    } else {
++        log_print(LOG_ERR, _("auth_gdbm_init: no auth-gdbm-mail-user directive in config"));
++        return 0;
++    }
++
++    /* Obtain gid to use */
++    if ((s = config_get_string("auth-gdbm-mail-group"))) {
++        if (!parse_gid(s, &virtual_gid)) {
++            log_print(LOG_ERR, _("auth_gdbm_init: auth-gdbm-mail-group directive `%s' does not make sense"), s);
++            return 0;
++        }
++    } else {
++        log_print(LOG_ERR, _("auth_gdbm_init: no auth-gdbm-mail-group directive in config"));
++        return 0;
++    }
++
++    /* Obtain path to passwd file */
++    if ((s = config_get_string("auth-gdbm-passwd-file"))) {
++        user_passwd_file = s;
++    } else {
++        log_print(LOG_ERR, _("auth_gdbm_init: no auth-gdbm-passwd-file directive in config"));
++        return 0;
++    }
++
++    /* persistent GDBM filehandle? */
++    if (config_get_bool("auth-gdbm-persistent")) {
++        persistent = 1;
++        if((dbf=gdbm_open(user_passwd_file, 0, GDBM_READER, 0644, 0)) == NULL) {
++            log_print(LOG_ERR, _("auth_gdbm_init: could not open GNU dbm file"));
++            return 0;
++        }
++    } else {
++        persistent = 0;
++    }
++
++    return 1;
++}
++
++/* auth_gdbm_new_user_pass:
++ * Attempt to authenticate user and pass using a GNU dbm file,
++ * as configured at compile-time.
++ * This is a virtual-domains authenticator. */
++authcontext auth_gdbm_new_user_pass(const char *user, const char *local_part, const char *domain, const char *pass, const char *clienthost /* unused */, const char *serverhost /* unused */) {
++    authcontext a = NULL;
++    char *who, *address;
++    datum key, value;
++
++    if (!local_part) return NULL;
++    
++    who = username_string(user, local_part, domain);
++
++    address = xmalloc(strlen(local_part) + strlen(domain) +2);
++    sprintf(address, "%s@%s", local_part, domain);
++    key.dptr = address;
++    key.dsize = strlen(address);
++
++    if (persistent) {
++        value = gdbm_fetch(dbf,key);
++    } else {
++        if((dbf=gdbm_open(user_passwd_file, 0, GDBM_READER, 0644, 0)) == NULL) {
++            log_print(LOG_ERR, _("auth_gdbm_init: could not open GNU dbm file"));
++            return 0;
++        }
++        value = gdbm_fetch(dbf,key);
++        gdbm_close(dbf);
++    }
++
++    xfree(address);
++    if(value.dptr == NULL) {
++        log_print(LOG_ERR, _("auth_gdbm_new_user_pass: could not find user %s"), who);
++        return a;
++    }
++
++    if (check_password(who, value.dptr, pass, "{crypt}"))
++        a = authcontext_new(virtual_uid, virtual_gid, NULL, NULL, NULL);
++    else
++        log_print(LOG_ERR, _("auth_gdbm_new_user_pass: failed login for %s"), who);
++
++    xfree(value.dptr);
++
++    return a;
++}
++
++/* auth_gdbm_new_apop:
++ * Attempt to authenticate user via APOP using a GNU dbm file,
++ * as configured at compile-time.
++ * This is a virtual-domains authenticator. */
++authcontext auth_gdbm_new_apop(const char *user, const char *local_part, const char *domain, const char *timestamp, const unsigned char *digest, const char *clienthost /* unused */, const char *serverhost /* unused */) {
++    authcontext a = NULL;
++    char *who, *address;
++    datum key, value;
++
++    if (!local_part) return NULL;
++
++    who = username_string(user, local_part, domain);
++
++    address = xmalloc(strlen(local_part) + strlen(domain) +2);
++    sprintf(address, "%s@%s", local_part, domain);
++    key.dptr = address;
++    key.dsize = strlen(address);
++
++    if (persistent) {
++        value = gdbm_fetch(dbf,key);
++    } else {
++        if((dbf=gdbm_open(user_passwd_file, 0, GDBM_READER, 0644, 0)) == NULL) {
++            log_print(LOG_ERR, _("auth_gdbm_init: could not open GNU dbm file"));
++            return 0;
++        }
++        value = gdbm_fetch(dbf,key);
++        gdbm_close(dbf);
++    }
++
++    xfree(address);
++    if(value.dptr == NULL) {
++        log_print(LOG_ERR, _("auth_gdbm_new_apop: could not find user %s"), who);
++        return a;
++    }
++
++    if (check_password_apop(who, value.dptr, timestamp, digest))
++        a = authcontext_new(virtual_uid, virtual_gid, NULL, NULL, NULL);
++    else
++        log_print(LOG_ERR, _("auth_gdbm_new_apop: failed login for %s"), who);
++
++    xfree(value.dptr);
++
++    return a;
++}
++
++void auth_gdbm_postfork() {
++    if (persistent)
++        gdbm_close(dbf);
++}
++
++void auth_gdbm_close() {
++    if (persistent)
++        gdbm_close(dbf);
++}
++
++#endif /* AUTH_GDBM */
+Index: tpop3d/auth_gdbm.h
+diff -u /dev/null tpop3d/auth_gdbm.h:1.1
+--- /dev/null	Mon Aug 22 19:57:08 2005
++++ tpop3d/auth_gdbm.h	Fri Aug  5 14:48:22 2005
+@@ -0,0 +1,35 @@
++/*
++ * auth_gdbm.h:
++ * Authenticate users using a GNU dbm file
++ *
++ * Based on auth_flatfile.h by Angel Marin, designed for tpop3d by
++ * Daniel Tiefnig at Inode, Austria. <d.tiefnig@inode.at>
++ *
++ * Copyright (c) 2004 Daniel Tiefnig. All rights reserved. This
++ * software is free software, you can modify and/or redistribute
++ * it as tpop3d itself. See the file COPYING in the base directory
++ * of your tpop3d distribution.
++ */
++
++#ifndef __AUTH_GDBM_H_ /* include guard */
++#define __AUTH_GDBM_H_
++
++#ifdef HAVE_CONFIG_H
++#include "configuration.h"
++#endif /* HAVE_CONFIG_H */
++
++#ifdef AUTH_GDBM
++
++#include "authswitch.h"
++
++/* auth_gdbm.c */
++int auth_gdbm_init(void);
++authcontext auth_gdbm_new_user_pass(const char *user, const char *local_part, const char *domain, const char *pass, const char *clienthost, const char *serverhost);
++authcontext auth_gdbm_new_apop(const char *user, const char *local_part, const char *domain, const char *timestamp, const unsigned char *digest, const char *clienthost, const char *serverhost);
++void auth_gdbm_postfork(void);
++void auth_gdbm_close(void);
++
++
++#endif /* AUTH_GDBM */
++
++#endif /* __AUTH_GDBM_H_ */
 Index: tpop3d/auth_mysql.c
 diff -u tpop3d/auth_mysql.c:1.54 tpop3d/auth_mysql.c:1.56
 --- tpop3d/auth_mysql.c:1.54	Mon Jul 14 23:31:20 2003
@@ -302,9 +554,9 @@ diff -u tpop3d/auth_pgsql.c:1.1 tpop3d/auth_pgsql.c:1.2
  int auth_pgsql_init(void) {
      char *username = NULL, *password = NULL, *hostname = NULL, *database = NULL, *localhost = "localhost", *s;
 Index: tpop3d/authswitch.c
-diff -u tpop3d/authswitch.c:1.42 tpop3d/authswitch.c:1.44
+diff -u tpop3d/authswitch.c:1.42 tpop3d/authswitch.c:1.45
 --- tpop3d/authswitch.c:1.42	Mon Nov 24 19:58:28 2003
-+++ tpop3d/authswitch.c	Wed Sep 15 19:26:28 2004
++++ tpop3d/authswitch.c	Fri Aug  5 14:48:22 2005
 @@ -6,7 +6,7 @@
   *
   */
@@ -314,7 +566,32 @@ diff -u tpop3d/authswitch.c:1.42 tpop3d/authswitch.c:1.44
  
  #ifdef HAVE_CONFIG_H
  #include "configuration.h"
-@@ -290,25 +290,26 @@
+@@ -52,6 +52,10 @@
+ #include "auth_passwd.h"
+ #endif /* AUTH_PASSWD */
+ 
++#ifdef AUTH_GDBM
++#include "auth_gdbm.h"
++#endif /* AUTH_GDBM */
++
+ #ifdef USE_WHOSON
+ #include <whoson.h>
+ #endif
+@@ -122,6 +126,13 @@
+             "flatfile",
+             _X("Uses /etc/passwd-style flat files")},
+ #endif /* AUTH_FLATFILE */
++
++#ifdef AUTH_GDBM
++        /* Authenticate against GNU dbm files. */
++        {auth_gdbm_init, auth_gdbm_new_apop, auth_gdbm_new_user_pass, NULL, auth_gdbm_postfork, auth_gdbm_close,
++            "gdbm",
++            _X("Uses GNU dbm files")},
++#endif /* AUTH_GDBM */
+ };
+ 
+ int *auth_drivers_running;
+@@ -290,25 +301,26 @@
              l = NULL;
      }
  
@@ -358,7 +635,7 @@ diff -u tpop3d/authswitch.c:1.42 tpop3d/authswitch.c:1.44
  
      xfree(x);
      
-@@ -330,7 +331,7 @@
+@@ -330,7 +342,7 @@
  #ifdef USE_WHOSON
      char buf[128] = {0};
      /* Notify whoson server the user has logged in correctly */
@@ -368,9 +645,9 @@ diff -u tpop3d/authswitch.c:1.42 tpop3d/authswitch.c:1.44
  #endif /* USE_WHOSON */
      
 Index: tpop3d/cfgdirectives.c
-diff -u tpop3d/cfgdirectives.c:1.26 tpop3d/cfgdirectives.c:1.29
+diff -u tpop3d/cfgdirectives.c:1.26 tpop3d/cfgdirectives.c:1.31
 --- tpop3d/cfgdirectives.c:1.26	Mon Nov 24 19:58:28 2003
-+++ tpop3d/cfgdirectives.c	Tue Oct  5 11:51:21 2004
++++ tpop3d/cfgdirectives.c	Fri Aug  5 14:48:22 2005
 @@ -9,7 +9,7 @@
   *
   */
@@ -396,19 +673,36 @@ diff -u tpop3d/cfgdirectives.c:1.26 tpop3d/cfgdirectives.c:1.29
   
  #if defined(MBOX_BSD) && defined(MBOX_BSD_SAVE_INDICES)
      "mailspool-index",
-@@ -52,6 +54,8 @@
+@@ -52,6 +54,10 @@
      
  #ifdef MBOX_MAILDIR
      "maildir-exclusive-lock",
 +    "maildir-recursion",
 +    "maildir-ignore-folders",
++    "maildir-evaluate-filename",
++    "maildir-size-string",
  #endif
  
  #ifdef USE_TLS
+@@ -145,6 +151,14 @@
+     "auth-flatfile-passwd-file",
+ #endif /* AUTH_FLATFILE */
+ 
++#ifdef AUTH_GDBM
++    "auth-gdbm-enable",
++    "auth-gdbm-mail-user",
++    "auth-gdbm-mail-group",
++    "auth-gdbm-passwd-file",
++    "auth-gdbm-persistent",
++#endif
++
+     /* final entry must be NULL */
+     NULL};
+ 
 Index: tpop3d/configure.in
-diff -u tpop3d/configure.in:1.58 tpop3d/configure.in:1.59
+diff -u tpop3d/configure.in:1.58 tpop3d/configure.in:1.60
 --- tpop3d/configure.in:1.58	Mon Nov 24 19:59:13 2003
-+++ tpop3d/configure.in	Wed Sep 29 20:57:59 2004
++++ tpop3d/configure.in	Fri Aug  5 14:48:22 2005
 @@ -6,7 +6,7 @@
  dnl
  dnl Copyright (c) 2001 Mark Longair, Chris Lightfoot. All Rights Reserved.
@@ -427,7 +721,21 @@ diff -u tpop3d/configure.in:1.58 tpop3d/configure.in:1.59
                                contain libpq.so. [default=/usr/lib]
  ],
      [pgsql_lib_dir=$withval],
-@@ -283,6 +283,16 @@
+@@ -150,6 +150,13 @@
+     [enable_auth_perl=$enableval],
+     [enable_auth_perl="no"])
+ 
++AC_ARG_ENABLE(auth-gdbm,
++        [  --enable-auth-gdbm      Enable authentication against GNU dbm files.
++                          [default=no]
++],
++    [enable_auth_gdbm=$enableval],
++    [enable_auth_gdbm="no"])
++
+ dnl Mailbox types.
+ 
+ AC_ARG_ENABLE(mbox-bsd,
+@@ -283,6 +290,16 @@
      [enable_masshosting=$enableval],
      [enable_masshosting=yes])
  
@@ -444,7 +752,30 @@ diff -u tpop3d/configure.in:1.58 tpop3d/configure.in:1.59
  
  dnl Some options mainly useful for development/debugging.
  
-@@ -452,6 +462,11 @@
+@@ -364,6 +381,12 @@
+     AC_DEFINE(AUTH_PERL,1,[Use an embedded perl interpreter for authentication.])
+ fi
+ 
++if test x"$enable_auth_gdbm" = x"yes"
++then
++    AC_DEFINE(AUTH_GDBM,1,[Use GNU dbm for authentication.])
++fi
++
++
+ if test x"$enable_auth_pam" != x"yes" \
+ && test x"$enable_auth_passwd" != x"yes" \
+ && test x"$enable_shadow" != x"yes" \
+@@ -371,7 +394,8 @@
+ && test x"$enable_auth_ldap" != x"yes" \
+ && test x"$enable_auth_flatfile" != x"yes" \
+ && test x"$enable_auth_other" != x"yes" \
+-&& test x"$enable_auth_perl" != x"yes"
++&& test x"$enable_auth_perl" != x"yes" \
++&& test x"$enable_auth_gdbm" != x"yes"
+ then
+     AC_MSG_ERROR([No authentication driver is enabled. At least one is required.])
+ fi
+@@ -452,6 +476,11 @@
  then
      AC_DEFINE(MASS_HOSTING,1,[Enable regex matching of inverse DNS results for domain names])
  fi
@@ -456,7 +787,7 @@ diff -u tpop3d/configure.in:1.58 tpop3d/configure.in:1.59
      
  if test x"$enable_backtrace" = x"yes"
  then
-@@ -556,9 +571,9 @@
+@@ -556,11 +585,18 @@
  fi
  
  # OpenSSL
@@ -467,7 +798,53 @@ diff -u tpop3d/configure.in:1.58 tpop3d/configure.in:1.59
 +    AC_CHECK_LIB2(ssl, SSL_new, [], AC_MSG_ERROR([[TLS/SHA1 passwords enabled, but can't find libssl]]), -lcrypto)
  fi
  
++# GNU dbm
++if test x"$enable_auth_gdbm" = x"yes"
++  then
++    AC_CHECK_LIB(gdbm, main, [], AC_MSG_ERROR([[GNU dbm authentication enabled, but can't find libgdbm]]) )
++fi
++
++
  # Where is nanosleep?
+ if test x"$enable_auth_other" = x"yes"
+ then
+@@ -600,7 +636,7 @@
+ AC_HEADER_STDC
+ AC_HEADER_SYS_WAIT
+ 
+-AC_CHECK_HEADERS(fcntl.h limits.h sys/file.h sys/time.h syslog.h unistd.h crypt.h execinfo.h security/pam_appl.h ldap.h mysql.h tcpd.h openssl/ssl.h libpq-fe.h)
++AC_CHECK_HEADERS(fcntl.h limits.h sys/file.h sys/time.h syslog.h unistd.h crypt.h execinfo.h security/pam_appl.h ldap.h mysql.h tcpd.h openssl/ssl.h libpq-fe.h gdbm.h)
+ 
+ if test x"$enable_backtrace" = x"yes"
+ then
+@@ -689,6 +725,14 @@
+     fi
+ fi
+ 
++if test x"$enable_auth_gdbm" = x"yes"
++then
++    if test x"$ac_cv_header_gdbm_h" != x"yes"
++    then
++        AC_MSG_ERROR( [GNU dbm authentication enabled but can't find gdbm.h] )
++    fi
++fi
++
+ dnl Checks for typedefs, structures, and compiler characteristics.
+ AC_C_CONST
+ AC_TYPE_UID_T
+@@ -744,6 +788,12 @@
+ 
+ fi
+ 
++if test x"$enable_auth_gdbm" = x"yes"
++then
++    AC_CHECK_FUNC(gdbm_open, [], AC_MSG_ERROR([[GNU dbm authentication enabled, but gdbm_open doesn't seem to be available.]]))
++    AC_CHECK_FUNC(gdbm_fetch, [], AC_MSG_ERROR([[GNU dbm authentication enabled, but gdbm_fetch doesn't seem to be available.]]))
++fi
++
+ dnl If flock and fcntl are selected, there's a chance that they
+ dnl will deadlock.  We do a test for this here...
+ 
 Index: tpop3d/connection.c
 diff -u tpop3d/connection.c:1.52 tpop3d/connection.c:1.56
 --- tpop3d/connection.c:1.52	Thu Nov  6 01:19:27 2003
@@ -697,9 +1074,9 @@ diff -u tpop3d/ioabs_tls.c:1.14 tpop3d/ioabs_tls.c:1.15
                  default:
                      log_print(LOG_ERR, _("ioabs_tls_post_select: client %s: SSL_accept: %s; closing connection"), c->idstr, ERR_reason_error_string(ERR_get_error()));
 Index: tpop3d/maildir.c
-diff -u tpop3d/maildir.c:1.19 tpop3d/maildir.c:1.26
+diff -u tpop3d/maildir.c:1.19 tpop3d/maildir.c:1.27
 --- tpop3d/maildir.c:1.19	Mon Nov 24 20:23:20 2003
-+++ tpop3d/maildir.c	Fri Sep 24 00:13:46 2004
++++ tpop3d/maildir.c	Tue Jul 26 18:05:44 2005
 @@ -13,7 +13,7 @@
  
  #ifdef MBOX_MAILDIR
@@ -723,7 +1100,7 @@ diff -u tpop3d/maildir.c:1.19 tpop3d/maildir.c:1.26
      DIR *dir;
      struct dirent *d;
  
-@@ -156,7 +156,7 @@
+@@ -156,23 +156,53 @@
  
      dir = opendir(subdir);
      if (!dir) {
@@ -732,13 +1109,40 @@ diff -u tpop3d/maildir.c:1.19 tpop3d/maildir.c:1.26
          return -1;
      }
      
-@@ -168,11 +168,19 @@
+     while ((d = readdir(dir))) {
+         struct stat st;
+-        char *filename;
++        char *filename, *seq;
++        int ret,seql;
+         
+         if (d->d_name[0] == '.') continue;
          filename = xmalloc(strlen(subdir) + strlen(d->d_name) + 2);
          sprintf(filename, "%s/%s", subdir, d->d_name);
          if (!filename) return -1;
 -        if (stat(filename, &st) == 0 && st.st_mtime < time) {
 -            /* These get sorted by mtime later. */
-+        if (0 == stat(filename, &st)) {
++
++        if(config_get_bool("maildir-evaluate-filename")) {
++            memset(&st, 0, sizeof(st));
++            st.st_mtime = strtoul(d->d_name, NULL, 10);
++            if(!(seq = config_get_string("maildir-size-string")))
++                seq = ",S=";
++
++            seql = strlen(seq);
++            if(seq = strstr(d->d_name, seq))
++                st.st_size = strtoul(seq + seql, NULL, 10);
++
++            if (st.st_size && st.st_mtime)
++                ret = 0;
++            else {
++                ret = stat(filename, &st);
++                log_print(LOG_DEBUG, "maildir_build_index: Falling back on stat()!");
++            }
++        } else {
++            ret = stat(filename, &st);
++        }
++
++        if (0 == ret) {
              struct indexpoint pt;
 +
 +            /* XXX Previously, we ignored messages from the future, since
@@ -754,7 +1158,7 @@ diff -u tpop3d/maildir.c:1.19 tpop3d/maildir.c:1.26
              /* Accumulate size of messages. */
              M->totalsize += st.st_size;
          }
-@@ -192,6 +200,86 @@
+@@ -192,6 +222,86 @@
      return 0;
  }
  
@@ -841,7 +1245,7 @@ diff -u tpop3d/maildir.c:1.19 tpop3d/maildir.c:1.26
  /* maildir_sort_callback A B
   * qsort(3) callback for ordering messages in a maildir. */
  int maildir_sort_callback(const void *a, const void *b) {
-@@ -205,7 +293,7 @@
+@@ -205,7 +315,7 @@
      mailbox M, failM = NULL;
      struct timeval tv1, tv2;
      float f;
@@ -850,7 +1254,7 @@ diff -u tpop3d/maildir.c:1.19 tpop3d/maildir.c:1.26
   
      alloc_struct(_mailbox, M);
      
-@@ -235,6 +323,7 @@
+@@ -235,6 +345,7 @@
      /* Build index of maildir. */
      if (maildir_build_index(M, "new", tv1.tv_sec) != 0) goto fail;
      if (maildir_build_index(M, "cur", tv1.tv_sec) != 0) goto fail;
@@ -858,7 +1262,7 @@ diff -u tpop3d/maildir.c:1.19 tpop3d/maildir.c:1.26
  
      /* Now sort the messages. */
      qsort(M->index, M->num, sizeof(struct indexpoint), maildir_sort_callback);
-@@ -247,8 +336,10 @@
+@@ -247,8 +358,10 @@
  
  fail:
      if (M) {
@@ -1121,7 +1525,7 @@ diff -u tpop3d/pop3.c:1.57 tpop3d/pop3.c:1.58
                  break;
 Index: tpop3d/pop3bench
 diff -u /dev/null tpop3d/pop3bench:1.3
---- /dev/null	Tue Oct  5 12:17:53 2004
+--- /dev/null	Mon Aug 22 19:57:08 2005
 +++ tpop3d/pop3bench	Tue Feb  3 19:52:03 2004
 @@ -0,0 +1,370 @@
 +#!/usr/bin/perl -w
@@ -1495,9 +1899,9 @@ diff -u /dev/null tpop3d/pop3bench:1.3
 +    quit($E->text());
 +}
 Index: tpop3d/tpop3d.conf.5
-diff -u tpop3d/tpop3d.conf.5:1.47 tpop3d/tpop3d.conf.5:1.51
+diff -u tpop3d/tpop3d.conf.5:1.47 tpop3d/tpop3d.conf.5:1.53
 --- tpop3d/tpop3d.conf.5:1.47	Mon Nov 24 19:58:28 2003
-+++ tpop3d/tpop3d.conf.5	Tue Oct  5 11:51:21 2004
++++ tpop3d/tpop3d.conf.5	Fri Aug  5 14:48:22 2005
 @@ -142,6 +142,16 @@
  timeout), then specify 600 seconds. This may be necessary with some clients
  which pause randomly whilst downloading messages.
@@ -1515,7 +1919,7 @@ diff -u tpop3d/tpop3d.conf.5:1.47 tpop3d/tpop3d.conf.5:1.51
  \fBlog-facility\fP: \fIfacility\fP
  This selects the `facility' as which \fBtpop3d\fP emits system log messages.
  Possible values for \fIfacility\fP are: \fBmail\fP, \fBauthpriv\fP,
-@@ -236,6 +246,21 @@
+@@ -236,6 +246,54 @@
  RFC1939. Even if not specified, \fBtpop3d\fP behaves intelligently when a
  message in a maildir is moved or deleted, so this option is not necessary.
  .TP
@@ -1523,7 +1927,7 @@ diff -u tpop3d/tpop3d.conf.5:1.47 tpop3d/tpop3d.conf.5:1.51
 +Tells \fBtpop3d\fP to display messages in IMAP folders as if they were in the
 +INBOX. Useful if you mix POP3 with IMAP clients such as webmail systems.
 +.TP
-+\fBmaildir-ignore-folders\fP: [foldername [...]]
++\fBmaildir-ignore-folders\fP: [\fIfoldername\fP [...]]
 +Specifies IMAP folders (without the leading dot) that should be excluded from
 +\fBmaildir-recursion\fP. May be empty; more than one folder should be separated
 +by spaces (not tabs).
@@ -1534,25 +1938,143 @@ diff -u tpop3d/tpop3d.conf.5:1.47 tpop3d/tpop3d.conf.5:1.51
 +.fi
 +
 +.TP
++\fBmaildir-evaluate-filename\fP: (\fByes\fP|\fBtrue\fP)
++If enabled, \fBtpop3d\fP tries to extract information about modification time
++and message size out of the message filenames when reading a maildir. This saves
++some disk I/O, as we don't have to stat() on each file. Extraction of
++information from the unique filenames in a maildir is NOT common practise, so
++use with care! You have to ensure, that message filenames conform to the
++following pattern:
++
++The message filename has to begin with the UNIX timestamp of the time the
++message was delivered. The size of the message in bytes may appear anywhere in
++the filename but has to be preceded with a unique string, which can be altered
++by \fBmaildir-size-string\fP in \fBtpop3d.conf\fP.
++
++If a message filename does not conform correctly, \fBtpop3d\fP may misinterprete
++what it found, allthough if the filename turns out to be definately unusable
++(e.g. the unique string is not found, or it doesn't start with digits) it will
++fall back on using stat().
++
++Message filenames are by default set correct by reasonable recent versions of
++qmail-ldap, exim users may use the maildir_tag option of the appendfile
++transport to conform.
++.TP
++\fBmaildir-size-string\fP: \fIstring\fP
++Specifies the unique string \fBtpop3d\fP will search for when evaluating message
++filenames to find the messages size.
++See \fBmaildir-evaluate-filename\fP for information on how this is used.
++
++The default is:
++.nf
++  maildir-size-string: ,S=
++.fi
++
++.TP
  .nf
  \fBtcp-wrappers-name\fP: \fIname\fP
  .fi
-@@ -342,7 +367,17 @@
- Log incorrect passwords supplied by users who fail to log in. Use of this
- option is an invasion of privacy, but may be useful for debugging client
- configuration problems.
+@@ -820,6 +887,37 @@
+ \fBkill(1, $$)\fP, but it would probably be preferable to use \fBauth-other\fP
+ in this case.
+ 
++.SS GNU dbm authentication options
++
++These are only available if you compiled \fBtpop3d\fP with support for
++\fBauth-gdbm\fP.
 +.TP
-+\fBno-commit-on-early-close\fP: (\fByes\fP|\fBtrue\fP)
-+Some POP3 clients (most notably Microsoft `Outlook') will close their
-+connection to the server immediately after issuing a QUIT command and before
-+receiving any response. Strictly they oughtn't to do that, and historically if
-+they did, \fBtpop3d\fP would abort the connection and not delete messages for
-+which DELE commands had been issued during the session. That behaviour has been
-+changed for greater compatibility with broken clients; you can set this option
-+to restore the previous behaviour. Doing so will reduce the chance that your
-+clients will lose mail due to flakey network connectivity.
- .PP
- \fBtpop3d\fP can cache the results of successful login attempts, and re-use
- them when the same user logs in again. This is probably not useful except
- for servers which run under very heavy load. Authentication cacheing can only
-
++\fBauth-gdbm-enable\fP: (\fByes\fP | \fBtrue\fP)
++Enable authentication via a GNU dbm file.
++.TP
++\fBauth-gdbm-passwd-file\fP: \fIstring\fP
++Specify the dbm file in which \fBtpop3d\fP will search for a user's password.
++.TP
++\fBauth-gdbm-persistent\fP: (\fByes\fP | \fBtrue\fP)
++Tells whether tpop3d should keep the GDBM file open (persistent: yes) all the time,
++or whether it should be reopened for each authentication request. The former should
++give slight better performance on heavy loaded servers, the latter is easier to
++handle. If you use persistent filehandles, you'll have to send a HUP signal to the
++listener process every time after replacing the GDBM file.
++.TP
++\fBauth-gdbm-mail-user\fP: (\fIuser-name\fP | \fIuid\fP)
++.TP
++\fBauth-gdbm-mail-group\fP: (\fIgroup-name\fP | \fIgid\fP)
++User and group under which access to the mailbox will take place.
++
++.SS A note on GNU dbm authentication
++
++The dbm file has to store password hashes as zero-terminated strings. The
++specified password hash is interpreted as a hash produced using \fBcrypt\fP(3),
++unless it is preceded by a hashing scheme in \fB{}\fP. The user and group under
++which access to the mailbox takes place with \fBauth-gdbm\fP are always as
++specified in the configuration file.
++
+ .SH FILES
+ .B /etc/tpop3d.conf
+ 
+Index: tpop3d/tpop3d.conf.sample
+diff -u tpop3d/tpop3d.conf.sample:1.3 tpop3d/tpop3d.conf.sample:1.5
+--- tpop3d/tpop3d.conf.sample:1.3	Mon Nov 24 19:58:28 2003
++++ tpop3d/tpop3d.conf.sample	Fri Aug  5 14:48:22 2005
+@@ -2,7 +2,7 @@
+ # tpop3d.conf.sample:
+ # Sample configuration file for tpop3d.
+ #
+-# $Id$
++# $Id$
+ #
+ 
+ #
+@@ -68,6 +68,28 @@
+ # [default: no]
+ #maildir-exclusive-lock: true
+ 
++# maildir-recursion: (yes|true)
++# Tells tpop3d to recurse into IMAP folders when searching for messages.
++# [default: no]
++#maildir-recursion: true
++
++# maildir-ignore-folders: foldername
++# Specifies IMAP Folders that should be excluded when recursing into IMAP
++# folders. (separated by spaces)
++# [default: Trash Sent]
++#maildir-ignore-folders: Trash Sent Draft Spam
++
++# maildir-evaluate-filename: (yes|true)
++# If enabled, tpop3d tries to extract modification time and message size out
++# of message filenames instead of doing a stat() on the file.
++# [default: no]
++#maildir-evaluate-filename: true
++
++# maildir-size-string: string
++# Tells tpop3d where to find the message size in the filename.
++# [default: ,S=]
++#maildir-size-string: ,S=
++
+ # tcp-wrappers-name: name
+ # Selects the `daemon name' used by tpop3d with TCP Wrappers. [default: tpop3d]
+ #tcp-wrappers-name: tpop3d
+@@ -340,3 +362,23 @@
+ # a successful login for POP-before-SMTP operation.
+ #auth-perl-onlogin:
+ 
++
++#
++# GDBM authentication options
++#
++
++# auth-gdbm-enable: (yes | true)
++# Enable authentication via GNU dbm files.
++#auth-gdbm-enable: true
++
++# auth-gdbm-passwd-file: string
++# Specify the dbm file in whichtpop3d will search for a user's password.
++#auth-gdbm-passwd-file: /var/lib/gdbm/...
++
++# auth-gdbm-persistent: (yes | true)
++# Tell tpop3d to use persistent filehandles.
++#auth-gdbm-enable: true
++
++# auth-gdbm-mail-user: (user-name | uid)
++# auth-gdbm-mail-group: (group-name | gid)
++# User and group under which access to the mailbox will take place.
