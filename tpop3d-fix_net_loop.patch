@@ -1,0 +1,15 @@
+diff -urN tpop3d-1.5.3.orig/mailbox.c tpop3d-1.5.3/mailbox.c
+--- tpop3d-1.5.3.orig/mailbox.c	2003-01-09 23:59:37.000000000 +0100
++++ tpop3d-1.5.3/mailbox.c	2005-11-03 11:46:10.578820368 +0100
+@@ -155,7 +155,10 @@
+         if (subspec) {
+             mdrv = str;
+             *subspec++ = 0;
+-        } else subspec = str;
++	} else {
++            subspec = str;
++            mdrv = mbox_drivers[0].name;
++	}
+ 
+         path = substitute_variables(subspec, &err, 4, "user", user, "local_part", local_part, "domain", domain, "home", home);
+ 
