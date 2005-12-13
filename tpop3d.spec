@@ -35,16 +35,16 @@ Patch7:		%{name}-maildirsize.patch
 URL:		http://www.ex-parrot.com/~chris/tpop3d/
 BuildRequires:	autoconf
 BuildRequires:	automake
+%{?with_gdbm:BuildRequires:	gdbm-devel}
 %{?with_mysql:BuildRequires:	mysql-devel}
 %{?with_ldap:BuildRequires:	openldap-devel}
+%{?with_ssl:BuildRequires:		openssl-devel >= 0.9.7d}
 %{?with_pam:BuildRequires:		pam-devel}
 %{?with_pgsql:BuildRequires:	postgresql-devel}
 %{?with_whoson:BuildRequires:	whoson-devel}
-%{?with_ssl:BuildRequires:		openssl-devel >= 0.9.7d}
-%{?with_gdbm:BuildRequires:	gdbm-devel}
-PreReq:		rc-scripts
 Requires(post,preun):	/sbin/chkconfig
 Requires:	pam >= 0.79.0
+Requires:	rc-scripts
 %if %{with perl}
 BuildRequires:	perl-devel
 Requires:	perl(DynaLoader) = %(%{__perl} -MDynaLoader -e 'print DynaLoader->VERSION')
@@ -100,8 +100,9 @@ wspiera nastêpuj±ce mechanizmy autentykacji:
 - auth_other - zewnêtrzny program
 - auth_perl - zakorzenione podprogramy Perla
 
-Ostatnie cztery opcje pozwalaj± wspieraæ wirtualne domeny; pierwsze dwie
-za¶ s± stworzone by autentykowaæ lokalnych (uniksowych) u¿ytkowników.
+Ostatnie cztery opcje pozwalaj± wspieraæ wirtualne domeny; pierwsze
+dwie za¶ s± stworzone by autentykowaæ lokalnych (uniksowych)
+u¿ytkowników.
 
 Wspierane s± nastêpuj±ce formaty skrzynek:
 - bsd - dla kolejkowych skrzynek w stylu BSD (`Unix')
@@ -186,9 +187,9 @@ fi
 %files
 %defattr(644,root,root,755)
 %doc README* TPOP3D-AuthDriver scripts FAQ CHANGES CREDITS TODO PORTABILITY
-%{?with_pam:%attr(640,root,root) %config(noreplace) %verify(not size mtime md5) /etc/pam.d/tpop3d}
-%{?with_pam:%attr(640,root,root) %config(noreplace) %verify(not size mtime md5) /etc/security/blacklist.pop3}
-%attr(640,root,root) %config(noreplace) %verify(not size mtime md5) %{_sysconfdir}/tpop3d.conf
+%{?with_pam:%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) /etc/pam.d/tpop3d}
+%{?with_pam:%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) /etc/security/blacklist.pop3}
+%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/tpop3d.conf
 %attr(754,root,root) /etc/rc.d/init.d/tpop3d
 %attr(755,root,root) %{_sbindir}/*
 %{_mandir}/man*/*
