@@ -16,7 +16,7 @@ Summary:	POP3 server
 Summary(pl):	Serwer POP3
 Name:		tpop3d
 Version:	1.5.3
-Release:	19
+Release:	20
 License:	GPL
 Group:		Networking/Daemons
 Source0:	http://www.ex-parrot.com/~chris/tpop3d/%{name}-%{version}.tar.gz
@@ -37,7 +37,7 @@ BuildRequires:	autoconf
 BuildRequires:	automake
 %{?with_gdbm:BuildRequires:	gdbm-devel}
 %{?with_mysql:BuildRequires:	mysql-devel}
-%{?with_ldap:BuildRequires:	openldap-devel}
+%{?with_ldap:BuildRequires:	openldap-devel >= 2.3.0}
 %{?with_ssl:BuildRequires:		openssl-devel >= 0.9.7d}
 %{?with_pam:BuildRequires:		pam-devel}
 %{?with_pgsql:BuildRequires:	postgresql-devel}
