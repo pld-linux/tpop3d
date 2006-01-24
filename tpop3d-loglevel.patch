@@ -1,15 +1,24 @@
+diff -urN tpop3d-1.5.3.org/maildir.c tpop3d-1.5.3/maildir.c
+--- tpop3d-1.5.3.org/maildir.c	2006-01-24 17:31:03.130963000 +0100
++++ tpop3d-1.5.3/maildir.c	2006-01-24 17:32:27.200963000 +0100
+@@ -360,7 +360,7 @@
+ 
+     gettimeofday(&tv2, NULL);
+     f = (float)(tv2.tv_sec - tv1.tv_sec) + 1e-6 * (float)(tv2.tv_usec - tv1.tv_usec);
+-    log_print(LOG_DEBUG, "maildir_new: scanned maildir %s (%d messages) in %0.3fs", dirname, (int)M->num, f);
++    log_print(LOG_NOTICE, "maildir_new: scanned maildir %s (%d messages) in %0.3fs", dirname, (int)M->num, f);
+     
+     return M;
+ 
 diff -urN tpop3d-1.5.3.org/netloop.c tpop3d-1.5.3/netloop.c
---- tpop3d-1.5.3.org/netloop.c	2006-01-24 17:22:20.730963000 +0100
-+++ tpop3d-1.5.3/netloop.c	2006-01-24 17:23:01.710963000 +0100
-@@ -495,9 +495,9 @@
+--- tpop3d-1.5.3.org/netloop.c	2006-01-24 17:31:03.150963000 +0100
++++ tpop3d-1.5.3/netloop.c	2006-01-24 17:32:00.070963000 +0100
+@@ -495,7 +495,7 @@
                      if ((p = connection_parsecommand(c)) && p->cmd == QUIT)
                          c->m->apply_changes(c->m);
                  }
--                log_print(LOG_INFO, _("connections_post_select: client %s: finished session for `%s' with %s"), c->idstr, c->a->user, c->a->auth);
-+                log_print(LOG_NOTICE, _("connections_post_select: client %s: finished session for `%s' with %s"), c->idstr, c->a->user, c->a->auth);
+-                log_print(LOG_NOTICE, _("connections_post_select: client %s: finished session for `%s' with %s"), c->idstr, c->a->user, c->a->auth);
++                log_print(LOG_INFO, _("connections_post_select: client %s: finished session for `%s' with %s"), c->idstr, c->a->user, c->a->auth);
              }
--            log_print(LOG_INFO, _("connections_post_select: client %s: disconnected; %d/%d bytes read/written"), c->idstr, c->nrd, c->nwr);
-+            log_print(LOG_NOTICE, _("connections_post_select: client %s: disconnected; %d/%d bytes read/written"), c->idstr, c->nrd, c->nwr);
+             log_print(LOG_NOTICE, _("connections_post_select: client %s: disconnected; %d/%d bytes read/written"), c->idstr, c->nrd, c->nwr);
  
- /*            remove_connection(c);*/
-             connections[i] = NULL;
