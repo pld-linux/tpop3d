@@ -11,14 +11,14 @@ diff -urN tpop3d-1.5.3.org/maildir.c tpop3d-1.5.3/maildir.c
      return M;
  
 diff -urN tpop3d-1.5.3.org/netloop.c tpop3d-1.5.3/netloop.c
---- tpop3d-1.5.3.org/netloop.c	2006-01-24 17:31:03.150963000 +0100
-+++ tpop3d-1.5.3/netloop.c	2006-01-24 17:32:00.070963000 +0100
-@@ -495,7 +495,7 @@
-                     if ((p = connection_parsecommand(c)) && p->cmd == QUIT)
-                         c->m->apply_changes(c->m);
+--- tpop3d-1.5.3.org/netloop.c	2006-01-24 17:34:14.000000000 +0100
++++ tpop3d-1.5.3/netloop.c	2006-01-24 17:34:29.600963000 +0100
+@@ -497,7 +497,7 @@
                  }
--                log_print(LOG_NOTICE, _("connections_post_select: client %s: finished session for `%s' with %s"), c->idstr, c->a->user, c->a->auth);
-+                log_print(LOG_INFO, _("connections_post_select: client %s: finished session for `%s' with %s"), c->idstr, c->a->user, c->a->auth);
+                 log_print(LOG_INFO, _("connections_post_select: client %s: finished session for `%s' with %s"), c->idstr, c->a->user, c->a->auth);
              }
-             log_print(LOG_NOTICE, _("connections_post_select: client %s: disconnected; %d/%d bytes read/written"), c->idstr, c->nrd, c->nwr);
+-            log_print(LOG_INFO, _("connections_post_select: client %s: disconnected; %d/%d bytes read/written"), c->idstr, c->nrd, c->nwr);
++            log_print(LOG_NOTICE, _("connections_post_select: client %s: disconnected; %d/%d bytes read/written"), c->idstr, c->nrd, c->nwr);
  
+ /*            remove_connection(c);*/
+             connections[i] = NULL;
