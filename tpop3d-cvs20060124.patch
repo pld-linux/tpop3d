@@ -1,6 +1,6 @@
-diff -urNbB tpop3d-1.5.3.org/auth_flatfile.c tpop3d-1.5.3/auth_flatfile.c
---- tpop3d-1.5.3.org/auth_flatfile.c	2003-02-18 00:18:32.000000000 +0100
-+++ tpop3d-1.5.3/auth_flatfile.c	2004-06-20 02:06:30.000000000 +0200
+diff -urN -x CVS tpop3d-1.5.3/auth_flatfile.c tpop3d/auth_flatfile.c
+--- tpop3d-1.5.3/auth_flatfile.c	2003-02-18 00:18:32.000000000 +0100
++++ tpop3d/auth_flatfile.c	2004-06-20 02:06:30.000000000 +0200
 @@ -11,7 +11,7 @@
  #endif /* HAVE_CONFIG_H */
  
@@ -37,9 +37,9 @@ diff -urNbB tpop3d-1.5.3.org/auth_flatfile.c tpop3d-1.5.3/auth_flatfile.c
  }
  
  /* auth_flatfile_new_user_pass:
-diff -urNbB tpop3d-1.5.3.org/auth_gdbm.c tpop3d-1.5.3/auth_gdbm.c
---- tpop3d-1.5.3.org/auth_gdbm.c	1970-01-01 01:00:00.000000000 +0100
-+++ tpop3d-1.5.3/auth_gdbm.c	2005-08-05 16:48:22.000000000 +0200
+diff -urN -x CVS tpop3d-1.5.3/auth_gdbm.c tpop3d/auth_gdbm.c
+--- tpop3d-1.5.3/auth_gdbm.c	1970-01-01 01:00:00.000000000 +0100
++++ tpop3d/auth_gdbm.c	2005-08-05 16:48:22.000000000 +0200
 @@ -0,0 +1,196 @@
 +/*
 + * auth_gdbm.c:
@@ -237,9 +237,9 @@ diff -urNbB tpop3d-1.5.3.org/auth_gdbm.c tpop3d-1.5.3/auth_gdbm.c
 +}
 +
 +#endif /* AUTH_GDBM */
-diff -urNbB tpop3d-1.5.3.org/auth_gdbm.h tpop3d-1.5.3/auth_gdbm.h
---- tpop3d-1.5.3.org/auth_gdbm.h	1970-01-01 01:00:00.000000000 +0100
-+++ tpop3d-1.5.3/auth_gdbm.h	2005-08-05 16:48:22.000000000 +0200
+diff -urN -x CVS tpop3d-1.5.3/auth_gdbm.h tpop3d/auth_gdbm.h
+--- tpop3d-1.5.3/auth_gdbm.h	1970-01-01 01:00:00.000000000 +0100
++++ tpop3d/auth_gdbm.h	2005-08-05 16:48:22.000000000 +0200
 @@ -0,0 +1,35 @@
 +/*
 + * auth_gdbm.h:
@@ -276,9 +276,9 @@ diff -urNbB tpop3d-1.5.3.org/auth_gdbm.h tpop3d-1.5.3/auth_gdbm.h
 +#endif /* AUTH_GDBM */
 +
 +#endif /* __AUTH_GDBM_H_ */
-diff -urNbB tpop3d-1.5.3.org/auth_mysql.c tpop3d-1.5.3/auth_mysql.c
---- tpop3d-1.5.3.org/auth_mysql.c	2003-07-15 01:31:20.000000000 +0200
-+++ tpop3d-1.5.3/auth_mysql.c	2004-08-20 01:57:05.000000000 +0200
+diff -urN -x CVS tpop3d-1.5.3/auth_mysql.c tpop3d/auth_mysql.c
+--- tpop3d-1.5.3/auth_mysql.c	2003-07-15 01:31:20.000000000 +0200
++++ tpop3d/auth_mysql.c	2004-08-20 01:57:05.000000000 +0200
 @@ -11,7 +11,7 @@
  #endif /* HAVE_CONFIG_H */
  
@@ -351,9 +351,9 @@ diff -urNbB tpop3d-1.5.3.org/auth_mysql.c tpop3d-1.5.3/auth_mysql.c
                      break;
                  }
  
-diff -urNbB tpop3d-1.5.3.org/auth_pgsql.c tpop3d-1.5.3/auth_pgsql.c
---- tpop3d-1.5.3.org/auth_pgsql.c	2003-07-15 01:31:20.000000000 +0200
-+++ tpop3d-1.5.3/auth_pgsql.c	2004-08-20 01:57:05.000000000 +0200
+diff -urN -x CVS tpop3d-1.5.3/auth_pgsql.c tpop3d/auth_pgsql.c
+--- tpop3d-1.5.3/auth_pgsql.c	2003-07-15 01:31:20.000000000 +0200
++++ tpop3d/auth_pgsql.c	2004-08-20 01:57:05.000000000 +0200
 @@ -13,7 +13,7 @@
  #endif /* HAVE_CONFIG_H */
  
@@ -405,9 +405,9 @@ diff -urNbB tpop3d-1.5.3.org/auth_pgsql.c tpop3d-1.5.3/auth_pgsql.c
  
  int auth_pgsql_init(void) {
      char *username = NULL, *password = NULL, *hostname = NULL, *database = NULL, *localhost = "localhost", *s;
-diff -urNbB tpop3d-1.5.3.org/authswitch.c tpop3d-1.5.3/authswitch.c
---- tpop3d-1.5.3.org/authswitch.c	2003-11-24 20:58:28.000000000 +0100
-+++ tpop3d-1.5.3/authswitch.c	2005-10-26 12:04:39.000000000 +0200
+diff -urN -x CVS tpop3d-1.5.3/authswitch.c tpop3d/authswitch.c
+--- tpop3d-1.5.3/authswitch.c	2003-11-24 20:58:28.000000000 +0100
++++ tpop3d/authswitch.c	2005-10-26 12:04:39.000000000 +0200
 @@ -6,7 +6,7 @@
   *
   */
@@ -450,7 +450,7 @@ diff -urNbB tpop3d-1.5.3.org/authswitch.c tpop3d-1.5.3/authswitch.c
  };
  
  int *auth_drivers_running;
-@@ -290,10 +302,9 @@
+@@ -290,25 +302,26 @@
              l = NULL;
      }
  
@@ -458,17 +458,38 @@ diff -urNbB tpop3d-1.5.3.org/authswitch.c tpop3d-1.5.3/authswitch.c
 -        return a;
 -
 -    for (aa = auth_drivers, aar = auth_drivers_running; aa < auth_drivers_end; ++aa, ++aar)
+-        if (*aar && aa->auth_new_user_pass && (a = aa->auth_new_user_pass(user, l, d, pass, clienthost, serverhost))) {
+-            a->auth = xstrdup(aa->name);
+-            a->user = xstrdup(user);
+-            if (!a->local_part) {
+-                if (l)
+-                    a->local_part = xstrdup(l);
+-                else
+-                    a->local_part = xstrdup(user);
 +    /* Try auth cache, then actual auth drivers. */
 +    if (!(a = authcache_new_user_pass(user, l, d, pass, clienthost, serverhost))) {
 +        for (aa = auth_drivers, aar = auth_drivers_running; aa < auth_drivers_end; ++aa, ++aar) {
-         if (*aar && aa->auth_new_user_pass && (a = aa->auth_new_user_pass(user, l, d, pass, clienthost, serverhost))) {
-             a->auth = xstrdup(aa->name);
-             a->user = xstrdup(user);
-@@ -309,6 +320,8 @@
-             log_print(LOG_INFO, _("authcontext_new_user_pass: began session for `%s' with %s; uid %d, gid %d"), a->user, a->auth, a->uid, a->gid);
-             break;
++            if (*aar && aa->auth_new_user_pass && (a = aa->auth_new_user_pass(user, l, d, pass, clienthost, serverhost))) {
++                a->auth = xstrdup(aa->name);
++                a->user = xstrdup(user);
++                if (!a->local_part) {
++                    if (l)
++                        a->local_part = xstrdup(l);
++                    else
++                        a->local_part = xstrdup(user);
++                }
++                if (!a->domain && d)
++                    a->domain = xstrdup(d);
++                authcache_save(a, user, l, d, pass, clienthost, serverhost);
++                log_print(LOG_INFO, _("authcontext_new_user_pass: began session for `%s' with %s; uid %d, gid %d"), a->user, a->auth, a->uid, a->gid);
++                break;
+             }
+-            if (!a->domain && d)
+-                a->domain = xstrdup(d);
+-            authcache_save(a, user, l, d, pass, clienthost, serverhost);
+-            log_print(LOG_INFO, _("authcontext_new_user_pass: began session for `%s' with %s; uid %d, gid %d"), a->user, a->auth, a->uid, a->gid);
+-            break;
          }
-+        }
 +    }
  
      xfree(x);
@@ -505,9 +526,9 @@ diff -urNbB tpop3d-1.5.3.org/authswitch.c tpop3d-1.5.3/authswitch.c
  
      a->auth = NULL;
      a->user = NULL;
-diff -urNbB tpop3d-1.5.3.org/cfgdirectives.c tpop3d-1.5.3/cfgdirectives.c
---- tpop3d-1.5.3.org/cfgdirectives.c	2003-11-24 20:58:28.000000000 +0100
-+++ tpop3d-1.5.3/cfgdirectives.c	2005-10-26 12:04:39.000000000 +0200
+diff -urN -x CVS tpop3d-1.5.3/cfgdirectives.c tpop3d/cfgdirectives.c
+--- tpop3d-1.5.3/cfgdirectives.c	2003-11-24 20:58:28.000000000 +0100
++++ tpop3d/cfgdirectives.c	2006-01-24 17:04:01.000000000 +0100
 @@ -9,7 +9,7 @@
   *
   */
@@ -517,15 +538,17 @@ diff -urNbB tpop3d-1.5.3.org/cfgdirectives.c tpop3d-1.5.3/cfgdirectives.c
  
  #ifdef HAVE_CONFIG_H
  #include "configuration.h"
-@@ -25,6 +25,7 @@
+@@ -25,14 +25,20 @@
      "append-domain",
      "strip-domain",
      "timeout-seconds",
 +    "tcp-send-buffer",
      "log-facility",
      "log-stderr",
++    "log-level",
      "apop-only",
-@@ -33,6 +34,10 @@
+     "mailbox",
+     "no-detach",
      "permit-empty-passwords",
      "onlogin-child-wait",
      "log-bad-passwords",
@@ -536,7 +559,7 @@ diff -urNbB tpop3d-1.5.3.org/cfgdirectives.c tpop3d-1.5.3/cfgdirectives.c
   
  #if defined(MBOX_BSD) && defined(MBOX_BSD_SAVE_INDICES)
      "mailspool-index",
-@@ -52,6 +57,10 @@
+@@ -52,6 +58,10 @@
      
  #ifdef MBOX_MAILDIR
      "maildir-exclusive-lock",
@@ -547,7 +570,7 @@ diff -urNbB tpop3d-1.5.3.org/cfgdirectives.c tpop3d-1.5.3/cfgdirectives.c
  #endif
  
  #ifdef USE_TLS
-@@ -145,6 +154,14 @@
+@@ -145,6 +155,14 @@
      "auth-flatfile-passwd-file",
  #endif /* AUTH_FLATFILE */
  
@@ -562,10 +585,10 @@ diff -urNbB tpop3d-1.5.3.org/cfgdirectives.c tpop3d-1.5.3/cfgdirectives.c
      /* final entry must be NULL */
      NULL};
  
-diff -urNbB tpop3d-1.5.3.org/CHANGES tpop3d-1.5.3/CHANGES
---- tpop3d-1.5.3.org/CHANGES	2003-11-24 21:26:07.000000000 +0100
-+++ tpop3d-1.5.3/CHANGES	2005-10-26 12:04:38.000000000 +0200
-@@ -1,5 +1,27 @@
+diff -urN -x CVS tpop3d-1.5.3/CHANGES tpop3d/CHANGES
+--- tpop3d-1.5.3/CHANGES	2003-11-24 21:26:07.000000000 +0100
++++ tpop3d/CHANGES	2006-01-24 17:03:59.000000000 +0100
+@@ -1,5 +1,29 @@
  Changes for tpop3d
 -$Id$
 +$Id$
@@ -590,13 +613,15 @@ diff -urNbB tpop3d-1.5.3.org/CHANGES tpop3d-1.5.3/CHANGES
 +file handling after HUP signals. Added lowercase options for POP3 USER command
 +and maildir database lookups. Added support for qmail-pop3d style UIDLs. (Adds
 +uidl-style config option) maildir-ignore-folders now uses tokens_new so
-+folders may be separated by spaces or tabs.
++folders may be separated by spaces or tabs. Remove any maildirsize file, for
++compliance with Maildir++ (thanks to Arkadiusz Miskiewicz). Added support
++for syslog like log levels. (log-level config option)
  
  1.5.3
  
-diff -urNbB tpop3d-1.5.3.org/configure.in tpop3d-1.5.3/configure.in
---- tpop3d-1.5.3.org/configure.in	2003-11-24 20:59:13.000000000 +0100
-+++ tpop3d-1.5.3/configure.in	2005-10-26 12:04:39.000000000 +0200
+diff -urN -x CVS tpop3d-1.5.3/configure.in tpop3d/configure.in
+--- tpop3d-1.5.3/configure.in	2003-11-24 20:59:13.000000000 +0100
++++ tpop3d/configure.in	2005-10-26 12:04:39.000000000 +0200
 @@ -6,7 +6,7 @@
  dnl
  dnl Copyright (c) 2001 Mark Longair, Chris Lightfoot. All Rights Reserved.
@@ -669,18 +694,18 @@ diff -urNbB tpop3d-1.5.3.org/configure.in tpop3d-1.5.3/configure.in
  then
      AC_MSG_ERROR([No authentication driver is enabled. At least one is required.])
  fi
-@@ -453,6 +477,11 @@
+@@ -452,6 +476,11 @@
+ then
      AC_DEFINE(MASS_HOSTING,1,[Enable regex matching of inverse DNS results for domain names])
  fi
-     
++
 +if test x"$enable_sha1_passwords" = x"yes"
 +then
 +    AC_DEFINE(SHA1_PASSWORDS,1,[Enable SHA1-format password hashes])
 +fi
-+    
+     
  if test x"$enable_backtrace" = x"yes"
  then
-     AC_DEFINE(APPALLING_BACKTRACE_HACK,1,[Produce a backtrace if the program crashes.])
 @@ -556,11 +585,18 @@
  fi
  
@@ -739,9 +764,9 @@ diff -urNbB tpop3d-1.5.3.org/configure.in tpop3d-1.5.3/configure.in
  dnl If flock and fcntl are selected, there's a chance that they
  dnl will deadlock.  We do a test for this here...
  
-diff -urNbB tpop3d-1.5.3.org/connection.c tpop3d-1.5.3/connection.c
---- tpop3d-1.5.3.org/connection.c	2003-11-14 20:15:20.000000000 +0100
-+++ tpop3d-1.5.3/connection.c	2004-09-15 21:26:28.000000000 +0200
+diff -urN -x CVS tpop3d-1.5.3/connection.c tpop3d/connection.c
+--- tpop3d-1.5.3/connection.c	2003-11-14 20:15:20.000000000 +0100
++++ tpop3d/connection.c	2004-09-15 21:26:28.000000000 +0200
 @@ -6,7 +6,7 @@
   *
   */
@@ -760,14 +785,16 @@ diff -urNbB tpop3d-1.5.3.org/connection.c tpop3d-1.5.3/connection.c
  
      c->timestamp = make_timestamp(c->domain);
      if (!c->timestamp) goto fail;
-@@ -238,6 +238,7 @@
+@@ -238,7 +238,8 @@
          } /* else IOABS_WOULDBLOCK */
      }
  
+-    buffer_push_data(c->wrb, data, len);
 +    if (len > 0)
-     buffer_push_data(c->wrb, data, len);
++        buffer_push_data(c->wrb, data, len);
          /* XXX should try a write from the buffer now...? */
      return 1;
+ }
 @@ -302,8 +303,10 @@
       * latter case we must be careful not to interpret command1\ncommand2\r\n
       * as a single command. So always use \n as the line ending and strip off
@@ -800,10 +827,11 @@ diff -urNbB tpop3d-1.5.3.org/connection.c tpop3d-1.5.3/connection.c
  }
  
  /* connection_sendmessage:
-@@ -439,6 +453,41 @@
+@@ -439,7 +453,42 @@
      char *p, *q, *r;
      size_t length, offset;
      ssize_t nwritten = 0;
+-    
 +    /* Doing lots of small writes is bad for performance, so buffer here and
 +     * only write data when we've accumulated a large chunk of data. Use our
 +     * own buffer here, rather than the connection IO buffer, since we don't
@@ -839,19 +867,22 @@ diff -urNbB tpop3d-1.5.3.org/connection.c tpop3d-1.5.3/connection.c
 +            } \
 +            nwritten += n; \
 +        } while (0)
-     
++
      offset = msgoffset - (msgoffset % PAGESIZE);
      length = (msgoffset + msglength + PAGESIZE) ;
-@@ -451,7 +500,8 @@
+     length -= length % PAGESIZE;
+@@ -451,8 +500,9 @@
          return -1; /* Failure before +OK sent. */
      }
  
 -    connection_sendresponse(c, 1, _("Message follows"));
+-    
 +    msg = _("+OK Message follows\r\n");
 +    buffer_push(msg, strlen(msg));
-     
++
      /* Find the beginning of the message headers */
      p = filemem + (msgoffset % PAGESIZE);
+     r = p + msglength;
 @@ -465,14 +515,12 @@
          errno = 0;
          
@@ -884,7 +915,7 @@ diff -urNbB tpop3d-1.5.3.org/connection.c tpop3d-1.5.3/connection.c
      
      /* Now send the message itself */
      while (p < r && n) {
-@@ -495,26 +539,30 @@
+@@ -495,27 +539,31 @@
          errno = 0;
  
          /* Escape a leading ., if present. */
@@ -920,57 +951,15 @@ diff -urNbB tpop3d-1.5.3.org/connection.c tpop3d-1.5.3/connection.c
 -        return -2;
 -    } else return nwritten + 3;
 +    return nwritten + 3;
-+
-+#undef buffer_push
  
++#undef buffer_push
++    
  write_failure:
      log_print(LOG_ERR, _("connection_sendmessage: send failure"));
-diff -urNbB tpop3d-1.5.3.org/init.d/tpop3d.sh tpop3d-1.5.3/init.d/tpop3d.sh
---- tpop3d-1.5.3.org/init.d/tpop3d.sh	1970-01-01 01:00:00.000000000 +0100
-+++ tpop3d-1.5.3/init.d/tpop3d.sh	2001-08-02 11:18:24.000000000 +0200
-@@ -0,0 +1,39 @@
-+#!/bin/sh
-+#
-+# tpop3d:
-+# Init script for starting/stopping tpop3d.
-+#
-+# Copyright (c) 2001 Chris Lightfoot. All rights reserved.
-+#  Portability enhanced by Chris Elsworth, July 2001
-+#
-+
-+DAEMON=/sbin/tpop3d
-+
-+[ -f $DAEMON ] || exit 0
-+
-+# See how we were called.
-+case "$1" in
-+  start)
-+        # Start daemons.
-+        $DAEMON -f /etc/tpop3d.conf -p /var/run/tpop3d.pid \
-+		&& echo -n " tpop3d"
-+        ;;
-+  stop)
-+        # Stop daemons.
-+	[ -r /var/run/httpd.pid ] && kill `cat /var/run/tpop3d.pid` \
-+		&& echo -n " tpop3d"
-+        ;;
-+  restart)
-+	$0 stop
-+	$0 start
-+	;;
-+  reload)
-+  	[ -r /var/run/httpd.pid ] && kill -HUP `cat /var/run/tpop3d.pid`
-+        ;;
-+  *)
-+        echo "Usage: `basename $0` {start|stop|restart|reload}"
-+        exit 1
-+esac
-+
-+exit 0
-+
-diff -urNbB tpop3d-1.5.3.org/INSTALL tpop3d-1.5.3/INSTALL
---- tpop3d-1.5.3.org/INSTALL	2003-01-10 00:25:59.000000000 +0100
-+++ tpop3d-1.5.3/INSTALL	2005-05-22 13:54:12.000000000 +0200
+     munmap(filemem, length);
+diff -urN -x CVS tpop3d-1.5.3/INSTALL tpop3d/INSTALL
+--- tpop3d-1.5.3/INSTALL	2003-01-10 00:25:59.000000000 +0100
++++ tpop3d/INSTALL	2005-05-22 13:54:12.000000000 +0200
 @@ -1,5 +1,5 @@
  Installation instructions for tpop3d
 -$Id$
@@ -995,9 +984,9 @@ diff -urNbB tpop3d-1.5.3.org/INSTALL tpop3d-1.5.3/INSTALL
  
        Note that to use APOP, the plaintext password type must be specified for
        a user, but this does not stop them logging in via any other method with
-diff -urNbB tpop3d-1.5.3.org/ioabs_tls.c tpop3d-1.5.3/ioabs_tls.c
---- tpop3d-1.5.3.org/ioabs_tls.c	2003-11-24 20:58:28.000000000 +0100
-+++ tpop3d-1.5.3/ioabs_tls.c	2004-06-20 02:06:30.000000000 +0200
+diff -urN -x CVS tpop3d-1.5.3/ioabs_tls.c tpop3d/ioabs_tls.c
+--- tpop3d-1.5.3/ioabs_tls.c	2003-11-24 20:58:28.000000000 +0100
++++ tpop3d/ioabs_tls.c	2004-06-20 02:06:30.000000000 +0200
 @@ -11,7 +11,7 @@
  
  #ifdef USE_TLS
@@ -1012,20 +1001,127 @@ diff -urNbB tpop3d-1.5.3.org/ioabs_tls.c tpop3d-1.5.3/ioabs_tls.c
  
                  case SSL_ERROR_SYSCALL:
 -                    if (!e) {
-                         if (ERR_get_error() == 0)
-                             log_print(LOG_ERR, _("ioabs_tls_post_select: client %s: SSL_accept: connection unexpectedly closed by peer"), c->idstr);
-                         else
-                             log_print(LOG_ERR, _("ioabs_tls_post_select: client %s: SSL_accept: %m; closing connection"), c->idstr);
-                         break;
+-                        if (ERR_get_error() == 0)
+-                            log_print(LOG_ERR, _("ioabs_tls_post_select: client %s: SSL_accept: connection unexpectedly closed by peer"), c->idstr);
+-                        else
+-                            log_print(LOG_ERR, _("ioabs_tls_post_select: client %s: SSL_accept: %m; closing connection"), c->idstr);
+-                        break;
 -                    }
 -                    /* fall through */
++                    if (ERR_get_error() == 0)
++                        log_print(LOG_ERR, _("ioabs_tls_post_select: client %s: SSL_accept: connection unexpectedly closed by peer"), c->idstr);
++                    else
++                        log_print(LOG_ERR, _("ioabs_tls_post_select: client %s: SSL_accept: %m; closing connection"), c->idstr);
++                    break;
 +                        
                  case SSL_ERROR_SSL:
                  default:
                      log_print(LOG_ERR, _("ioabs_tls_post_select: client %s: SSL_accept: %s; closing connection"), c->idstr, ERR_reason_error_string(ERR_get_error()));
-diff -urNbB tpop3d-1.5.3.org/mailbox.c tpop3d-1.5.3/mailbox.c
---- tpop3d-1.5.3.org/mailbox.c	2003-01-09 23:59:37.000000000 +0100
-+++ tpop3d-1.5.3/mailbox.c	2005-10-26 12:04:39.000000000 +0200
+diff -urN -x CVS tpop3d-1.5.3/logging.c tpop3d/logging.c
+--- tpop3d-1.5.3/logging.c	2003-07-15 01:31:20.000000000 +0200
++++ tpop3d/logging.c	2006-01-24 17:04:01.000000000 +0100
+@@ -7,7 +7,7 @@
+  *
+  */
+ 
+-static const char rcsid[] = "$Id$";
++static const char rcsid[] = "$Id$";
+ 
+ #include <errno.h>
+ #include <stdarg.h>
+@@ -51,30 +51,69 @@
+ 
+ #define NFACIL      (sizeof(facil) / sizeof(struct logfac))
+ 
++/* level:
++ * Log level names and constants, used to allow configurable logging at
++ * run time. */
++static struct loglev {
++    char *name;
++    int lev;
++} level[] = {
++        {"debug",       LOG_DEBUG},
++        {"info",        LOG_INFO},
++        {"notice",      LOG_NOTICE},
++        {"warning",     LOG_WARNING},
++        {"warn",        LOG_WARNING}, /* DEPRECATED */
++        {"err",         LOG_ERR},
++        {"error",       LOG_ERR},     /* DEPRECATED */
++        {"crit",        LOG_CRIT},
++        {"alert",       LOG_ALERT},
++        {"emerg",       LOG_EMERG},
++        {"panic",       LOG_EMERG},   /* DEPRECATED */
++    };
++
++#define NLEVEL      (sizeof(level) / sizeof(struct loglev))
++
+ static int log_fac;
++static int log_lev;
+ 
+ /* log_init:
+  * Start up logging. */
+ void log_init(void) {
+-    int fac = LOG_MAIL, warn = 0;
+-    char *s;
++    int fac = LOG_MAIL, lev = LOG_DEBUG, warn_fac = 0, warn_lev = 0;
++    char *sfac, *slev;
+ 
+-    if ((s = config_get_string("log-facility"))) {
++    if ((sfac = config_get_string("log-facility"))) {
+         struct logfac *l;
+-        warn = 1;
++        warn_fac = 1;
+         for (l = facil; l < facil + NFACIL; ++l)
+-            if (strcasecmp(l->name, s) == 0) {
+-                warn = 0;
++            if (strcasecmp(l->name, sfac) == 0) {
++                warn_fac = 0;
+                 fac = l->fac;
+                 break;
+             }
+     }
+ 
+-    openlog("tpop3d", LOG_PID | LOG_NDELAY, fac);
+-    if (warn == 1)
+-        log_print(LOG_ERR, _("log_init: log-facility `%s' unknown, using `mail'"), s);
++    if ((slev = config_get_string("log-level"))) {
++        struct loglev *l;
++        warn_lev = 1;
++        for (l = level; l < level + NLEVEL; ++l)
++            if (strcasecmp(l->name, slev) == 0) {
++                warn_lev = 0;
++                lev = l->lev;
++                break;
++            }
++    }
+ 
+     log_fac = fac;
++    log_lev = lev;
++
++    openlog("tpop3d", LOG_PID | LOG_NDELAY, fac);
++
++    if (warn_fac == 1)
++        log_print(LOG_ERR, _("log_init: log-facility `%s' unknown, using `mail'"), sfac);
++    if (warn_lev == 1)
++        log_print(LOG_ERR, _("log_init: log-level `%s' unknown, using `debug'"), slev);
++
+ }
+ 
+ 
+@@ -112,6 +151,10 @@
+ void log_print(int priority, const char *fmt, ...) {
+     char *s;
+     va_list ap;
++
++    if(priority > log_lev)
++        return;
++
+     va_start(ap, fmt);
+     s = verrprintf(fmt, ap);
+     va_end(ap);
+diff -urN -x CVS tpop3d-1.5.3/mailbox.c tpop3d/mailbox.c
+--- tpop3d-1.5.3/mailbox.c	2003-01-09 23:59:37.000000000 +0100
++++ tpop3d/mailbox.c	2006-01-24 17:04:01.000000000 +0100
 @@ -4,7 +4,7 @@
   *
   * Copyright (c) 2001 Chris Lightfoot, Paul Makepeace. All rights reserved.
@@ -1044,9 +1140,15 @@ diff -urNbB tpop3d-1.5.3.org/mailbox.c tpop3d-1.5.3/mailbox.c
      tokens t;
      mailbox m = NULL;
      int i;
-@@ -157,15 +157,25 @@
+@@ -155,17 +155,30 @@
+         if (subspec) {
+             mdrv = str;
              *subspec++ = 0;
-         } else subspec = str;
+-        } else subspec = str;
++        } else {
++            subspec = str;
++            mdrv = mbox_drivers[0].name;
++        }
  
 -        path = substitute_variables(subspec, &err, 4, "user", user, "local_part", local_part, "domain", domain, "home", home);
 +        path = substitute_variables(subspec, &err, 4, "user", a->user, "local_part", a->local_part, "domain", a->domain, "home", a->home);
@@ -1072,7 +1174,7 @@ diff -urNbB tpop3d-1.5.3.org/mailbox.c tpop3d-1.5.3/mailbox.c
          }
      }
      
-@@ -198,12 +208,12 @@
+@@ -198,12 +211,12 @@
      buffer = xmalloc(strlen("auth--mailbox") + strlen(a->auth) + 1);
      sprintf(buffer, "auth-%s-mailbox", a->auth);
      if ((s = config_get_string(buffer)))
@@ -1087,9 +1189,9 @@ diff -urNbB tpop3d-1.5.3.org/mailbox.c tpop3d-1.5.3/mailbox.c
      
  #ifdef MAILSPOOL_DIR
      /* Then the compiled-in default. */
-diff -urNbB tpop3d-1.5.3.org/maildir.c tpop3d-1.5.3/maildir.c
---- tpop3d-1.5.3.org/maildir.c	2003-11-24 21:23:20.000000000 +0100
-+++ tpop3d-1.5.3/maildir.c	2005-10-26 12:04:39.000000000 +0200
+diff -urN -x CVS tpop3d-1.5.3/maildir.c tpop3d/maildir.c
+--- tpop3d-1.5.3/maildir.c	2003-11-24 21:23:20.000000000 +0100
++++ tpop3d/maildir.c	2006-01-24 17:04:01.000000000 +0100
 @@ -13,7 +13,7 @@
  
  #ifdef MBOX_MAILDIR
@@ -1287,17 +1389,53 @@ diff -urNbB tpop3d-1.5.3.org/maildir.c tpop3d-1.5.3/maildir.c
  
  fail:
      if (M) {
-+        if (M->name) {
-         if (locked) maildir_unlock(M->name);
+-        if (locked) maildir_unlock(M->name);
 -        if (M->name) xfree(M->name);
++        if (M->name) {
++            if (locked) maildir_unlock(M->name);
 +            xfree(M->name);
 +        }
          if (M->index) xfree(M->index);
          xfree(M);
      }
-diff -urNbB tpop3d-1.5.3.org/main.c tpop3d-1.5.3/main.c
---- tpop3d-1.5.3.org/main.c	2003-11-24 20:58:28.000000000 +0100
-+++ tpop3d-1.5.3/main.c	2005-10-26 12:04:39.000000000 +0200
+@@ -381,13 +502,16 @@
+  * Apply deletions to a maildir. */
+ int maildir_apply_changes(mailbox M) {
+     struct indexpoint *m;
++    int did_deletions = 0;
+     if (!M) return 1;
+ 
+     for (m = M->index; m < M->index + M->num; ++m) {
+         if (m->deleted) {
+             if (unlink(m->filename) == -1)
+-                log_print(LOG_ERR, "maildir_apply_changes: unlink(%s): %m", m->filename);
+                 /* Warn but proceed anyway. */
++                log_print(LOG_ERR, "maildir_apply_changes: unlink(%s): %m", m->filename);
++            else
++                did_deletions = 1;
+         } else {
+             /* Mark message read. */
+             if (strncmp(m->filename, "new/", 4) == 0) {
+@@ -400,6 +524,16 @@
+         }
+     }
+ 
++    /* This handles the maildirsize file which appears in Maildir++ mailboxes.
++     * We delete it; a later delivery by a compliant MDA will recreate it. */
++    if (did_deletions) {
++        char *name;
++        name = xmalloc(strlen(M->name) + sizeof "/maildirsize");
++        sprintf(name, "%s/maildirsize", M->name);
++        unlink(name);
++        xfree(name);
++    }
++
+     return 1;
+ }
+ 
+diff -urN -x CVS tpop3d-1.5.3/main.c tpop3d/main.c
+--- tpop3d-1.5.3/main.c	2003-11-24 20:58:28.000000000 +0100
++++ tpop3d/main.c	2005-10-26 12:04:39.000000000 +0200
 @@ -7,7 +7,7 @@
   */
  
@@ -1325,9 +1463,9 @@ diff -urNbB tpop3d-1.5.3.org/main.c tpop3d-1.5.3/main.c
                              return 1;
                          }
                          break;
-diff -urNbB tpop3d-1.5.3.org/Makefile.am tpop3d-1.5.3/Makefile.am
---- tpop3d-1.5.3.org/Makefile.am	2003-11-24 20:58:28.000000000 +0100
-+++ tpop3d-1.5.3/Makefile.am	2005-10-26 12:04:38.000000000 +0200
+diff -urN -x CVS tpop3d-1.5.3/Makefile.am tpop3d/Makefile.am
+--- tpop3d-1.5.3/Makefile.am	2003-11-24 20:58:28.000000000 +0100
++++ tpop3d/Makefile.am	2005-10-26 12:04:38.000000000 +0200
 @@ -4,12 +4,12 @@
  #
  # Copyright (c) 2001 Chris Lightfoot, Mark Longair. All rights reserved.
@@ -1352,529 +1490,9 @@ diff -urNbB tpop3d-1.5.3.org/Makefile.am tpop3d-1.5.3/Makefile.am
  
  CFLAGS += -Wall -g -O2 -DCONFIG_DIR='"@sysconfdir@"' # -Wstrict-prototypes
  
-diff -urNbB tpop3d-1.5.3.org/Makefile.original tpop3d-1.5.3/Makefile.original
---- tpop3d-1.5.3.org/Makefile.original	1970-01-01 01:00:00.000000000 +0100
-+++ tpop3d-1.5.3/Makefile.original	2001-04-19 17:46:10.000000000 +0200
-@@ -0,0 +1,237 @@
-+#
-+# Makefile:
-+# Old makefile for tpop3d; now use ./configure ; make, unless you have
-+# difficulty.
-+#
-+# Copyright (c) 2000 Chris Lightfoot. All Rights Reserved.
-+#
-+# $Id$
-+#
-+
-+VERSION = 1.2.4
-+
-+# On machines where gcc is not the default C compiler, you may wish to specify
-+# gcc here, for instance if your vendor's compiler is broken (Solaris
-+# [cough]).
-+#CC = gcc
-+
-+CFLAGS  += -g -DTPOP3D_VERSION='"$(VERSION)"' -Wall
-+LDFLAGS += -g
-+
-+# Here you define the location of mailspools; /var/spool/mail is appropriate
-+# for Linux and many other systems; on BSD, this is typically /var/mail.
-+MAILSPOOL_DIR = /var/spool/mail
-+#MAILSPOOL_DIR = /var/mail
-+
-+CFLAGS += -DMAILSPOOL_DIR='"$(MAILSPOOL_DIR)"'
-+
-+# On most modern systems, you will want to use PAM (Pluggable Authentication
-+# Modules) to authenticate Unix (i.e. non-virtual) users. Alternatively, you
-+# can use auth_passwd, which authenticates users against /etc/passwd or
-+# /etc/shadow.
-+CFLAGS += -DAUTH_PAM
-+#CFLAGS += -DAUTH_PASSWD                            # /etc/passwd
-+#CFLAGS += -DAUTH_PASSWD -DAUTH_PASSWD_SHADOW       # /etc/shadow
-+
-+# If you use auth_passwd, you will probably need to link against libcrypt.
-+#LDLIBS += -lcrypt
-+
-+# These are the libraries which are needed to get PAM support working. On
-+# Linux, you need -ldl for dynamic linking support; on other systems (e.g.
-+# FreeBSD) this is not the case. If you are not using PAM at all, comment
-+# this out.
-+LDLIBS += -lpam -ldl
-+
-+# On some systems you will need to link with additional libraries, or define
-+# additional flags.
-+#CFLAGS += -D_REENTRANT     # Solaris
-+#LDLIBS += -lnsl -lsocket   # Solaris
-+
-+# If you want to be able to authenticate users in virtual domains against a
-+# MySQL database, switch these on. This uses the vmail-sql authentication
-+# schema (see http://www.ex-parrot.com/~chris/vmail-sql), but could easily
-+# be adapted to use another. For an example, apply mysql_crypt.patch, which
-+# modifies auth_mysql to use passwords hashed with crypt(3) rather than MD5.
-+#MYSQLROOT = /software
-+#CFLAGS   += -DAUTH_MYSQL -I$(MYSQLROOT)/include/mysql
-+#LDFLAGS  += -L$(MYSQLROOT)/lib/mysql
-+#LDLIBS   += -lmysqlclient
-+
-+# Some people may find that users whose POP3 clients report errors from the
-+# server verbatim complain at the wording of some server responses. If you are
-+# in this position, you can uncomment the following line (not recommended; in
-+# my view, this is a technical solution to a social problem, and anyway users
-+# should get used to their computers being rude to them).
-+#CFLAGS += -DNO_SNIDE_COMMENTS
-+
-+# Locking:
-+# tpop3d supports a number of ways to lock mailspools as compile-time options.
-+#
-+# Unfortunately, Unix mailspool locking is arcane and complex (a less
-+# charitable author would say "broken"). You may have to experiment to get
-+# this right.
-+#
-+# Your choices are:
-+#
-+# fcntl(2) locking-- a system locking mechanism supported on all modern
-+#   systems and which works over NFS.
-+#
-+# flock(2) locking-- an older (BSD) locking mechanism which does not work over
-+#   NFS.
-+#
-+# dotfile locking-- an ancient mechanism which uses files ending ".lock" for
-+#   locking; works (kind of) over NFS.
-+#
-+# Switching on several of these means that tpop3d will try to obtain _all_ of
-+# the locks you specify before accessing a mailspool. If it cannot obtain any
-+# one of them, it will give up.
-+#
-+# In addition, tpop3d can steal locks from PINE and other cooperating
-+# programs which are based on the C-Client library from Washington University.
-+# Internally, the C-Client library may use (normally) flock(2) or (on some
-+# systems) fcntl(2). tpop3d does not establish C-Client locks itself. If this
-+# is confusing, read the C-Client source; however, I do not guarantee that
-+# this will enlighten you.
-+#
-+# It is, unfortunately, not safe simply to turn everything on and hope for the
-+# best. Some systems, such as modern BSDs, implement flock and fcntl using
-+# common internals, and on such systems, tpop3d will deadlock while trying to
-+# obtain both sorts of lock. Some systems, such as Solaris, do not support
-+# flock(2). Some systems, such as modern Linux distributions, do not use
-+# dotfile locking at all (and have altered permissions on /var/spool/mail to
-+# accomodate this).
-+#
-+# The following default is probably sensible for most Linux distributions and
-+# other modern systems:
-+CFLAGS += -DWITH_FCNTL_LOCKING -DWITH_DOTFILE_LOCKING
-+
-+# Uncomment this if you have a good reason to want flock(2) locking:
-+#CFLAGS += -DWITH_FLOCK_LOCKING
-+
-+# On recent RedHat releases and other lockfile-free systems use only this:
-+#CFLAGS += -DWITH_FCNTL_LOCKING
-+
-+# If users on your system will use PINE, the Washington University IMAP
-+# server, or any other software based on the C-Client library, you will want
-+# this switched on:
-+CFLAGS += -DWITH_CCLIENT_LOCKING
-+
-+# On most systems, the C-Client library uses flock(2) locking to lock its own
-+# lockfiles (really!) but on others where flock(2) is not supported, or where
-+# the system policy is different (such as new RedHat Linux distributions),
-+# C-Client will use fcntl(2) locking internally, and you will want to
-+# uncomment this:
-+#CFLAGS += -DCCLIENT_USES_FCNTL
-+
-+# Independent of C-Client-style locking, you can opt for tpop3d not to allow
-+# users to download or remove the metadata messages which C-Client saves in
-+# mailspools (these are the ones with subject "DON'T DELETE THIS MESSAGE --
-+# FOLDER INTERNAL DATA" and an X-IMAP header used to save state associated
-+# with IMAP UIDs). This is harmless if your users do not use PINE, and
-+# probably desirable if they do.
-+CFLAGS += -DIGNORE_CCLIENT_METADATA
-+
-+# For Electric Fence malloc(3) debugging, uncomment the following two lines:
-+#LDFLAGS += -umalloc -ufree -ucalloc -urealloc
-+#LDLIBS  += -lefence
-+
-+# If tpop3d crashes (unlikely :) ), and you are running on a system with
-+# backtrace(3) -- probably only modern Linux systems and others which have
-+# glibc >= 2.1 -- then uncomment this. Do not do so under any other
-+# circumstances.
-+#CFLAGS += -DAPPALLING_BACKTRACE_HACK
-+
-+TXTS =  README          \
-+	PORTABILITY     \
-+        CHANGES         \
-+        COPYING         \
-+        CREDITS         \
-+        TODO            \
-+        mysql_crypt.patch   \
-+        tpop3d.8        \
-+        tpop3d.cat      \
-+        init.d/tpop3d   \
-+        init.d/initscript_wait-for-mysqld.patch
-+
-+SUBDIRS = init.d
-+
-+SRCS =  auth_mysql.c	\
-+        auth_pam.c	\
-+        auth_passwd.c   \
-+        authswitch.c	\
-+        cfgdirectives.c \
-+        config.c	\
-+        connection.c	\
-+        errprintf.c     \
-+        list.c	        \
-+        listener.c      \
-+        locks.c         \
-+        mailspool.c	\
-+        main.c	        \
-+        md5c.c	        \
-+        pop3.c	        \
-+        signals.c       \
-+        stringmap.c	\
-+	tokenise.c      \
-+        util.c          \
-+        vector.c
-+
-+OBJS = $(SRCS:.c=.o)
-+
-+HDRS =  auth_mysql.h	\
-+        auth_pam.h	\
-+        auth_passwd.h   \
-+        authswitch.h	\
-+        config.h	\
-+        connection.h	\
-+        errprintf.h     \
-+        global.h	\
-+        list.h	        \
-+        listener.h      \
-+        locks.h         \
-+        mailspool.h	\
-+        main.h	        \
-+        md5.h	        \
-+        signals.h       \
-+        stringmap.h	\
-+	tokenise.h      \
-+        vector.h        \
-+        util.h
-+
-+# If you do not have makedepend, you will need to remove references to depend
-+# and nodepend below.
-+tpop3d: depend $(OBJS) Makefile
-+	$(CC) $(LDFLAGS) $(LDLIBS) -o $@ $(OBJS)
-+
-+tpop3d.cat: tpop3d.8 Makefile
-+	(echo -e ".pl 1100i" ; cat tpop3d.8 ; echo ".pl \n(nlu+10") | groff -Tascii -man > tpop3d.cat
-+
-+tarball: nodepend $(SRCS) $(HDRS) $(TXTS)
-+	mkdir tpop3d-$(VERSION)
-+	for i in $(SUBDIRS) ; do mkdir tpop3d-$(VERSION)/$$i ; done
-+	for i in Makefile $(SRCS) $(HDRS) $(TXTS) ; do cp $$i tpop3d-$(VERSION)/$$i ; done
-+	tar cvzf tpop3d-$(VERSION).tar.gz tpop3d-$(VERSION)
-+	rm -rf tpop3d-$(VERSION)
-+	mv tpop3d-$(VERSION).tar.gz ..
-+
-+checkin:
-+	ci -l $(SRCS) $(HDRS) $(TXTS) Makefile
-+
-+%.o: %.c Makefile
-+	$(CC) $(CFLAGS) -c -o $@ $<
-+
-+clean: nodepend
-+	rm -f *~ *.o core tpop3d depend TAGS *.bak
-+
-+tags :
-+	etags *.c *.h
-+
-+depend:
-+	makedepend -- $(CFLAGS) -- $(SRCS)
-+	touch depend
-+
-+nodepend:
-+	makedepend -- --
-+	rm -f depend
-+ 
-+# DO NOT DELETE
-diff -urNbB tpop3d-1.5.3.org/mysql_crypt.patch tpop3d-1.5.3/mysql_crypt.patch
---- tpop3d-1.5.3.org/mysql_crypt.patch	1970-01-01 01:00:00.000000000 +0100
-+++ tpop3d-1.5.3/mysql_crypt.patch	2001-02-01 22:32:43.000000000 +0100
-@@ -0,0 +1,275 @@
-+--- auth_mysql.c	Thu Feb  1 21:23:08 2001
-++++ auth_mysql_crypt.c	Thu Feb  1 21:26:58 2001
-+@@ -97,190 +97,26 @@
-+     return ret;
-+ }
-+ 
-+-/* auth_mysql_new_apop:
-+- * Attempt to authenticate a user via APOP, using a SELECT statement of the
-+- * form
-+- *   SELECT domain.path, popbox.mbox_name, domain.unix_user,
-+- *          popbox.apop_password
-+- *           FROM popbox, domain
-+- *          WHERE popbox.local_part = $local_part
-+- *            AND popbox.domain_name = $domain
-+- *            AND popbox.domain_name = domain.domain_name
-+- */
-+-const char apop_query_template[] =
-+-    "SELECT domain.path, popbox.mbox_name, domain.unix_user, popbox.apop_password "
-+-      "FROM popbox, domain "
-+-     "WHERE popbox.local_part = '%s' "
-+-       "AND popbox.domain_name = '%s' "
-+-       "AND popbox.domain_name = domain.domain_name";
-+-authcontext auth_mysql_new_apop(const char *name, const char *timestamp, const unsigned char *digest) {
-+-    char *query, *x, *y;
-+-    authcontext a = NULL;
-+-    char *local_part;
-+-    const char *domain;
-+-    item *I;
-+-    int use_gid = 0;
-+-    size_t l;
-+-    gid_t gid;
-+-
-+-    if (!mysql) return NULL;
-+-
-+-    /* Obtain gid to use */
-+-    if ((I = stringmap_find(config, "auth-mysql-mail-group"))) {
-+-        gid = atoi((char*)I->v);
-+-        if (!gid) {
-+-            struct group *grp;
-+-            grp = getgrnam((char*)I->v);
-+-            if (!grp) {
-+-                print_log(LOG_ERR, "auth_mysql_new_apop: auth-mysql-mail-group directive `%s' does not make sense", (char*)I->v);
-+-                return NULL;
-+-            }
-+-            gid = grp->gr_gid;
-+-        }
-+-        use_gid = 1;
-+-    }
-+-#ifdef AUTH_MYSQL_MAIL_GID
-+-    else {
-+-        gid = AUTH_PAM_MAIL_GID;
-+-        use_gid = 1;
-+-    }
-+-#endif
-+-
-+-    domain = name + strcspn(name, "@%!");
-+-    if (domain == name || !*domain) return NULL;
-+-    ++domain;
-+-    
-+-    local_part = (char*)malloc(domain - name);
-+-    if (!local_part) return NULL;
-+-    memset(local_part, 0, domain - name);
-+-    strncpy(local_part, name, domain - name - 1);
-+-    
-+-    if (mysql_ping(mysql) == -1) {
-+-        print_log(LOG_ERR, "auth_mysql_new_apop: mysql_ping: %s", mysql_error(mysql));
-+-        return NULL;
-+-    }
-+-
-+-    query = (char*)malloc(l = (sizeof(apop_query_template) + strlen(name) * 2 + 1));
-+-    x = (char*)malloc(strlen(local_part) * 2 + 1);
-+-    y = (char*)malloc(strlen(domain) * 2 + 1);
-+-    if (!query || !x || !y) goto fail;
-+-
-+-    mysql_escape_string(x, local_part, strlen(local_part));
-+-    mysql_escape_string(y, domain, strlen(domain));
-+-
-+-    snprintf(query, l, apop_query_template, x, y);
-+-
-+-    if (mysql_query(mysql, query) == 0) {
-+-        MYSQL_RES *result = mysql_store_result(mysql);
-+-        int i;
-+-
-+-        if (!result) {
-+-            print_log(LOG_ERR, "auth_mysql_new_apop: mysql_store_result: %s", mysql_error(mysql));
-+-            goto fail;
-+-        }
-+-
-+-        switch (i = mysql_num_rows(result)) {
-+-        case 0:
-+-            print_log(LOG_WARNING, "auth_mysql_new_apop: attempted login by nonexistent user %s@%s", local_part, domain);
-+-            break;
-+-        case 1: {
-+-                MYSQL_ROW row = mysql_fetch_row(result);
-+-                unsigned long *lengths;
-+-                char *mailbox;
-+-                struct passwd *pw;
-+-                unsigned char this_digest[16];
-+-                MD5_CTX ctx;
-+-
-+-                /* These are "can't happen" errors */
-+-                if (!row || !(lengths = mysql_fetch_lengths(result))) break;
-+-                
-+-                /* Calculate our idea of the digest */
-+-                MD5Init(&ctx);
-+-                MD5Update(&ctx, (unsigned char*)timestamp, strlen(timestamp));
-+-                MD5Update(&ctx, (unsigned char*)row[3], lengths[3]);
-+-                MD5Final(this_digest, &ctx);
-+-
-+-                /* User was lying */
-+-                if (memcmp(this_digest, digest, 16)) {
-+-                    print_log(LOG_WARNING, "auth_mysql_new_apop: failed login for %s@%s", local_part, domain);
-+-                    break;
-+-                }
-+-
-+-                /* User was not lying (about her password) */
-+-                pw = getpwnam((const char*)row[2]);
-+-
-+-                if (!pw) {
-+-                    print_log(LOG_ERR, "auth_mysql_new_apop: getpwnam(%s): %m", (const char*)row[2]);
-+-                    break;
-+-                }
-+-
-+-                /* It would be bad to allow a virtual domain user to log in as
-+-                 * root....
-+-                 */
-+-                if (!pw->pw_uid) {
-+-                    print_log(LOG_ERR, "auth_mysql_new_apop: unix user for domain is root");
-+-                    break;
-+-                }
-+-
-+-                mailbox = (char*)malloc(l = (lengths[0] + lengths[1] + 2));
-+-                snprintf(mailbox, l, "%s/%s", row[0], row[1]);
-+-
-+-                a = authcontext_new(pw->pw_uid,
-+-                                    use_gid ? gid : pw->pw_gid,
-+-                                    mailbox);
-+-
-+-                free(mailbox);
-+-
-+-		break;
-+-            }
-+-
-+-        default:
-+-            print_log(LOG_ERR, "auth_mysql_new_apop: database inconsistency: query for %s returned %d rows", name, i);
-+-            break;
-+-        }
-+-
-+-        mysql_free_result(result);
-+-        
-+-    } else {
-+-        print_log(LOG_ERR, "auth_mysql_new_apop: mysql_query: %s", mysql_error(mysql));
-+-    }
-+-
-+-fail:
-+-    if (local_part) free(local_part);
-+-    if (x) free(x);
-+-    if (y) free(y);
-+-    if (query) free(query);
-+-
-+-    return a;
-+-}
-+-
-+ /* auth_mysql_new_user_pass:
-+  * Attempt to authenticate a user via USER/PASS, using a SELECT statement of
-+  * the form
-+- *   SELECT domain.path, popbox.mbox_name, domain.unix_user
-++ *   SELECT domain.path, popbox.mbox_name, domain.unix_user, popbox.crypt_pw
-+  *          FROM popbox, domain
-+  *          WHERE popbox.local_part = $local_part
-+- *            AND popbox.password_hash = $hash_of_password
-+  *            AND popbox.domain_name = $domain
-+  *            AND popbox.domain_name = domain.domain_name
-+  */
-+ char user_pass_query_template[] =
-+-    "SELECT domain.path, popbox.mbox_name, domain.unix_user "
-++    "SELECT domain.path, popbox.mbox_name, domain.unix_user, popbox.crypt_pw "
-+       "FROM popbox, domain "
-+      "WHERE popbox.local_part = '%s' "
-+        "AND popbox.domain_name = '%s' "
-+-       "AND popbox.password_hash = '%s' "
-+        "AND popbox.domain_name = domain.domain_name";
-+ authcontext auth_mysql_new_user_pass(const char *user, const char *pass) {
-+     char *query, *x, *y;
-+     authcontext a = NULL;
-+     char *local_part;
-+     const char *domain;
-+-    unsigned char digest[16];
-+-    char hexdigest[33] = {0};
-+-    char *p;
-+-    unsigned char *q;
-+-    MD5_CTX ctx;
-+     item *I;
-+     size_t l;
-+     int use_gid = 0;
-+@@ -323,21 +159,15 @@
-+         return NULL;
-+     }
-+ 
-+-    query = (char*)malloc(l = (sizeof(user_pass_query_template) + strlen(user) * 2 + 1 + 34));
-++    query = (char*)malloc(l = (sizeof(user_pass_query_template) + strlen(user) * 2 + 1));
-+     x = (char*)malloc(strlen(local_part) * 2 + 1);
-+     y = (char*)malloc(strlen(domain) * 2 + 1);
-+     if (!query || !x || !y) goto fail;
-+ 
-+-    MD5Init(&ctx);
-+-    MD5Update(&ctx, (unsigned char*)pass, strlen(pass));
-+-    MD5Final(digest, &ctx);
-+-
-+-    for (p = hexdigest, q = digest; q < digest + 16; ++q, p += 2) snprintf(p, 3, "%02x", (unsigned)*q);
-+-
-+     mysql_escape_string(x, local_part, strlen(local_part));
-+     mysql_escape_string(y, domain, strlen(domain));
-+ 
-+-    snprintf(query, l, user_pass_query_template, x, y, hexdigest);
-++    snprintf(query, l, user_pass_query_template, x, y);
-+ 
-+     if (mysql_query(mysql, query) == 0) {
-+         MYSQL_RES *result = mysql_store_result(mysql);
-+@@ -350,16 +180,23 @@
-+ 
-+         switch (i = mysql_num_rows(result)) {
-+         case 0:
-+-            print_log(LOG_WARNING, "auth_mysql_new_user_pass: failed login for %s@%s", local_part, domain);
-++            print_log(LOG_WARNING, "auth_mysql_new_user_pass: invalid user for %s@%s", local_part, domain);
-+             break;
-+         case 1: {
-+                 MYSQL_ROW row = mysql_fetch_row(result);
-+                 unsigned long *lengths;
-+                 char *mailbox;
-+                 struct passwd *pw;
-++                char *crypt_pw = row[3];
-+ 
-+                 /* These are "can't happen" errors */
-+                 if (!row || !(lengths = mysql_fetch_lengths(result))) break;
-++
-++                /* Authenticate. */
-++                if (strcmp(crypt_pw, crypt(pass, crypt_pw)) != 0) {
-++                    print_log(LOG_WARNING, "auth_mysql_new_user_pass: failed login for %s@%s", local_part, domain);
-++                    break;
-++                }
-+                 
-+                 pw = getpwnam((const char*)row[2]);
-+ 
-+--- auth_mysql.h	Thu Feb  1 21:23:32 2001
-++++ auth_mysql_crypt.h	Thu Feb  1 21:26:39 2001
-+@@ -24,15 +24,14 @@
-+  */
-+ 
-+ /* Config directive: auth-mysql-mail-group */
-+-#undef AUTH_MYSQL_MAIL_GID
-++#undef AUTH_MYSQL_CRYPT_MAIL_GID
-+ 
-+ int  auth_mysql_init();
-+ 
-+ /* These use SELECT statements defined in auth_mysql.c */
-+-authcontext auth_mysql_new_apop(const char *name, const char *timestamp, const unsigned char *digest);
-+ authcontext auth_mysql_new_user_pass(const char *user, const char *pass);
-+ void auth_mysql_close();
-+ 
-+-#endif /* AUTH_MYSQL */
-++#endif /* AUTH_MYSQL_CRYPT */
-+ 
-+ #endif /* __AUTH_MYSQL_H_ */
-+--- authswitch.c	Thu Feb  1 21:23:54 2001
-++++ authswitch_mysql_crypt.c	Thu Feb  1 21:23:44 2001
-+@@ -53,7 +53,7 @@
-+             
-+ #ifdef AUTH_MYSQL
-+         /* This is for vmail-sql and similar schemes */
-+-        {auth_mysql_init, auth_mysql_new_apop, auth_mysql_new_user_pass, auth_mysql_close,
-++        {auth_mysql_init, NULL, auth_mysql_new_user_pass, auth_mysql_close,
-+             "mysql",
-+             "Uses a MySQL database"},
-+ #endif /* AUTH_MYSQL */
-diff -urNbB tpop3d-1.5.3.org/netloop.c tpop3d-1.5.3/netloop.c
---- tpop3d-1.5.3.org/netloop.c	2003-11-24 20:58:28.000000000 +0100
-+++ tpop3d-1.5.3/netloop.c	2004-10-05 13:51:21.000000000 +0200
+diff -urN -x CVS tpop3d-1.5.3/netloop.c tpop3d/netloop.c
+--- tpop3d-1.5.3/netloop.c	2003-11-24 20:58:28.000000000 +0100
++++ tpop3d/netloop.c	2006-01-24 17:04:02.000000000 +0100
 @@ -7,7 +7,7 @@
   *
   */
@@ -1925,6 +1543,24 @@ diff -urNbB tpop3d-1.5.3.org/netloop.c tpop3d-1.5.3/netloop.c
                      /* Set a small send buffer so that we get EAGAIN if the client
                       * isn't acking our data. */
                      log_print(LOG_ERR, "listeners_post_select: setsockopt: %m");
+@@ -171,7 +183,7 @@
+                 }
+             }
+ 
+-            if (errno != EAGAIN)
++            if (errno != EAGAIN && errno != EINTR)
+                 log_print(LOG_ERR, "net_loop: accept: %m");
+             
+         }
+@@ -327,7 +339,7 @@
+             /* Began session. We log a message in a known format, and call
+              * into the authentication drivers in case they want to do
+              * something with the information for POP-before-SMTP relaying. */
+-            log_print(LOG_INFO, _("fork_child: %s: began session for `%s' with %s; child PID is %d"), c->idstr, c->a->user, c->a->auth, (int)ch);
++            log_print(LOG_NOTICE, _("fork_child: %s: began session for `%s' with %s; child PID is %d"), c->idstr, c->a->user, c->a->auth, (int)ch);
+             authswitch_onlogin(c->a, c->remote_ip, c->local_ip);
+ 
+             if (childwait) {
 @@ -363,11 +375,11 @@
  /* connections_post_select:
   * Called after the main select(2) to do stuff with connections.
@@ -2024,9 +1660,9 @@ diff -urNbB tpop3d-1.5.3.org/netloop.c tpop3d-1.5.3/netloop.c
          if (!post_fork) listeners_pre_select(&n, &readfds, &writefds, NULL);
  
          connections_pre_select(&n, &readfds, &writefds, NULL);
-diff -urNbB tpop3d-1.5.3.org/password.c tpop3d-1.5.3/password.c
---- tpop3d-1.5.3.org/password.c	2003-09-10 00:52:30.000000000 +0200
-+++ tpop3d-1.5.3/password.c	2004-09-29 22:58:00.000000000 +0200
+diff -urN -x CVS tpop3d-1.5.3/password.c tpop3d/password.c
+--- tpop3d-1.5.3/password.c	2003-09-10 00:52:30.000000000 +0200
++++ tpop3d/password.c	2004-09-29 22:58:00.000000000 +0200
 @@ -31,10 +31,14 @@
  #define _XOPEN_SRC      /* crypt(3), on some systems */
  #include <unistd.h>
@@ -2082,383 +1718,9 @@ diff -urNbB tpop3d-1.5.3.org/password.c tpop3d-1.5.3/password.c
              /* Base 64. */
              return strcmp(realhash, md5_digest_str(pass, strlen(pass), 1)) == 0;
          } else
-diff -urNbB tpop3d-1.5.3.org/pop3bench tpop3d-1.5.3/pop3bench
---- tpop3d-1.5.3.org/pop3bench	1970-01-01 01:00:00.000000000 +0100
-+++ tpop3d-1.5.3/pop3bench	2004-02-03 20:52:03.000000000 +0100
-@@ -0,0 +1,370 @@
-+#!/usr/bin/perl -w
-+#
-+# pop3bench:
-+# POP3 server benchmarking tool.
-+#
-+# Copyright (c) 2004 Chris Lightfoot. All rights reserved.
-+# Email: chris@ex-parrot.com; WWW: http://www.ex-parrot.com/~chris/
-+#
-+
-+my $rcsid = ''; $rcsid .= '$Id$';
-+
-+use Digest::MD5;
-+use IO::Socket;
-+
-+my $have_ssl = 0;
-+eval '
-+    use IO::Socket::SSL;
-+    $have_ssl = 1;
-+';
-+
-+use Time::HiRes;
-+use Error qw(:try);
-+
-+my $T = time();
-+
-+sub howlong () {
-+    my $T2 = time();
-+    $T2 -= $T;
-+    $T = time();
-+    return $T2;
-+}
-+
-+# error MESSAGE
-+# Print the MESSAGE to stderr.
-+sub error ($) {
-+    print STDERR "pop3bench: $_[0]\n";
-+}
-+
-+# quit MESSAGE
-+# Print the MESSAGE to stderr and abort.
-+sub quit ($) {
-+    error($_[0]);
-+    exit(1);
-+}
-+
-+# verbose OPTIONS MESSAGE
-+# If enabled, print a verbose MESSAGE to stderr.
-+sub verbose ($$) {
-+    error($_[1]) if ($_[0]->{verbose});
-+}
-+
-+# usage
-+# Print a usage message to stdout.
-+sub usage () {
-+    print <<EOF;
-+pop3bench: POP3 server benchmarking tool
-+
-+Synopsis: pop3bench --help | [options] HOST [PORT]
-+
-+Options:
-+    --help
-+        Display this message.
-+
-+    --verbose
-+        Log debugging information.
-+
-+    --conversation
-+        Log the conversation between client and server. Implies --verbose.
-+
-+    --username USER
-+    --password PASSWORD
-+        Specify USER and PASSWORD for authentication. Default: ask
-+        interactively.
-+
-+    --apop
-+        Use the APOP shared-secret authentication method. Default: use
-+        USER/PASS.
-+
-+    --pipelining
-+        Use command pipelining, if supported. Default: don't.
-+
-+    --tls
-+    --stls
-+        Make a TLS connection to the server; or, connect to the server
-+        normally, but attempt to negotiate TLS operation using the STLS
-+        command. Default: use unsecured TCP.
-+
-+    --commands LIST
-+        Benchmark the given comma-separated LIST of commands on the server.
-+        LIST may include: LIST UIDL DELE RETR TOP NOOP. Benchmarking DELE is
-+        destructive, obviously. Default: LIST, UIDL, RETR.
-+
-+In unsecured TCP and STLS modes, the default PORT is 110; in TLS mode the
-+default PORT is 995.
-+
-+Copyright (c) 2004 Chris Lightfoot <chris\@ex-parrot.com>
-+All Rights Reserved.
-+EOF
-+}
-+
-+# parse_options ARGUMENTS
-+# Return a reference to a hash with the options to be used by the program.
-+sub parse_options (@) {
-+    my @args = @_;
-+    my $res = {
-+        port => undef,
-+        mode => 'tcp',
-+        apop => 0,
-+        pipelining => 0,
-+        user => undef,
-+        pass => undef,
-+        commands => [qw(list uidl retr)],
-+        verbose => 0,
-+        conversation => 0
-+    };
-+    
-+    while (@args && $args[0] =~ /^--(.+)/) {
-+        shift(@args);
-+        if ($1 eq 'help') {
-+            usage();
-+            exit(0);
-+        } elsif ($1 eq 'verbose') {
-+            $res->{verbose} = 1;
-+        } elsif ($1 eq 'conversation') {
-+            $res->{conversation} = $res->{verbose} = 1;
-+        } elsif ($1 eq 'username') {
-+            $res->{user} = shift(@args);
-+        } elsif ($1 eq 'password') {
-+            $res->{pass} = shift(@args);
-+        } elsif ($1 eq 'apop') {
-+            $res->{apop} = 1;
-+        } elsif ($1 eq 'pipelining') {
-+            $res->{pipelining} = 1;
-+        } elsif ($1 eq 'commands') {
-+            my %allowed = map { $_ => 1 } qw(list uidl dele retr top noop);
-+            $res->{commands} = [ ];
-+            foreach (split(/,\s*/, shift(@args))) {
-+                $_ = lc($_);
-+                return "`$_' is not a known command" unless (exists($allowed{$_}));
-+                push(@{$res->{commands}}, $_);
-+            }
-+        } elsif ($1 =~ /^(s?tls)$/) {
-+            return "specify at most one of --tls, --stls" if ($res->{mode} ne 'tcp');
-+            $res->{mode} = $1;
-+        } else {
-+            return "`--$1': unknown option";
-+        }
-+    }
-+
-+    return "arguments are host and optional port" if (@args > 2 || @args == 0);
-+
-+    $res->{host} = shift(@args);
-+    $res->{port} = shift(@args) if (@args);
-+
-+    # Default port differs between TCP and TLS modes.
-+    if (!defined($res->{port})) {
-+        if ($res->{mode} eq 'tls') {
-+            $res->{port} = 995;
-+        } else {
-+            $res->{port} = 110;
-+        }
-+    }
-+
-+    return $res;
-+}
-+
-+# get_pop3_line OPTIONS SOCKET
-+# Return a POP3 response line read from SOCKET, or undef on failure.
-+sub get_pop3_line ($$) {
-+    my ($opts, $s) = @_;
-+    local $/ = "\r\n";
-+    my $x = $s->getline() or throw Error::Simple("read: $!");
-+    chomp($x);
-+    return $x;
-+}
-+
-+# get_pop3_resp OPTIONS SOCKET
-+# Get a POP3 response line, and return 1 if it starts +OK, 0 if -ERR, or throw
-+# an exception on error.
-+sub get_pop3_resp ($$) {
-+    my ($opts, $s) = @_;
-+    my $r = get_pop3_line($opts, $s);
-+    verbose($opts, "<-- $r") if ($opts->{conversation});
-+    if ($r =~ /^\+OK/) {
-+        return 1;
-+    } elsif ($r =~ /^-ERR/) {
-+        return 0;
-+    } else {
-+        throw Error::Simple("bad response line `$r'");
-+    }
-+}
-+
-+# send_pop3_cmd OPTIONS SOCKET COMMAND
-+# Send COMMAND to SOCKET.
-+sub send_pop3_cmd ($$$) {
-+    my ($opts, $s, $cmd) = @_;
-+    $s->print("$cmd\r\n") or throw Error::Simple("write: $!");
-+    if ($opts->{conversation}) {
-+        if ($cmd =~ /^PASS /i) {
-+            verbose($opts, "--> PASS [...]");
-+        } else {
-+            verbose($opts, "--> $cmd");
-+        }
-+    }
-+}
-+
-+# get_pop3_multiline_resp OPTIONS SOCKET [DISCARD]
-+# Get a multiline response from the server. If DISCARD is true, just count the
-+# lines and return the total. Otherwise return the response as a list of lines.
-+# DISCARD is assumed to be true when called in scalar context;
-+sub get_pop3_multiline_resp ($$;$) {
-+    my ($opts, $s, $discard) = @_;
-+    $discard ||= wantarray;
-+    throw Error::Simple("bad response") if (!get_pop3_resp($opts, $s));
-+    my @list;
-+    my $N = 0;
-+    while (($_ = get_pop3_line($opts, $s)) ne '.') {
-+        if ($discard) {
-+            ++$N;
-+        } else {
-+            push(@list, $_);
-+        }
-+    }
-+    if ($opts->{conversation}) {
-+        verbose($opts, "<-- ... " . scalar(@list) . " lines ...");
-+        verbose($opts, "<-- .");
-+    }
-+    if ($discard) {
-+        return $N;
-+    } else {
-+        return @list;
-+    }
-+}
-+
-+# connect_to_server OPTIONS
-+# Return a socket connected to the server, per OPTIONS.
-+sub connect_to_server ($) {
-+    my $opts = shift;
-+    my $s;
-+    verbose($opts, "connecting to $opts->{host}:$opts->{port}");
-+    if ($opts->{mode} ne 'tls') {
-+        $s = new IO::Socket::INET("$opts->{host}:$opts->{port}");
-+    } else {
-+        $s = new IO::Socket::SSL("$opts->{host}:$opts->{port}");
-+    }
-+    
-+    throw Error::Simple("connect: $!") unless (defined($s));
-+
-+    try {
-+        my $banner = get_pop3_line($opts, $s);
-+        if (!$banner) {
-+            throw Error::Simple("no banner response from server");
-+        } elsif ($banner !~ /^\+OK/) {
-+            throw Error::Simple("bad banner response `$banner'");
-+        }
-+
-+        if ($banner =~ m#<([^>]+)>#) {
-+            $opts->{timestamp} = $1;
-+        }
-+
-+        if ($opts->{mode} eq 'stls') {
-+            verbose($opts, "enabling STLS mode");
-+            send_pop3_cmd($opts, $s, "STLS");
-+            if (!get_pop3_resp($opts, $s)) {
-+                throw Error::Simple("negative STLS response");
-+            } else {
-+                verbose($opts, "beginning TLS negotiation");
-+                IO::Socket::SSL->start_SSL($s);
-+                if (ref($s) ne 'IO::Socket::SSL') {
-+                    throw Error::Simple("TLS negotiation failed");
-+                }
-+                verbose($opts, "TLS negotiation successful");
-+            }
-+        }
-+    } otherwise {
-+        my $E = shift;
-+        $s->close();
-+        throw $E;
-+    };
-+
-+    return $s;
-+}
-+
-+# do_login OPTIONS SOCKET
-+# Log in to the server by USER/PASS or APOP as appropriate. Return the number
-+# of messages available, by doing a LIST.
-+sub do_login ($$) {
-+    my ($opts, $s) = @_;
-+    if ($opts->{apop}) {
-+        throw Error::Simple("can't do APOP login since server did not send a timestamp") if (!exists($opts->{timestamp}));
-+        verbose($opts, "sending APOP login command");
-+        my $digest = Digest::MD5::md5_hex($opts->{timestamp} . $opts->{user});
-+        send_pop3_cmd($opts, $s, "APOP $opts->{user} $digest");
-+        throw Error::Simple("negative APOP response (login failed)") if (!get_pop3_resp($opts, $s));
-+    } else {
-+        verbose($opts, "sending USER/PASS login commands");
-+        send_pop3_cmd($opts, $s, "USER $opts->{user}");
-+        send_pop3_cmd($opts, $s, "PASS $opts->{pass}") if ($opts->{pipelining});
-+        throw Error::Simple("negative USER response") if (!get_pop3_resp($opts, $s));
-+        send_pop3_cmd($opts, $s, "PASS $opts->{pass}") unless ($opts->{pipelining});
-+        throw Error::Simple("negative PASS response (login failed)") if (!get_pop3_resp($opts, $s));
-+    }
-+    verbose($opts, "login successful; retrieving list of messages");
-+    send_pop3_cmd($opts, $s, "LIST");
-+    my $n = get_pop3_multiline_resp($opts, $s);
-+    verbose($opts, "$n messages available");
-+    return $n;
-+}
-+
-+# do_quit OPTIONS SOCKET
-+# Log out and shut down the connection on SOCKET.
-+sub do_quit ($$) {
-+    my ($opts, $s) = @_;
-+    verbose($opts, "logging out");
-+    send_pop3_cmd($opts, $s, "QUIT");
-+    error("negative QUIT response (bad, not fatal)") if (!get_pop3_resp($opts, $s));
-+    verbose($opts, "closing connection");
-+    $s->shutdown(2);
-+    $s->close();
-+    verbose($opts, "done");
-+}
-+
-+my $opts = parse_options(@ARGV);
-+
-+if (!ref($opts)) {
-+    quit($opts);
-+    exit(1);
-+}
-+
-+if ($opts->{mode} ne 'tcp' && !$have_ssl) {
-+    quit("$opts->{mode} requested, but no IO::Socket::SSL");
-+}
-+
-+# If not specified on command line, get username and password.
-+if (!defined($opts->{user})) {
-+    $| = 1;
-+    print "Username: ";
-+    my $u = STDIN->getline();
-+    quit("you must give a username") if (!defined($u));
-+    chomp($u);
-+    $u =~ s/^\s+//;
-+    $u =~ s/\s+$//;
-+    quit("you must give a username") if (length($u) == 0);
-+    $| = 0;
-+    $opts->{user} = $u;
-+}
-+
-+if (!defined($opts->{pass})) {
-+    $| = 1;
-+    print "Password: ";
-+    system("stty", "-echo");
-+    my $p = STDIN->getline();
-+    quit("you must give a password") if (!defined($p));
-+    chomp($p);
-+    $p =~ s/^\s+//;
-+    $p =~ s/\s+$//;
-+    system("stty", "echo");
-+    print "\n";
-+    $| = 0;
-+    $opts->{pass} = $p;
-+}
-+
-+try {
-+    my $s = connect_to_server($opts);
-+    do_login($opts, $s);
-+    do_quit($opts, $s);
-+} catch Error::Simple with {
-+    my $E = shift;
-+    quit($E->text());
-+}
-diff -urNbB tpop3d-1.5.3.org/pop3.c tpop3d-1.5.3/pop3.c
---- tpop3d-1.5.3.org/pop3.c	2003-11-06 02:19:27.000000000 +0100
-+++ tpop3d-1.5.3/pop3.c	2005-10-26 12:04:39.000000000 +0200
+diff -urN -x CVS tpop3d-1.5.3/pop3.c tpop3d/pop3.c
+--- tpop3d-1.5.3/pop3.c	2003-11-06 02:19:27.000000000 +0100
++++ tpop3d/pop3.c	2006-01-24 17:04:02.000000000 +0100
 @@ -6,7 +6,7 @@
   *
   */
@@ -2499,7 +1761,7 @@ diff -urNbB tpop3d-1.5.3.org/pop3.c tpop3d-1.5.3/pop3.c
          if (!c->user)
  #ifndef NO_SNIDE_COMMENTS
              connection_sendresponse(c, 0, _("Tell me your name, knave!"));
-@@ -246,32 +252,101 @@
+@@ -246,30 +252,99 @@
  /* do_uidl CONNECTION MSGNUM
   * UIDL command: MSGNUM is the argument or -1 if none was specified. */
  static void do_uidl(connection c, const int msg_num) {
@@ -2512,6 +1774,7 @@ diff -urNbB tpop3d-1.5.3.org/pop3.c tpop3d-1.5.3/pop3.c
              connection_sendresponse(c, 0, _("That message is no more."));
          else {
 -            char response[64] = {0};
+-            snprintf(response, 63, "%d %s", 1 + msg_num, hex_digest(curmsg->hash));
 +            char *idstyle;
 +            char response[128] = {0};
 +            if (!(idstyle = config_get_string("uidl-style")))
@@ -2551,7 +1814,7 @@ diff -urNbB tpop3d-1.5.3.org/pop3.c tpop3d-1.5.3/pop3.c
 +
 +                /* It isn't guaranteed that these IDs are unique; it is likely, though.
 +                 * See RFC1939. */
-             snprintf(response, 63, "%d %s", 1 + msg_num, hex_digest(curmsg->hash));
++                snprintf(response, 63, "%d %s", 1 + msg_num, hex_digest(curmsg->hash));
 +            }
 +
              connection_sendresponse(c, 1, response);
@@ -2563,6 +1826,13 @@ diff -urNbB tpop3d-1.5.3.org/pop3.c tpop3d-1.5.3/pop3.c
 +
          if (!(connection_sendresponse(c, 1, _("ID list follows:"))))
              return;
+-        for (m = c->m->index; m < c->m->index + c->m->num; ++m) {
+-            if (!m->deleted) {
+-                char response[64] = {0};
+-                snprintf(response, 63, "%d %s", 1 + m - c->m->index, hex_digest(m->hash));
+-                if (!connection_sendline(c, response))
+-                    return;
+-                ++nn;
 +
 +        if (!(idstyle = config_get_string("uidl-style")))
 +            idstyle = "tpop3d";
@@ -2571,8 +1841,8 @@ diff -urNbB tpop3d-1.5.3.org/pop3.c tpop3d-1.5.3/pop3.c
 +           && strcmp(c->a->mboxdrv, "maildir") == 0)
 +        {
 +            char response[128] = {0};
-         for (m = c->m->index; m < c->m->index + c->m->num; ++m) {
-             if (!m->deleted) {
++            for (m = c->m->index; m < c->m->index + c->m->num; ++m) {
++                if (!m->deleted) {
 +                    snprintf(response, 127, "%d %s", 1 + m - c->m->index, 1 + strrchr(m->filename, '/'));
 +                    response[strcspn(response, ":")] = '\0';
 +                    if (!connection_sendline(c, response))
@@ -2587,23 +1857,43 @@ diff -urNbB tpop3d-1.5.3.org/pop3.c tpop3d-1.5.3/pop3.c
 +
 +        /* "tpop3d" and fallback for unknown uidl formats */
 +        } else {
-                 char response[64] = {0};
++            char response[64] = {0};
 +
 +            if(strcmp(idstyle, "tpop3d") != 0)
 +                log_print(LOG_WARNING, _("do_uidl: '%s' UIDLs not implemented, or not supported with '%s' mailbox, using fallback."), idstyle, c->a->mboxdrv);
 +
 +            for (m = c->m->index; m < c->m->index + c->m->num; ++m) {
 +                if (!m->deleted) {
-                 snprintf(response, 63, "%d %s", 1 + m - c->m->index, hex_digest(m->hash));
-                 if (!connection_sendline(c, response))
-                     return;
-                 ++nn;
++                    snprintf(response, 63, "%d %s", 1 + m - c->m->index, hex_digest(m->hash));
++                    if (!connection_sendline(c, response))
++                        return;
++                    ++nn;
++                }
              }
          }
-+        }
          connection_sendline(c, ".");
-         /* That might have taken a long time. */
-         c->idlesince = time(NULL);
+@@ -295,10 +370,10 @@
+             if (verbose)
+                 log_print(LOG_DEBUG, _("do_retr: client %s: sending message %d (%d bytes)"),
+                         c->idstr, msg_num + 1, (int)curmsg->msglength);
+-        
++            
+             if ((n = c->m->sendmessage(c->m, c, msg_num, -1)) == -2)
+                 return close_connection;
+-            
++
+             /* That might have taken a long time. */
+             c->idlesince = time(NULL);
+             if (verbose) {
+@@ -421,7 +496,7 @@
+                     } else {
+                         /* Otherwise we've issued an OK response but haven't
+                          * managed to negotiate a TLS connection. */
+-                        log_print(LOG_INFO, _("connection_do: client %s: tried and failed to negotiate TLS connection; closing connection"), c->idstr);
++                        log_print(LOG_NOTICE, _("connection_do: client %s: tried and failed to negotiate TLS connection; closing connection"), c->idstr);
+                         return close_connection;
+                     }
+                 }
 @@ -583,6 +658,9 @@
          }
          
@@ -2623,9 +1913,9 @@ diff -urNbB tpop3d-1.5.3.org/pop3.c tpop3d-1.5.3/pop3.c
  #endif
                  break;
  
-diff -urNbB tpop3d-1.5.3.org/README tpop3d-1.5.3/README
---- tpop3d-1.5.3.org/README	2003-11-24 20:59:13.000000000 +0100
-+++ tpop3d-1.5.3/README	2004-02-03 20:52:02.000000000 +0100
+diff -urN -x CVS tpop3d-1.5.3/README tpop3d/README
+--- tpop3d-1.5.3/README	2003-11-24 20:59:13.000000000 +0100
++++ tpop3d/README	2004-02-03 20:52:02.000000000 +0100
 @@ -1,7 +1,7 @@
  tpop3d, copyright (c) 2000-2003 Chris Lightfoot <chris@ex-parrot.com>
    http://www.ex-parrot.com/~chris/tpop3d/
@@ -2643,9 +1933,9 @@ diff -urNbB tpop3d-1.5.3.org/README tpop3d-1.5.3/README
      auth-ldap           an LDAP directory
      auth-flatfile       /etc/passwd-style flat files
      auth-other          an external program
-diff -urNbB tpop3d-1.5.3.org/README.auth_mysql tpop3d-1.5.3/README.auth_mysql
---- tpop3d-1.5.3.org/README.auth_mysql	2001-11-07 01:50:41.000000000 +0100
-+++ tpop3d-1.5.3/README.auth_mysql	2004-09-29 22:57:59.000000000 +0200
+diff -urN -x CVS tpop3d-1.5.3/README.auth_mysql tpop3d/README.auth_mysql
+--- tpop3d-1.5.3/README.auth_mysql	2001-11-07 01:50:41.000000000 +0100
++++ tpop3d/README.auth_mysql	2004-09-29 22:57:59.000000000 +0200
 @@ -1,5 +1,5 @@
  README for MySQL authentication in tpop3d
 -$Id$
@@ -2677,9 +1967,9 @@ diff -urNbB tpop3d-1.5.3.org/README.auth_mysql tpop3d-1.5.3/README.auth_mysql
  
     Now, we compare the user's password against the stored hash or password,
     and decide whether to authenticate the user or not. If this does not
-diff -urNbB tpop3d-1.5.3.org/README.bulletins tpop3d-1.5.3/README.bulletins
---- tpop3d-1.5.3.org/README.bulletins	1970-01-01 01:00:00.000000000 +0100
-+++ tpop3d-1.5.3/README.bulletins	2003-08-25 20:01:12.000000000 +0200
+diff -urN -x CVS tpop3d-1.5.3/README.bulletins tpop3d/README.bulletins
+--- tpop3d-1.5.3/README.bulletins	1970-01-01 01:00:00.000000000 +0100
++++ tpop3d/README.bulletins	2003-08-25 20:01:12.000000000 +0200
 @@ -0,0 +1,16 @@
 +Implementing POP3 server bulletins using tpop3d
 +$Id$
@@ -2697,218 +1987,9 @@ diff -urNbB tpop3d-1.5.3.org/README.bulletins tpop3d-1.5.3/README.bulletins
 +bulletin delivery. A simple example of a bulletin script is in
 +scripts/bulletins.
 +
-diff -urNbB tpop3d-1.5.3.org/scripts/bulletins tpop3d-1.5.3/scripts/bulletins
---- tpop3d-1.5.3.org/scripts/bulletins	1970-01-01 01:00:00.000000000 +0100
-+++ tpop3d-1.5.3/scripts/bulletins	2003-08-25 20:01:12.000000000 +0200
-@@ -0,0 +1,96 @@
-+#!/usr/bin/perl -w
-+#
-+# bulletins:
-+# Deliver bulletins to POP3 users.
-+#
-+# This is designed to be used with auth-perl, though with a simple
-+# modification (making the function below a method of a TPOP3D::AuthDriver
-+# subclass) it could run in auth-other, too.
-+#
-+# Configuration options:
-+#
-+#   onlogin-child-wait:     yes     # delay mailbox locking
-+#   auth-perl-enable:       yes
-+#   auth-perl-start:        do '/etc/mail/bulletins';   # or whatever
-+#   auth-perl-onlogin:      onlogin_bulletins_handler
-+#
-+#
-+# Copyright (c) 2003 Chris Lightfoot. All rights reserved.
-+# Email: chris@ex-parrot.com; WWW: http://www.ex-parrot.com/~chris/
-+#
-+
-+my $rcsid = ''; $rcsid .= '$Id$';
-+
-+use strict;
-+
-+use GDBM_File;
-+
-+# onlogin_bulletins_handler REQUEST
-+# Deliver any bulletins which are pending for the authenticated user identified
-+# in the REQUEST. This subroutine is called by tpop3d, which will set
-+# REQUEST->{local_part} and REQUEST->{domain} to the proper values. Bulletins
-+# should be complete RFC822 messages stored in flat text files under
-+# /etc/mail/bulletins, each with the extension .msg. This function will use a
-+# GDBM database for each bulletin to record the addresses of users to whom it
-+# has been delivered, so as to ensure that each user receives only one copy of
-+# each bulletin. Bulletins are delivered to user mailboxes using the local mail
-+# transport agent. If your MTA queues locally submitted messages, rather than
-+# delivering them immediately, the bulletins may not in fact be read until a
-+# later POP3 session. If this is a problem, either reconfigure your MTA for
-+# immediate delivery or modify the below to perform message delivery itself.
-+sub onlogin_bulletins_handler ($) {
-+    my $req = shift;
-+    my $resp = { };
-+    
-+    #
-+    # Iterate over list of bulletins.
-+    #
-+    foreach my $bull (glob("/etc/mail/bulletins/*.msg")) {
-+        my $recips = $bull;
-+        
-+        # Obtain and tie delivery database, creating it if it does not
-+        # already exist.
-+
-+        $recips =~ s/msg$/db/;
-+        my $r = $req->{local_part} . '@' . $req->{domain};
-+        my %rr;
-+        tie(%rr, 'GDBM_File', $recips, &GDBM_WRCREAT, 0600);
-+
-+        # Attempt delivery if this user has not already been sent a copy
-+        # of this message.
-+
-+        if (!exists($rr{$r})) {
-+
-+            # Invoke sendmail. There are better ways of doing this, but this is
-+            # simplest. Note that it wouldn't usually be safe to call sendmail
-+            # in this way, but tpop3d has already authenticated somebody using
-+            # the given local-part and domain, so they're presumably safe
-+            # strings.
-+
-+            system("sendmail -oi '$r' < $bull");
-+            if ($? == 0) {
-+
-+                # Sendmail exits with code 0 on success.
-+
-+                # Record delivery of this bulletin to this user.
-+                $rr{$r} = 1;
-+
-+            } else {
-+
-+                # Sendmail (or system(3)) failed. There's not a whole lot we
-+                # can do here, but we log a message and abort sending any other
-+                # bulletins to this user for the moment.
-+
-+                untie(%rr);
-+                return { logmsg => "sendmail failed; error code $?" };
-+            }
-+        }
-+        untie(%rr);
-+    }
-+    
-+    # Don't log anything in case of success; we might want to note how
-+    # many bulletins were delivered or something, of course.
-+    return { };
-+}
-+
-+1;
-diff -urNbB tpop3d-1.5.3.org/scripts/flat_file tpop3d-1.5.3/scripts/flat_file
---- tpop3d-1.5.3.org/scripts/flat_file	1970-01-01 01:00:00.000000000 +0100
-+++ tpop3d-1.5.3/scripts/flat_file	2002-04-25 21:14:41.000000000 +0200
-@@ -0,0 +1,105 @@
-+#!/usr/bin/perl -w
-+#
-+# flat_file:
-+# Authenticate users against a list of users stored in flat files.
-+#
-+# This script was contributed by Chris E. Stith <mischief@motion.net>.
-+# Users are authenticated by looking them up in
-+#   /var/spool/mail/$(domain)/users,
-+# which contains lines of the form
-+#   user:crypt'd password
-+#
-+# The relevant config section is--
-+#
-+#   # This must be set to yes, or we have to make all our users put
-+#   # `user@domain.tld' in the username field of their mail clients instead
-+#   # of just `user'.
-+#   append-domain: yes
-+#
-+#   # The only method enabled for POP3 auth is the custom Perl script through
-+#   # tpop3d's embedded Perl interpeter. All of this has to do with that.
-+#   auth-perl-enable: yes
-+#   auth-perl-start: do '/etc/tpop3d/tpop3d.pl';
-+#   auth-perl-finish: stop();
-+#   auth-perl-pass: pass
-+#
-+use strict;
-+use TPOP3D::AuthDriver;
-+use Crypt::PasswdMD5;
-+use Fcntl qw{ :flock };
-+
-+my $maildir = '/var/spool/mail';
-+
-+### check on validity of username and password
-+sub auth_ok {
-+    my ( $user, $domain, $pass ) = @_;
-+    my $file = "$maildir/$domain/users";
-+    my $fh;
-+    unless ( open $fh, "< $file" ) {
-+	TPOP3D::print_log ("Sorry, can't read `$file'\n");
-+        return 0;
-+    }
-+    flock( $fh, LOCK_SH );
-+    while ( <$fh> ) {
-+        my ( $un, $pw, undef ) = split/:/;
-+        if ( $un eq $user ) {
-+            my $pass1 = crypt($pass, $pw);
-+            my $pass2 = Crypt::PasswdMD5::unix_md5_crypt($pass, $pw);
-+            if ( ($pw eq $pass1) || ($pw eq $pass2) ) {
-+                close $fh;
-+                return 1;
-+            }
-+        }
-+    }
-+    close $fh;
-+    return 0;
-+}
-+     
-+### report on validity of user and password
-+sub pass {
-+    my $href = $_[0];
-+    my ($local, $domain) = ($href->{'local_part'}, $href->{'domain'});
-+    unless ( length $local ) { $local = $href->{'user'} }
-+    $domain = lc $domain;
-+    unless ( length $domain ) {
-+        return {
-+            'result' => 'NO',
-+            'logmsg' => "failed auth without explicit domain, will retry"
-+        };
-+    }
-+    my $pass = $href->{'pass'};
-+    undef %{$href};
-+    if ( auth_ok($local, $domain, $pass) ) {
-+        # Success.
-+        return {
-+            'result' => 'YES',
-+            'logmsg' => "authenticated $local in domain $domain",
-+            'uid' => 'tpop3d',   # pop server's assigned uid
-+            'gid' => 'mail',
-+            'mboxtype' => 'bsd',
-+            'mailbox' => "/var/spool/mail/$domain/mailboxes/$local"
-+        };
-+    } else {
-+        # Failure.
-+        return {
-+            'result' => 'NO',
-+            'logmsg' => "auth failed for user $local in domain $domain"
-+        };
-+    }
-+}
-+
-+### let the log know we're back
-+sub start {
-+    TPOP3D::print_log ("Embedded Perl auth mechanism for tpop3d starting.\n");
-+}
-+### let the log know we're gone
-+sub stop {
-+    TPOP3D::print_log ("Embedded Perl auth mechanism for tpop3d ending.\n");
-+}
-+
-+if (defined($ENV{TPOP3D_CONTEXT}) and $ENV{TPOP3D_CONTEXT} eq 'auth_other') {
-+  no strict 'subs';
-+  TPOP3D::AuthDriver::run(TPOP3D::AuthDriver);
-+  exit 0;
-+}
-+
-diff -urNbB tpop3d-1.5.3.org/TODO tpop3d-1.5.3/TODO
---- tpop3d-1.5.3.org/TODO	2003-11-24 20:58:28.000000000 +0100
-+++ tpop3d-1.5.3/TODO	2004-06-20 02:06:30.000000000 +0200
+diff -urN -x CVS tpop3d-1.5.3/TODO tpop3d/TODO
+--- tpop3d-1.5.3/TODO	2003-11-24 20:58:28.000000000 +0100
++++ tpop3d/TODO	2004-06-20 02:06:30.000000000 +0200
 @@ -1,5 +1,5 @@
  Things To Do
 -$Id$
@@ -2935,9 +2016,9 @@ diff -urNbB tpop3d-1.5.3.org/TODO tpop3d-1.5.3/TODO
 +* Repeated messages (email of 20040325)
 +
 +* Maildir semantics (email of 20040331)
-diff -urNbB tpop3d-1.5.3.org/tpop3d.conf.5 tpop3d-1.5.3/tpop3d.conf.5
---- tpop3d-1.5.3.org/tpop3d.conf.5	2003-11-24 21:26:07.000000000 +0100
-+++ tpop3d-1.5.3/tpop3d.conf.5	2005-10-26 12:04:39.000000000 +0200
+diff -urN -x CVS tpop3d-1.5.3/tpop3d.conf.5 tpop3d/tpop3d.conf.5
+--- tpop3d-1.5.3/tpop3d.conf.5	2003-11-24 21:26:07.000000000 +0100
++++ tpop3d/tpop3d.conf.5	2006-01-24 17:04:02.000000000 +0100
 @@ -5,7 +5,7 @@
  .\"
  .\" Copyright (c) 2001-2 Chris Lightfoot. All rights reserved.
@@ -2976,7 +2057,18 @@ diff -urNbB tpop3d-1.5.3.org/tpop3d.conf.5 tpop3d-1.5.3/tpop3d.conf.5
  \fBlog-facility\fP: \fIfacility\fP
  This selects the `facility' as which \fBtpop3d\fP emits system log messages.
  Possible values for \fIfacility\fP are: \fBmail\fP, \fBauthpriv\fP,
-@@ -196,6 +211,12 @@
+@@ -149,6 +164,10 @@
+ (Although other possibilities are mentioned in \fBopenlog\fP(3), they don't
+ make much sense for a POP3 server.)
+ .TP
++\fBlog-level\fP: \fIlevel\fP
++This selects the `level' at which \fBtpop3d\fP logs system log messages.
++Possible values for \fIlevel\fP are described in \fBsyslog.conf\fP(5).
++.TP
+ \fBlog-stderr\fP: (\fByes\fP|\fBtrue\fP)
+ Send log messages to standard error as well as the system log. This makes sense
+ only when \fBtpop3d\fP is running with a controlling terminal.
+@@ -196,6 +215,12 @@
  option. Those that do not also have a specific option, of the form
  \fBauth-foo-mailbox:\fP which overrides the global setting.
  .TP
@@ -2989,7 +2081,7 @@ diff -urNbB tpop3d-1.5.3.org/tpop3d.conf.5 tpop3d-1.5.3/tpop3d.conf.5
  .nf
  \fBmailspool-index:\fP \fIpath-spec\fP
  .fi
-@@ -236,6 +257,65 @@
+@@ -236,6 +261,65 @@
  RFC1939. Even if not specified, \fBtpop3d\fP behaves intelligently when a
  message in a maildir is moved or deleted, so this option is not necessary.
  .TP
@@ -3055,7 +2147,7 @@ diff -urNbB tpop3d-1.5.3.org/tpop3d.conf.5 tpop3d-1.5.3/tpop3d.conf.5
  .nf
  \fBtcp-wrappers-name\fP: \fIname\fP
  .fi
-@@ -342,6 +422,16 @@
+@@ -342,6 +426,16 @@
  Log incorrect passwords supplied by users who fail to log in. Use of this
  option is an invasion of privacy, but may be useful for debugging client
  configuration problems.
@@ -3072,7 +2164,7 @@ diff -urNbB tpop3d-1.5.3.org/tpop3d.conf.5 tpop3d-1.5.3/tpop3d.conf.5
  .PP
  \fBtpop3d\fP can cache the results of successful login attempts, and re-use
  them when the same user logs in again. This is probably not useful except
-@@ -819,6 +909,37 @@
+@@ -819,6 +913,37 @@
  \fBkill(1, $$)\fP, but it would probably be preferable to use \fBauth-other\fP
  in this case.
  
@@ -3110,7 +2202,7 @@ diff -urNbB tpop3d-1.5.3.org/tpop3d.conf.5 tpop3d-1.5.3/tpop3d.conf.5
  .SH FILES
  .B /etc/tpop3d.conf
  
-@@ -855,7 +976,7 @@
+@@ -855,7 +980,7 @@
  .IR http://lists.beasts.org/pipermail/tpop3d-discuss/ .
  
  .SH VERSION
@@ -3119,9 +2211,9 @@ diff -urNbB tpop3d-1.5.3.org/tpop3d.conf.5 tpop3d-1.5.3/tpop3d.conf.5
  
  .SH COPYING
  This program is free software; you can redistribute it and/or modify
-diff -urNbB tpop3d-1.5.3.org/tpop3d.conf.sample tpop3d-1.5.3/tpop3d.conf.sample
---- tpop3d-1.5.3.org/tpop3d.conf.sample	2003-11-24 20:58:28.000000000 +0100
-+++ tpop3d-1.5.3/tpop3d.conf.sample	2005-10-26 12:04:39.000000000 +0200
+diff -urN -x CVS tpop3d-1.5.3/tpop3d.conf.sample tpop3d/tpop3d.conf.sample
+--- tpop3d-1.5.3/tpop3d.conf.sample	2003-11-24 20:58:28.000000000 +0100
++++ tpop3d/tpop3d.conf.sample	2006-01-24 17:04:02.000000000 +0100
 @@ -2,7 +2,7 @@
  # tpop3d.conf.sample:
  # Sample configuration file for tpop3d.
@@ -3131,7 +2223,18 @@ diff -urNbB tpop3d-1.5.3.org/tpop3d.conf.sample tpop3d-1.5.3/tpop3d.conf.sample
  #
  
  #
-@@ -68,6 +68,28 @@
+@@ -44,6 +44,10 @@
+ # The `facility' as which tpop3d emits system log messages.
+ #log-facility: mail
+ 
++# log-level: level
++# The `level' at which tpop3d logs system log messages.
++#log-level: debug
++
+ # log-stderr: (yes|true)
+ # Send log messages to standard error as well as the system log.
+ #log-stderr: true
+@@ -68,6 +72,28 @@
  # [default: no]
  #maildir-exclusive-lock: true
  
@@ -3160,7 +2263,7 @@ diff -urNbB tpop3d-1.5.3.org/tpop3d.conf.sample tpop3d-1.5.3/tpop3d.conf.sample
  # tcp-wrappers-name: name
  # Selects the `daemon name' used by tpop3d with TCP Wrappers. [default: tpop3d]
  #tcp-wrappers-name: tpop3d
-@@ -340,3 +362,23 @@
+@@ -340,3 +366,23 @@
  # a successful login for POP-before-SMTP operation.
  #auth-perl-onlogin:
  
@@ -3184,9 +2287,9 @@ diff -urNbB tpop3d-1.5.3.org/tpop3d.conf.sample tpop3d-1.5.3/tpop3d.conf.sample
 +# auth-gdbm-mail-user: (user-name | uid)
 +# auth-gdbm-mail-group: (group-name | gid)
 +# User and group under which access to the mailbox will take place.
-diff -urNbB tpop3d-1.5.3.org/util.c tpop3d-1.5.3/util.c
---- tpop3d-1.5.3.org/util.c	2003-11-06 02:19:27.000000000 +0100
-+++ tpop3d-1.5.3/util.c	2005-10-26 12:04:39.000000000 +0200
+diff -urN -x CVS tpop3d-1.5.3/util.c tpop3d/util.c
+--- tpop3d-1.5.3/util.c	2003-11-06 02:19:27.000000000 +0100
++++ tpop3d/util.c	2005-10-26 12:04:39.000000000 +0200
 @@ -6,7 +6,7 @@
   *
   */
