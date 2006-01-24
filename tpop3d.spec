@@ -16,7 +16,7 @@ Summary:	POP3 server
 Summary(pl):	Serwer POP3
 Name:		tpop3d
 Version:	1.5.3
-Release:	21
+Release:	22
 License:	GPL
 Group:		Networking/Daemons
 Source0:	http://www.ex-parrot.com/~chris/tpop3d/%{name}-%{version}.tar.gz
@@ -30,6 +30,7 @@ Patch2:		%{name}-resolv.patch
 Patch3:		%{name}-pam-vdomain.patch
 Patch4:		%{name}-disable-dotfile-locking.patch
 Patch5:		%{name}-sql-getpwuid-optional.patch
+Patch6:		%{name}-loglevel.patch
 URL:		http://www.ex-parrot.com/~chris/tpop3d/
 BuildRequires:	autoconf
 BuildRequires:	automake
@@ -122,6 +123,7 @@ pomiêdzy sesjami.
 %if %{with skipgetpwcheck}
 %patch5 -p0
 %endif
+%patch6 -p1
 
 %build
 %{__aclocal}
