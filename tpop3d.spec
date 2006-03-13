@@ -37,9 +37,10 @@ BuildRequires:	automake
 %{?with_gdbm:BuildRequires:	gdbm-devel}
 %{?with_mysql:BuildRequires:	mysql-devel}
 %{?with_ldap:BuildRequires:	openldap-devel >= 2.3.0}
-%{?with_ssl:BuildRequires:		openssl-devel >= 0.9.7d}
+%{?with_ssl:BuildRequires:	openssl-devel >= 0.9.7d}
 %{?with_pam:BuildRequires:		pam-devel}
 %{?with_pgsql:BuildRequires:	postgresql-devel}
+BuildRequires:	rpmbuild(macros) >= 1.268
 %{?with_whoson:BuildRequires:	whoson-devel}
 Requires(post,preun):	/sbin/chkconfig
 Requires:	pam >= 0.79.0
@@ -166,19 +167,12 @@ touch $RPM_BUILD_ROOT/etc/security/blacklist.pop3
 rm -rf $RPM_BUILD_ROOT
 
 %post
-umask 022
 /sbin/chkconfig --add %{name}
-if [ -f /var/lock/subsys/%{name} ]; then
-	/etc/rc.d/init.d/%{name} restart >&2
-else
-	echo "Run \"/etc/rc.d/init.d/%{name} start\" to start %{name} daemon."
-fi
+%service %{name} restart "%{name} daemon"
 
 %preun
 if [ "$1" = "0" ]; then
-	if [ -f /var/lock/subsys/%{name} ]; then
-		/etc/rc.d/init.d/%{name} stop >&2
-	fi
+	%service %{name} stop
 	/sbin/chkconfig --del %{name}
 fi
 
