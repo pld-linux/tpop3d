@@ -11,6 +11,7 @@
 %bcond_without	gdbm		# without gdbm auth db
 %bcond_without	snide		# without snide server responses
 %bcond_with	skipgetpwcheck	# with getpwuid returned struct check ommited (see patch for details)
+%bcond_with	libevent	# libevent instead of select; very experimental
 #
 Summary:	POP3 server
 Summary(pl):	Serwer POP3
@@ -31,10 +32,12 @@ Patch3:		%{name}-pam-vdomain.patch
 Patch4:		%{name}-disable-dotfile-locking.patch
 Patch5:		%{name}-sql-getpwuid-optional.patch
 Patch6:		%{name}-loglevel.patch
+Patch7:		%{name}-libevent.patch
 URL:		http://www.ex-parrot.com/~chris/tpop3d/
 BuildRequires:	autoconf
 BuildRequires:	automake
 %{?with_gdbm:BuildRequires:	gdbm-devel}
+%{?with_libevent:BuildRequires:	libevent-devel}
 %{?with_mysql:BuildRequires:	mysql-devel}
 %{?with_ldap:BuildRequires:	openldap-devel >= 2.3.0}
 %{?with_ssl:BuildRequires:	openssl-devel >= 0.9.7d}
@@ -125,6 +128,9 @@ pomiêdzy sesjami.
 %patch5 -p0
 %endif
 %patch6 -p1
+%if %{with libevent}
+%patch7 -p1
+%endif
 
 %build
 %{__aclocal}
