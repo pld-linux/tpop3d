@@ -1,0 +1,523 @@
+diff -urN tpop3d-1.5.3.org/configure.in tpop3d-1.5.3/configure.in
+--- tpop3d-1.5.3.org/configure.in	2006-06-02 10:37:54.000000000 +0200
++++ tpop3d-1.5.3/configure.in	2006-06-02 11:10:12.000000000 +0200
+@@ -16,6 +16,8 @@
+ 
+ AC_DEFINE_UNQUOTED(TPOP3D_VERSION, "$VERSION", [The tpop3d version number])
+ 
++AC_CHECK_LIB(event, main, [], AC_MSG_ERROR([[tpop3d can't be build without libevent]]) )
++
+ dnl Check which options are enabled...
+ 
+ dnl The various authentication options.
+diff -urN tpop3d-1.5.3.org/connection.c tpop3d-1.5.3/connection.c
+--- tpop3d-1.5.3.org/connection.c	2006-06-02 10:37:54.000000000 +0200
++++ tpop3d-1.5.3/connection.c	2006-06-02 11:02:44.000000000 +0200
+@@ -38,6 +38,8 @@
+ 
+ extern int verbose;
+ 
++extern connection_post_event(int fd, short event_type, void *vc);
++
+ /* make_timestamp:
+  * Create a timestamp string. */
+ #define TIMESTAMP_LEN   32
+@@ -143,6 +145,12 @@
+ #endif
+     c->io = (struct ioabs*)ioabs_tcp_create();
+     
++    event_set(&c->ev, c->s, EV_READ|EV_WRITE|EV_PERSIST, connection_post_event, (void *)c);
++    if (event_add(&c->ev, NULL) == -1) {
++	    log_print(LOG_ERR, "connection_new: event_add: %m");
++	    goto fail;
++    }
++
+     c->state = authorisation;
+ 
+     c->idlesince = time(NULL);
+@@ -176,6 +184,8 @@
+         close(c->s);
+     }
+ 
++    event_del(&c->ev);
++
+     if (c->a) authcontext_delete(c->a);
+     if (c->m) (c->m)->delete(c->m);
+ 
+diff -urN tpop3d-1.5.3.org/connection.h tpop3d-1.5.3/connection.h
+--- tpop3d-1.5.3.org/connection.h	2003-01-09 23:59:37.000000000 +0100
++++ tpop3d-1.5.3/connection.h	2006-06-02 11:02:44.000000000 +0200
+@@ -35,6 +35,7 @@
+ 
+ typedef struct _connection {
+     int s;                  /* connected socket                 */
++    struct event ev;	    /* event				*/
+     struct sockaddr_in sin; /* name of peer                     */
+     char *remote_ip;        /* ASCII remote IP address          */
+     struct sockaddr_in sin_local; /* name of local side         */
+@@ -83,19 +84,11 @@
+      * IOABS_ERROR if a fatal error occurred. */
+     ssize_t (*immediate_write)(connection c, const void *buf, size_t count);
+ 
+-    /* pre_ and post_select are called before and after select(2) in the main
+-     * loop, and should do all I/O related processing. Frozen connection
+-     * handling is done in the calling code, so these should address only
+-     * buffering and state issues. post_select should return a combination of
+-     * the flags defined below, as well as doing any I/O-layer specific
+-     * handling. */
+-    void (*pre_select)(connection c, int *n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds);
+-    
+     /* post_select:
+      * Do handling after select has completed. Returns 1 if new data have been
+      * read, 0 if not. May alter the connection_state of the associated
+      * connection. */
+-    int (*post_select)(connection c, fd_set *readfds, fd_set *writefds, fd_set *exceptfds);
++    int (*post_event)(int, short, void *);
+ 
+     /* shutdown:
+      * Shut down the connection. Returns zero on success, IOABS_WOULDBLOCK if
+diff -urN tpop3d-1.5.3.org/ioabs_tcp.c tpop3d-1.5.3/ioabs_tcp.c
+--- tpop3d-1.5.3.org/ioabs_tcp.c	2003-09-30 20:45:46.000000000 +0200
++++ tpop3d-1.5.3/ioabs_tcp.c	2006-06-02 11:02:44.000000000 +0200
+@@ -25,6 +25,7 @@
+ /* ioabs_tcp_shutdown:
+  * Shut down the socket connection. */
+ static int ioabs_tcp_shutdown(connection c) {
++    event_del(&c->ev);
+     shutdown(c->s, 2);
+     close(c->s);
+     c->cstate = closed;
+@@ -59,29 +60,16 @@
+         return n;
+ }
+ 
+-/* ioabs_tcp_pre_select:
+- * Simple pre-select handling for TCP. */
+-static void ioabs_tcp_pre_select(connection c, int *n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds) {
+-    struct ioabs_tcp *io;
+-    io = (struct ioabs_tcp*)c->io;
+-
+-    FD_SET(c->s, readfds);
+-    if (buffer_available(c->wrb) > 0)
+-        FD_SET(c->s, writefds);
+-    
+-    if (c->s > *n)
+-        *n = c->s;
+-}
+-
+-/* ioabs_tcp_post_select:
++/* ioabs_tcp_post_event:
+  * Simple post-select handling for TCP. */
+-static int ioabs_tcp_post_select(connection c, fd_set *readfds, fd_set *writefds, fd_set *exceptfds) {
++static int ioabs_tcp_post_event(int fd, short event_type, void *vc) {
+     int ret = 0;
+     ssize_t n;
+     struct ioabs_tcp *io;
++    connection c = vc;
+     io = (struct ioabs_tcp*)c->io;
+ 
+-    if (FD_ISSET(c->s, readfds)) {
++    if (event_type & EV_READ) {
+         /* Can read data. */
+         do {
+             char *r;
+@@ -110,7 +98,7 @@
+         }
+     }
+ 
+-    if (FD_ISSET(c->s, writefds) && buffer_available(c->wrb) > 0) {
++    if ((event_type & EV_WRITE) && buffer_available(c->wrb) > 0) {
+         /* Can write data. */
+         n = 1;
+         do {
+@@ -149,8 +137,7 @@
+     struct ioabs_tcp *io;
+     io = xmalloc(sizeof *io);
+     io->und.immediate_write = ioabs_tcp_immediate_write;
+-    io->und.pre_select      = ioabs_tcp_pre_select;
+-    io->und.post_select     = ioabs_tcp_post_select;
++    io->und.post_event = ioabs_tcp_post_event;
+     io->und.shutdown        = ioabs_tcp_shutdown;
+     io->und.destroy         = ioabs_tcp_destroy;
+     return io;
+diff -urN tpop3d-1.5.3.org/ioabs_tls.c tpop3d-1.5.3/ioabs_tls.c
+--- tpop3d-1.5.3.org/ioabs_tls.c	2006-06-02 10:37:54.000000000 +0200
++++ tpop3d-1.5.3/ioabs_tls.c	2006-06-02 11:02:44.000000000 +0200
+@@ -44,6 +44,7 @@
+ /* underlying_shutdown CONNECTION
+  * Shut down the underlying transport for CONNECTION. */
+ static void underlying_shutdown(connection c) {
++    event_del(&c->ev);
+     shutdown(c->s, 2);
+     close(c->s);
+     c->s = -1;
+@@ -226,33 +227,18 @@
+     return IOABS_ERROR;
+ }
+ 
+-/* ioabs_tls_pre_select:
+- * Pre-select handling for TLS, taking account of the rehandshaking nonsense. */
+-static void ioabs_tls_pre_select(connection c, int *n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds) {
+-    struct ioabs_tls *io;
+-    io = (struct ioabs_tls*)c->io;
+-
+-    FD_SET(c->s, readfds);  /* always want to read */
+-    if (!io->write_blocked_on_read &&
+-        (buffer_available(c->wrb) > 0 || io->accept_blocked_on_write
+-         || io->read_blocked_on_write || io->shutdown_blocked_on_write))
+-        FD_SET(c->s, writefds);
+-
+-    if (c->s > *n)
+-        *n = c->s;
+-}
+-
+-/* ioabs_tls_post_select:
++/* ioabs_tls_post_event:
+  * Post-select handling for TLS, with its complicated logic. */
+-static int ioabs_tls_post_select(connection c, fd_set *readfds, fd_set *writefds, fd_set *exceptfds) {
++static int ioabs_tls_post_event(int fd, short event_type, void *vc) {
+     int ret = 0, R = 0;
+     ssize_t n, wtotal;
+     int canread, canwrite;
+     struct ioabs_tls *io;
++    connection c = vc;
+     io = (struct ioabs_tls*)c->io;
+ 
+-    canread  = FD_ISSET(c->s, readfds);
+-    canwrite = FD_ISSET(c->s, writefds);
++    canread  = event_type & EV_READ;
++    canwrite = event_type & EV_WRITE;
+     
+     /* First, accept handling. */
+     if ((io->accept_blocked_on_read && canread) || (io->accept_blocked_on_write && canwrite)) {
+@@ -399,8 +385,7 @@
+         }
+     
+     io->und.immediate_write = ioabs_tls_immediate_write;
+-    io->und.pre_select      = ioabs_tls_pre_select;
+-    io->und.post_select     = ioabs_tls_post_select;
++    io->und.post_event      = ioabs_tls_post_event;
+     io->und.shutdown        = ioabs_tls_shutdown;
+     io->und.destroy         = ioabs_tls_destroy;
+ 
+diff -urN tpop3d-1.5.3.org/listener.c tpop3d-1.5.3/listener.c
+--- tpop3d-1.5.3.org/listener.c	2003-11-14 19:08:29.000000000 +0100
++++ tpop3d-1.5.3/listener.c	2006-06-02 11:02:44.000000000 +0200
+@@ -42,6 +42,8 @@
+ 
+ #include "util.h"
+ 
++extern void listeners_post_event(int fd, short event_type, void *vL);
++
+ /* listener_new:
+  * Create a new listener object, listening on the specified address. */
+ listener listener_new(const struct sockaddr_in *addr, const char *domain
+@@ -78,6 +80,11 @@
+             log_print(LOG_ERR, "listener_new: listen: %m");
+             goto fail;
+         }
++        event_set(&L->ev, L->s, EV_READ|EV_PERSIST, listeners_post_event, L);
++	if (event_add(&L->ev, NULL) == -1) {
++	    log_print(LOG_ERR, "listener_new: event_add: %m");
++	    goto fail;
++	}
+     }
+ 
+ #ifdef MASS_HOSTING
+@@ -176,6 +183,7 @@
+ void listener_delete(listener L) {
+     if (!L) return;
+     if (L->s != -1) close(L->s); /* Do not shutdown(2). */
++    event_del(&L->ev);
+     xfree(L->domain);
+ #ifdef MASS_HOSTING
+     if (L->have_re)
+diff -urN tpop3d-1.5.3.org/listener.h tpop3d-1.5.3/listener.h
+--- tpop3d-1.5.3.org/listener.h	2003-01-09 23:59:37.000000000 +0100
++++ tpop3d-1.5.3/listener.h	2006-06-02 11:02:44.000000000 +0200
+@@ -12,6 +12,8 @@
+ #define __LISTENER_H_
+ 
+ #include <sys/types.h>
++#include <sys/time.h>
++#include <event.h>
+ 
+ #ifdef MASS_HOSTING
+ #include <regex.h>
+@@ -40,6 +42,7 @@
+     } tls;
+ #endif
+     int s;
++    struct event ev;
+ } *listener;
+ 
+ /* the arguments of the constructor vary according to the particular
+diff -urN tpop3d-1.5.3.org/main.c tpop3d-1.5.3/main.c
+--- tpop3d-1.5.3.org/main.c	2006-06-02 10:37:54.000000000 +0200
++++ tpop3d-1.5.3/main.c	2006-06-02 11:02:44.000000000 +0200
+@@ -473,6 +473,9 @@
+         }
+     }
+ 
++    /* Initialize event handlers */
++    event_init();
++
+     /* Identify addresses on which to listen.
+      * The syntax for these is <addr>[:port][(domain)]. */
+     s = config_get_string("listen-address");
+diff -urN tpop3d-1.5.3.org/netloop.c tpop3d-1.5.3/netloop.c
+--- tpop3d-1.5.3.org/netloop.c	2006-06-02 10:37:54.000000000 +0200
++++ tpop3d-1.5.3/netloop.c	2006-06-02 11:03:12.000000000 +0200
+@@ -30,6 +30,7 @@
+ 
+ #include <sys/socket.h>
+ #include <sys/time.h>
++#include <event.h>
+ 
+ #include "config.h"
+ #include "connection.h"
+@@ -67,10 +68,9 @@
+ 
+ /* 
+  * Theory of operation:
+- * 
+- * The main loop is in net_loop, below; it calls listeners_ and
+- * connections_pre_select, then calls select, then calls listeners_ and
+- * connections_post_select. In the event that a server is forked to handle a
++ *
++ * The main loop is in net_loop, below; it calls event_dispatch which handles
++ * all network events. In the event that a server is forked to handle a
+  * client, fork_child is called. The global variables listeners and
+  * connections are used to handle this procedure.
+  */
+@@ -103,25 +103,11 @@
+         if (*J == c) *J = NULL;
+ }
+ 
+-/* listeners_pre_select:
+- * Called before the main select(2) so listening sockets can be polled. */
+-static void listeners_pre_select(int *n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds) {
+-    item *t;
+-    vector_iterate(listeners, t) {
+-        int s = ((listener)t->v)->s;
+-        FD_SET(s, readfds);
+-        if (s > *n) *n = s;
+-    }
+-}
+-
+ /* listeners_post_select:
+  * Called after the main select(2) to allow listening sockets to sort
+  * themselves out. */
+-static void listeners_post_select(fd_set *readfds, fd_set *writefds, fd_set *exceptfds) {
+-    item *t;
+-    vector_iterate(listeners, t) {
+-        listener L = (listener)t->v;
+-        if (FD_ISSET(L->s, readfds)) {
++void listeners_post_event(int fd, short event_type, void *vL) {
++	listener L = vL;
+             struct sockaddr_in sin, sinlocal;
+             size_t l = sizeof(sin);
+             static int tcp_send_buf = -1;
+@@ -185,20 +171,8 @@
+ 
+             if (errno != EAGAIN && errno != EINTR)
+                 log_print(LOG_ERR, "net_loop: accept: %m");
+-            
+-        }
+-    }
+ }
+ 
+-/* connections_pre_select:
+- * Called before the main select(2) so connections can be polled. */
+-static void connections_pre_select(int *n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds) {
+-    connection *J;
+-    for (J = connections; J < connections + max_connections; ++J)
+-        /* Don't add frozen connections to the select masks. */
+-        if (*J && !connection_isfrozen(*J) && (*J)->cstate != closed)
+-            (*J)->io->pre_select(*J, n, readfds, writefds, exceptfds);
+-}
+ 
+ /* fork_child CONNECTION
+  * Handle forking a child to handle CONNECTION after authentication. Returns 1
+@@ -380,27 +354,13 @@
+  * running/closing/closed state machine around and reading and writing the I/O
+  * buffers. We need to try to parse commands when it's indicated that data have
+  * been read, and react to the changed state of any connection. */
+-static void connections_post_select(fd_set *readfds, fd_set *writefds, fd_set *exceptfds) {
+-    static size_t i;
+-    size_t i0;
+-    time_t start;
+-
+-    time(&start);
+-
+-    for (i0 = (i + max_connections - 1) % max_connections; time(NULL) < start + LATENCY && i != i0; i = (i + 1) % max_connections) {
+-        connection c;
++void connection_post_event(int fd, short event_type, void *vc) {
+         int r;
+ 
+-        if (!(c = connections[i]))
+-            continue;
+-
+-        if (i > 0 && post_fork) {
+-            connections[0] = c;
+-            connections[i] = NULL;
+-        }
++	connection c = vc;
+ 
+         /* Handle all post-select I/O. */
+-        r = c->io->post_select(c, readfds, writefds, exceptfds);
++	r = c->io->post_event(fd, event_type, vc);
+ 
+         if (r && !connection_isfrozen(c)) {
+             /*
+@@ -439,19 +399,11 @@
+                 if (!c || c->do_shutdown)
+                     break;
+             }
+-
+-            if (post_fork) {
+-                if (i != 0) {
+-                    connections[0] = connections[i];
+-                    connections[i] = NULL;
+-                }
+-                i = 0;
+-                break;
+             }
+ 
++	/* if connection has been destroyed, return */
+             if (!c)
+-                continue; /* if connection has been destroyed, do next one */
+-        }
++		return;
+ 
+         /* Timeout handling. */
+         if (timeout_seconds && (time(NULL) > (c->idlesince + timeout_seconds))) {
+@@ -499,19 +451,12 @@
+             }
+             log_print(LOG_INFO, _("connections_post_select: client %s: disconnected; %d/%d bytes read/written"), c->idstr, c->nrd, c->nwr);
+ 
+-/*            remove_connection(c);*/
+-            connections[i] = NULL;
++		remove_connection(c);
+             connection_delete(c);
+             /* If this is a child process, we exit now. */
+             if (post_fork)
+                 _exit(0);
+         }
+-
+-        if (post_fork) {
+-            i = 0;
+-            break;
+-        }
+-    }
+ }
+ 
+ /* net_loop
+@@ -520,6 +465,7 @@
+ sig_atomic_t foad = 0, restart = 0; /* Flags used to indicate that we should exit or should re-exec. */
+ 
+ void net_loop(void) {
++	extern int (*event_sigcb)(void);
+     connection *J;
+ #ifdef AUTH_OTHER
+     extern pid_t auth_other_childdied;
+@@ -538,31 +484,12 @@
+ 
+     log_print(LOG_INFO, _("net_loop: tpop3d version %s successfully started"), TPOP3D_VERSION);
+     
++    
+     /* Main select() loop */
+     while (!foad) {
+-        fd_set readfds, writefds;
+-        struct timeval tv = {0};
+-        int n = 0, e;
+-
+-        FD_ZERO(&readfds);
+-        FD_ZERO(&writefds);
+-
+-        tv.tv_sec = 1;  /* must be smaller than timeout */
+-
+-        if (!post_fork) listeners_pre_select(&n, &readfds, &writefds, NULL);
+ 
+-        connections_pre_select(&n, &readfds, &writefds, NULL);
+-
+-        e = select(n + 1, &readfds, &writefds, NULL, &tv);
+-        if (e == -1 && errno != EINTR) {
+-            log_print(LOG_WARNING, "net_loop: select: %m");
+-        } else if (e >= 0) {
+-            /* Check for new incoming connections */
+-            if (!post_fork) listeners_post_select(&readfds, &writefds, NULL);
+-
+-            /* Monitor existing connections */
+-            connections_post_select(&readfds, &writefds, NULL);
+-        }
++    	event_sigcb = event_sigcb_handler;
++		event_dispatch();
+ 
+         sigprocmask(SIG_BLOCK, &chmask, NULL);
+         
+diff -urN tpop3d-1.5.3.org/signals.c tpop3d-1.5.3/signals.c
+--- tpop3d-1.5.3.org/signals.c	2003-07-18 10:26:00.000000000 +0200
++++ tpop3d-1.5.3/signals.c	2006-06-02 11:02:44.000000000 +0200
+@@ -95,6 +95,9 @@
+ /* terminate_signal_handler:
+  * Signal handler to handle orderly termination of the program. */
+ void terminate_signal_handler(const int i) {
++	extern int event_gotsig;
++	event_gotsig = 1;
++    
+     foad = i;
+ }
+ 
+@@ -112,6 +115,9 @@
+ 
+ void die_signal_handler(const int i) {
+     struct sigaction sa = {0};
++    extern int event_gotsig;
++	
++	event_gotsig = 1;
+ /*    log_print(LOG_ERR, "quit: %s", sys_siglist[i]); */
+     log_print(LOG_ERR, _("quit: signal %d post_fork = %d"), i, post_fork); /* Some systems do not have sys_siglist. */
+ #ifdef APPALLING_BACKTRACE_HACK
+@@ -141,6 +147,9 @@
+ void child_signal_handler(const int i) {
+     pid_t pid;
+     int e, status;
++    extern int event_gotsig;
++	
++	event_gotsig = 1;
+ 
+     /* Save errno. */
+     e = errno;
+@@ -185,10 +194,21 @@
+ /* restart_signal_handler:
+  * Signal handler to restart the server on receiving a SIGHUP. */
+ void restart_signal_handler(const int i) {
++	extern int event_gotsig;
++	event_gotsig = 1;
++
+     if (!post_fork) {
+         foad = i;
+         restart = 1;
+     }
+ }
+ 
++/* event_sigcb_handler:
++ * Return error to event_dispatch() causing it's termination */
++int event_sigcb_handler(void) {
++	if (foad)
++		return -1;
++	else
++		return 1;
++}
+ 
+diff -urN tpop3d-1.5.3.org/signals.h tpop3d-1.5.3/signals.h
+--- tpop3d-1.5.3.org/signals.h	2003-01-09 23:59:39.000000000 +0100
++++ tpop3d-1.5.3/signals.h	2006-06-02 11:02:44.000000000 +0200
+@@ -17,5 +17,6 @@
+ void die_signal_handler(const int i);
+ void child_signal_handler(const int i);
+ void restart_signal_handler(const int i);
++int event_sigcb_handler(void);
+ 
+ #endif /* __SIGNALS_H_ */
