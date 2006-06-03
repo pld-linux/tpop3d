@@ -12,7 +12,7 @@ diff -urN tpop3d-1.5.3.org/configure.in tpop3d-1.5.3/configure.in
  dnl The various authentication options.
 diff -urN tpop3d-1.5.3.org/connection.c tpop3d-1.5.3/connection.c
 --- tpop3d-1.5.3.org/connection.c	2006-06-03 23:40:00.000000000 +0200
-+++ tpop3d-1.5.3/connection.c	2006-06-03 23:40:37.000000000 +0200
++++ tpop3d-1.5.3/connection.c	2006-06-04 01:14:04.000000000 +0200
 @@ -38,6 +38,8 @@
  
  extern int verbose;
@@ -53,15 +53,6 @@ diff -urN tpop3d-1.5.3.org/connection.c tpop3d-1.5.3/connection.c
      if (c->a) authcontext_delete(c->a);
      if (c->m) (c->m)->delete(c->m);
  
-@@ -264,7 +274,7 @@
- /* connection_freeze:
-  * Mark a connection as frozen. */
- void connection_freeze(connection c) {
--    c->frozenuntil = time(NULL) + 3;
-+    c->frozenuntil = 0; // time(NULL) + 3;
- }
- 
- /* pop3_commands:
 diff -urN tpop3d-1.5.3.org/connection.h tpop3d-1.5.3/connection.h
 --- tpop3d-1.5.3.org/connection.h	2003-01-09 23:59:37.000000000 +0100
 +++ tpop3d-1.5.3/connection.h	2006-06-03 23:40:37.000000000 +0200
@@ -92,7 +83,7 @@ diff -urN tpop3d-1.5.3.org/connection.h tpop3d-1.5.3/connection.h
       * Shut down the connection. Returns zero on success, IOABS_WOULDBLOCK if
 diff -urN tpop3d-1.5.3.org/ioabs_tcp.c tpop3d-1.5.3/ioabs_tcp.c
 --- tpop3d-1.5.3.org/ioabs_tcp.c	2003-09-30 20:45:46.000000000 +0200
-+++ tpop3d-1.5.3/ioabs_tcp.c	2006-06-03 23:40:37.000000000 +0200
++++ tpop3d-1.5.3/ioabs_tcp.c	2006-06-04 01:14:04.000000000 +0200
 @@ -25,6 +25,7 @@
  /* ioabs_tcp_shutdown:
   * Shut down the socket connection. */
@@ -160,7 +151,7 @@ diff -urN tpop3d-1.5.3.org/ioabs_tcp.c tpop3d-1.5.3/ioabs_tcp.c
      return io;
 diff -urN tpop3d-1.5.3.org/ioabs_tls.c tpop3d-1.5.3/ioabs_tls.c
 --- tpop3d-1.5.3.org/ioabs_tls.c	2006-06-03 23:40:00.000000000 +0200
-+++ tpop3d-1.5.3/ioabs_tls.c	2006-06-03 23:40:37.000000000 +0200
++++ tpop3d-1.5.3/ioabs_tls.c	2006-06-04 01:14:04.000000000 +0200
 @@ -44,6 +44,7 @@
  /* underlying_shutdown CONNECTION
   * Shut down the underlying transport for CONNECTION. */
@@ -225,7 +216,7 @@ diff -urN tpop3d-1.5.3.org/ioabs_tls.c tpop3d-1.5.3/ioabs_tls.c
  
 diff -urN tpop3d-1.5.3.org/listener.c tpop3d-1.5.3/listener.c
 --- tpop3d-1.5.3.org/listener.c	2003-11-14 19:08:29.000000000 +0100
-+++ tpop3d-1.5.3/listener.c	2006-06-03 23:40:37.000000000 +0200
++++ tpop3d-1.5.3/listener.c	2006-06-04 01:14:04.000000000 +0200
 @@ -42,6 +42,8 @@
  
  #include "util.h"
@@ -277,7 +268,7 @@ diff -urN tpop3d-1.5.3.org/listener.h tpop3d-1.5.3/listener.h
  /* the arguments of the constructor vary according to the particular
 diff -urN tpop3d-1.5.3.org/main.c tpop3d-1.5.3/main.c
 --- tpop3d-1.5.3.org/main.c	2006-06-03 23:40:00.000000000 +0200
-+++ tpop3d-1.5.3/main.c	2006-06-03 23:40:37.000000000 +0200
++++ tpop3d-1.5.3/main.c	2006-06-04 01:14:04.000000000 +0200
 @@ -483,6 +483,9 @@
          }
      }
@@ -290,7 +281,7 @@ diff -urN tpop3d-1.5.3.org/main.c tpop3d-1.5.3/main.c
      s = config_get_string("listen-address");
 diff -urN tpop3d-1.5.3.org/netloop.c tpop3d-1.5.3/netloop.c
 --- tpop3d-1.5.3.org/netloop.c	2006-06-03 23:40:00.000000000 +0200
-+++ tpop3d-1.5.3/netloop.c	2006-06-03 23:41:32.000000000 +0200
++++ tpop3d-1.5.3/netloop.c	2006-06-04 01:17:46.000000000 +0200
 @@ -30,6 +30,7 @@
  
  #include <sys/socket.h>
@@ -350,7 +341,7 @@ diff -urN tpop3d-1.5.3.org/netloop.c tpop3d-1.5.3/netloop.c
              struct sockaddr_in sin, sinlocal;
              size_t l = sizeof(sin);
              static int tcp_send_buf = -1;
-@@ -185,19 +173,25 @@
+@@ -185,19 +173,24 @@
  
              if (errno != EAGAIN && errno != EINTR)
                  log_print(LOG_ERR, "net_loop: accept: %m");
@@ -372,8 +363,7 @@ diff -urN tpop3d-1.5.3.org/netloop.c tpop3d-1.5.3/netloop.c
 +static void connections_reschedule_event(connection c) {
 +    short want_event;
 +
-+    /* Don't add frozen connections to the select masks. */
-+    if (c && !connection_isfrozen(c) && c->cstate != closed) {
++    if (c && c->cstate != closed) {
 +	    want_event = c->io->reschedule_event(c);
 +	    /* update if required events are not pending */
 +	    if ((want_event & EV_READ && !event_pending(&c->ev, EV_READ, NULL)) 
@@ -387,7 +377,7 @@ diff -urN tpop3d-1.5.3.org/netloop.c tpop3d-1.5.3/netloop.c
  }
  
  /* fork_child CONNECTION
-@@ -380,27 +374,13 @@
+@@ -380,27 +373,17 @@
   * running/closing/closed state machine around and reading and writing the I/O
   * buffers. We need to try to parse commands when it's indicated that data have
   * been read, and react to the changed state of any connection. */
@@ -402,7 +392,9 @@ diff -urN tpop3d-1.5.3.org/netloop.c tpop3d-1.5.3/netloop.c
 -        connection c;
 +void connection_post_event(int fd, short event_type, void *vc) {
          int r;
--
++	
++	connection c = vc;
+ 
 -        if (!(c = connections[i]))
 -            continue;
 -
@@ -410,8 +402,9 @@ diff -urN tpop3d-1.5.3.org/netloop.c tpop3d-1.5.3/netloop.c
 -            connections[0] = c;
 -            connections[i] = NULL;
 -        }
-+	
-+	connection c = vc;
++	/* freeze connection, wait for new events until freze time passes */
++	if (connection_isfrozen(c))
++		return;
  
          /* Handle all post-select I/O. */
 -        r = c->io->post_select(c, readfds, writefds, exceptfds);
@@ -419,7 +412,7 @@ diff -urN tpop3d-1.5.3.org/netloop.c tpop3d-1.5.3/netloop.c
  
          if (r && !connection_isfrozen(c)) {
              /*
-@@ -438,20 +418,12 @@
+@@ -438,20 +421,12 @@
  
                  if (!c || c->do_shutdown)
                      break;
@@ -445,7 +438,7 @@ diff -urN tpop3d-1.5.3.org/netloop.c tpop3d-1.5.3/netloop.c
  
          /* Timeout handling. */
          if (timeout_seconds && (time(NULL) > (c->idlesince + timeout_seconds))) {
-@@ -499,19 +471,12 @@
+@@ -499,19 +474,14 @@
              }
              log_print(LOG_NOTICE, _("connections_post_select: client %s: disconnected; %d/%d bytes read/written"), c->idstr, c->nrd, c->nwr);
  
@@ -457,16 +450,17 @@ diff -urN tpop3d-1.5.3.org/netloop.c tpop3d-1.5.3/netloop.c
              if (post_fork)
                  _exit(0);
          }
--
+ 
 -        if (post_fork) {
 -            i = 0;
 -            break;
 -        }
 -    }
++	connections_reschedule_event(c);
  }
  
  /* net_loop
-@@ -520,6 +485,7 @@
+@@ -520,6 +490,7 @@
  sig_atomic_t foad = 0, restart = 0; /* Flags used to indicate that we should exit or should re-exec. */
  
  void net_loop(void) {
@@ -474,7 +468,7 @@ diff -urN tpop3d-1.5.3.org/netloop.c tpop3d-1.5.3/netloop.c
      connection *J;
  #ifdef AUTH_OTHER
      extern pid_t auth_other_childdied;
-@@ -537,32 +503,12 @@
+@@ -537,32 +508,12 @@
      connections = (connection*)xcalloc(max_connections, sizeof(connection*));
  
      log_print(LOG_INFO, _("net_loop: tpop3d version %s successfully started"), TPOP3D_VERSION);
@@ -512,7 +506,7 @@ diff -urN tpop3d-1.5.3.org/netloop.c tpop3d-1.5.3/netloop.c
          
 diff -urN tpop3d-1.5.3.org/signals.c tpop3d-1.5.3/signals.c
 --- tpop3d-1.5.3.org/signals.c	2003-07-18 10:26:00.000000000 +0200
-+++ tpop3d-1.5.3/signals.c	2006-06-03 23:40:37.000000000 +0200
++++ tpop3d-1.5.3/signals.c	2006-06-04 01:14:04.000000000 +0200
 @@ -95,6 +95,9 @@
  /* terminate_signal_handler:
   * Signal handler to handle orderly termination of the program. */
@@ -575,4 +569,3 @@ diff -urN tpop3d-1.5.3.org/signals.h tpop3d-1.5.3/signals.h
 +int event_sigcb_handler(void);
  
  #endif /* __SIGNALS_H_ */
-
