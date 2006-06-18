@@ -17,7 +17,7 @@ Summary:	POP3 server
 Summary(pl):	Serwer POP3
 Name:		tpop3d
 Version:	1.5.3
-Release:	23
+Release:	24
 License:	GPL
 Group:		Networking/Daemons
 Source0:	http://www.ex-parrot.com/~chris/tpop3d/%{name}-%{version}.tar.gz
@@ -56,11 +56,8 @@ Provides:	pop3daemon
 Obsoletes:	courier-imap-pop3
 Obsoletes:	imap-pop
 Obsoletes:	imap-pop3
-Obsoletes:	pop3daemon
 Obsoletes:	qpopper
 Obsoletes:	qpopper6
-Obsoletes:	solid-pop3d
-Obsoletes:	solid-pop3d-ssl
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 %description
