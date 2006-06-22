@@ -12,6 +12,7 @@
 %bcond_without	snide		# without snide server responses
 %bcond_with	skipgetpwcheck	# with getpwuid returned struct check ommited (see patch for details)
 %bcond_with	libevent	# libevent instead of select; very experimental
+%bcond_with	poll		# use poll; little experimental
 #
 Summary:	POP3 server
 Summary(pl):	Serwer POP3
@@ -33,6 +34,7 @@ Patch4:		%{name}-disable-dotfile-locking.patch
 Patch5:		%{name}-sql-getpwuid-optional.patch
 Patch6:		%{name}-loglevel.patch
 Patch7:		%{name}-libevent.patch
+Patch8:		%{name}-poll.patch
 URL:		http://www.ex-parrot.com/~chris/tpop3d/
 BuildRequires:	autoconf
 BuildRequires:	automake
@@ -127,6 +129,9 @@ pomiêdzy sesjami.
 %patch6 -p1
 %if %{with libevent}
 %patch7 -p1
+%endif
+%if %{with poll}
+%patch8 -p1
 %endif
 
 %build
