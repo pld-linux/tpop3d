@@ -11,14 +11,12 @@
 %bcond_without	gdbm		# without gdbm auth db
 %bcond_without	snide		# without snide server responses
 %bcond_with	skipgetpwcheck	# with getpwuid returned struct check ommited (see patch for details)
-%bcond_with	libevent	# libevent instead of select; very experimental
-%bcond_with	poll		# use poll; little experimental
 #
 Summary:	POP3 server
 Summary(pl):	Serwer POP3
 Name:		tpop3d
 Version:	1.5.3
-Release:	24
+Release:	25
 License:	GPL
 Group:		Networking/Daemons
 Source0:	http://www.ex-parrot.com/~chris/tpop3d/%{name}-%{version}.tar.gz
@@ -27,14 +25,12 @@ Source1:	%{name}.pamd
 Source2:	%{name}.init
 Source3:	%{name}.conf
 Patch0:		%{name}-ac_am_fixes.patch
-Patch1:		%{name}-cvs20060124.patch
+Patch1:		%{name}-cvs20060622.patch
 Patch2:		%{name}-resolv.patch
 Patch3:		%{name}-pam-vdomain.patch
 Patch4:		%{name}-disable-dotfile-locking.patch
 Patch5:		%{name}-sql-getpwuid-optional.patch
 Patch6:		%{name}-loglevel.patch
-Patch7:		%{name}-libevent.patch
-Patch8:		%{name}-poll.patch
 URL:		http://www.ex-parrot.com/~chris/tpop3d/
 BuildRequires:	autoconf
 BuildRequires:	automake
@@ -127,12 +123,6 @@ pomiêdzy sesjami.
 %patch5 -p0
 %endif
 %patch6 -p1
-%if %{with libevent}
-%patch7 -p1
-%endif
-%if %{with poll}
-%patch8 -p1
-%endif
 
 %build
 %{__aclocal}
