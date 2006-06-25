@@ -35,7 +35,7 @@ diff -urN tpop3d-1.5.3.org/ioabs_tls.c tpop3d-1.5.3/ioabs_tls.c
      if ((io->accept_blocked_on_read && canread) || (io->accept_blocked_on_write && canwrite)) {
 diff -urN tpop3d-1.5.3.org/netloop.c tpop3d-1.5.3/netloop.c
 --- tpop3d-1.5.3.org/netloop.c	2006-06-25 20:16:47.000000000 +0200
-+++ tpop3d-1.5.3/netloop.c	2006-06-25 20:50:08.000000000 +0200
++++ tpop3d-1.5.3/netloop.c	2006-06-25 20:54:05.000000000 +0200
 @@ -124,7 +124,7 @@
      item *t;
      vector_iterate(listeners, t) {
@@ -45,12 +45,16 @@ diff -urN tpop3d-1.5.3.org/netloop.c tpop3d-1.5.3/netloop.c
              struct sockaddr_in sin, sinlocal;
              size_t l = sizeof(sin);
              static int tcp_send_buf = -1;
-@@ -553,6 +553,8 @@
-         int n = 0, e;
+@@ -550,9 +550,11 @@
+     
+     /* Main select() loop */
+     while (!foad) {
+-        int n = 0, e;
++        int n = 0, i, e;
  
         memset(pfds, 0, max_connections * sizeof(struct pollfd));
-+       for (n = 0; n < max_connections; n++)
-+	       pfds[n].fd = -1;
++       for (i = 0; i < max_connections; i++)
++	       pfds[i].fd = -1;
  
          if (!post_fork) listeners_pre_select(&n, pfds);
  
