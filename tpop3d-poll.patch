@@ -1,24 +1,56 @@
-diff -urN tpop3d-1.5.3.org/poll.c tpop3d-1.5.3/poll.c
---- tpop3d-1.5.3.org/poll.c	2006-06-25 20:02:19.000000000 +0200
-+++ tpop3d-1.5.3/poll.c	2006-06-25 20:03:11.000000000 +0200
-@@ -7,6 +7,8 @@
-  *
-  */
+diff -urN tpop3d-1.5.3.org/ioabs_tcp.c tpop3d-1.5.3/ioabs_tcp.c
+--- tpop3d-1.5.3.org/ioabs_tcp.c	2006-06-25 20:16:47.000000000 +0200
++++ tpop3d-1.5.3/ioabs_tcp.c	2006-06-25 20:43:25.000000000 +0200
+@@ -82,7 +82,7 @@
+     struct ioabs_tcp *io;
+     io = (struct ioabs_tcp*)c->io;
  
-+#include "configuration.h"
-+
- #ifndef HAVE_POLL
+-    if (pfds[c->s].revents == POLLIN) {
++    if (pfds[c->s].revents & POLLIN) {
+         /* Can read data. */
+         do {
+             char *r;
+@@ -111,7 +111,7 @@
+         }
+     }
  
- static const char rcsid[] = "$Id$";
-diff -urN tpop3d-1.5.3.org/poll.h tpop3d-1.5.3/poll.h
---- tpop3d-1.5.3.org/poll.h	2006-06-25 20:02:19.000000000 +0200
-+++ tpop3d-1.5.3/poll.h	2006-06-25 20:02:46.000000000 +0200
-@@ -11,6 +11,8 @@
- #ifndef __POLL_H_ /* include guard */
- #define __POLL_H_
+-    if (pfds[c->s].revents == POLLOUT && buffer_available(c->wrb) > 0) {
++    if (pfds[c->s].revents & POLLOUT && buffer_available(c->wrb) > 0) {
+         /* Can write data. */
+         n = 1;
+         do {
+diff -urN tpop3d-1.5.3.org/ioabs_tls.c tpop3d-1.5.3/ioabs_tls.c
+--- tpop3d-1.5.3.org/ioabs_tls.c	2006-06-25 20:16:47.000000000 +0200
++++ tpop3d-1.5.3/ioabs_tls.c	2006-06-25 20:43:36.000000000 +0200
+@@ -252,8 +252,8 @@
+     struct ioabs_tls *io;
+     io = (struct ioabs_tls*)c->io;
  
-+#include "configuration.h"
-+
- #ifdef HAVE_POLL
+-    canread  = pfds[c->s].revents == POLLIN;
+-    canwrite = pfds[c->s].revents == POLLOUT;
++    canread  = pfds[c->s].revents & POLLIN;
++    canwrite = pfds[c->s].revents & POLLOUT;
+     
+     /* First, accept handling. */
+     if ((io->accept_blocked_on_read && canread) || (io->accept_blocked_on_write && canwrite)) {
+diff -urN tpop3d-1.5.3.org/netloop.c tpop3d-1.5.3/netloop.c
+--- tpop3d-1.5.3.org/netloop.c	2006-06-25 20:16:47.000000000 +0200
++++ tpop3d-1.5.3/netloop.c	2006-06-25 20:43:02.000000000 +0200
+@@ -124,7 +124,7 @@
+     item *t;
+     vector_iterate(listeners, t) {
+         listener L = (listener)t->v;
+-       if (pfds[L->s].revents == POLLIN) {
++       if (pfds[L->s].revents & POLLIN) {
+             struct sockaddr_in sin, sinlocal;
+             size_t l = sizeof(sin);
+             static int tcp_send_buf = -1;
+@@ -552,7 +552,7 @@
+     while (!foad) {
+         int n = 0, e;
  
- #include <sys/poll.h>
+-       memset(pfds, 0, max_connections * sizeof(struct pollfd));
++       memset(pfds, -1, max_connections * sizeof(struct pollfd));
+ 
+         if (!post_fork) listeners_pre_select(&n, pfds);
+ 
