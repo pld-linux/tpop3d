@@ -58,3 +58,31 @@ diff -urN tpop3d-1.5.3.org/netloop.c tpop3d-1.5.3/netloop.c
  
          if (!post_fork) listeners_pre_select(&n, pfds);
  
+diff -urN tpop3d-1.5.3.org/poll.c tpop3d-1.5.3/poll.c
+--- tpop3d-1.5.3.org/poll.c	2006-06-25 20:41:56.000000000 +0200
++++ tpop3d-1.5.3/poll.c	2006-06-25 22:20:47.000000000 +0200
+@@ -7,6 +7,10 @@
+  *
+  */
+ 
++#ifdef HAVE_CONFIG_H
++#include "configuration.h"
++#endif /* HAVE_CONFIG_H */
++
+ #ifndef HAVE_POLL
+ 
+ static const char rcsid[] = "$Id$";
+diff -urN tpop3d-1.5.3.org/poll.h tpop3d-1.5.3/poll.h
+--- tpop3d-1.5.3.org/poll.h	2006-06-25 20:41:56.000000000 +0200
++++ tpop3d-1.5.3/poll.h	2006-06-25 22:20:54.000000000 +0200
+@@ -11,6 +11,10 @@
+ #ifndef __POLL_H_ /* include guard */
+ #define __POLL_H_
+ 
++#ifdef HAVE_CONFIG_H
++#include "configuration.h"
++#endif /* HAVE_CONFIG_H */
++
+ #ifdef HAVE_POLL
+ 
+ #include <sys/poll.h>
