@@ -5,7 +5,7 @@ diff -urN tpop3d-1.5.3.org/poll.c tpop3d-1.5.3/poll.c
   *
   */
  
-+#include "config.h"
++#include "configuration.h"
 +
  #ifndef HAVE_POLL
  
@@ -17,7 +17,7 @@ diff -urN tpop3d-1.5.3.org/poll.h tpop3d-1.5.3/poll.h
  #ifndef __POLL_H_ /* include guard */
  #define __POLL_H_
  
-+#include "config.h"
++#include "configuration.h"
 +
  #ifdef HAVE_POLL
  
