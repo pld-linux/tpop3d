@@ -1,5 +1,5 @@
-diff -urN tpop3d-1.5.3.org/auth_flatfile.c tpop3d/auth_flatfile.c
---- tpop3d-1.5.3.org/auth_flatfile.c	2003-02-18 00:18:32.000000000 +0100
+diff -urN tpop3d-1.5.3/auth_flatfile.c tpop3d/auth_flatfile.c
+--- tpop3d-1.5.3/auth_flatfile.c	2003-02-18 00:18:32.000000000 +0100
 +++ tpop3d/auth_flatfile.c	2004-06-20 02:06:30.000000000 +0200
 @@ -11,7 +11,7 @@
  #endif /* HAVE_CONFIG_H */
@@ -37,8 +37,8 @@ diff -urN tpop3d-1.5.3.org/auth_flatfile.c tpop3d/auth_flatfile.c
  }
  
  /* auth_flatfile_new_user_pass:
-diff -urN tpop3d-1.5.3.org/auth_gdbm.c tpop3d/auth_gdbm.c
---- tpop3d-1.5.3.org/auth_gdbm.c	1970-01-01 01:00:00.000000000 +0100
+diff -urN tpop3d-1.5.3/auth_gdbm.c tpop3d/auth_gdbm.c
+--- tpop3d-1.5.3/auth_gdbm.c	1970-01-01 01:00:00.000000000 +0100
 +++ tpop3d/auth_gdbm.c	2005-08-05 16:48:22.000000000 +0200
 @@ -0,0 +1,196 @@
 +/*
@@ -237,8 +237,8 @@ diff -urN tpop3d-1.5.3.org/auth_gdbm.c tpop3d/auth_gdbm.c
 +}
 +
 +#endif /* AUTH_GDBM */
-diff -urN tpop3d-1.5.3.org/auth_gdbm.h tpop3d/auth_gdbm.h
---- tpop3d-1.5.3.org/auth_gdbm.h	1970-01-01 01:00:00.000000000 +0100
+diff -urN tpop3d-1.5.3/auth_gdbm.h tpop3d/auth_gdbm.h
+--- tpop3d-1.5.3/auth_gdbm.h	1970-01-01 01:00:00.000000000 +0100
 +++ tpop3d/auth_gdbm.h	2005-08-05 16:48:22.000000000 +0200
 @@ -0,0 +1,35 @@
 +/*
@@ -276,8 +276,8 @@ diff -urN tpop3d-1.5.3.org/auth_gdbm.h tpop3d/auth_gdbm.h
 +#endif /* AUTH_GDBM */
 +
 +#endif /* __AUTH_GDBM_H_ */
-diff -urN tpop3d-1.5.3.org/auth_mysql.c tpop3d/auth_mysql.c
---- tpop3d-1.5.3.org/auth_mysql.c	2003-07-15 01:31:20.000000000 +0200
+diff -urN tpop3d-1.5.3/auth_mysql.c tpop3d/auth_mysql.c
+--- tpop3d-1.5.3/auth_mysql.c	2003-07-15 01:31:20.000000000 +0200
 +++ tpop3d/auth_mysql.c	2004-08-20 01:57:05.000000000 +0200
 @@ -11,7 +11,7 @@
  #endif /* HAVE_CONFIG_H */
@@ -351,8 +351,8 @@ diff -urN tpop3d-1.5.3.org/auth_mysql.c tpop3d/auth_mysql.c
                      break;
                  }
  
-diff -urN tpop3d-1.5.3.org/auth_pgsql.c tpop3d/auth_pgsql.c
---- tpop3d-1.5.3.org/auth_pgsql.c	2003-07-15 01:31:20.000000000 +0200
+diff -urN tpop3d-1.5.3/auth_pgsql.c tpop3d/auth_pgsql.c
+--- tpop3d-1.5.3/auth_pgsql.c	2003-07-15 01:31:20.000000000 +0200
 +++ tpop3d/auth_pgsql.c	2004-08-20 01:57:05.000000000 +0200
 @@ -13,7 +13,7 @@
  #endif /* HAVE_CONFIG_H */
@@ -405,8 +405,8 @@ diff -urN tpop3d-1.5.3.org/auth_pgsql.c tpop3d/auth_pgsql.c
  
  int auth_pgsql_init(void) {
      char *username = NULL, *password = NULL, *hostname = NULL, *database = NULL, *localhost = "localhost", *s;
-diff -urN tpop3d-1.5.3.org/authswitch.c tpop3d/authswitch.c
---- tpop3d-1.5.3.org/authswitch.c	2003-11-24 20:58:28.000000000 +0100
+diff -urN tpop3d-1.5.3/authswitch.c tpop3d/authswitch.c
+--- tpop3d-1.5.3/authswitch.c	2003-11-24 20:58:28.000000000 +0100
 +++ tpop3d/authswitch.c	2005-08-25 15:21:58.000000000 +0200
 @@ -6,7 +6,7 @@
   *
@@ -526,9 +526,9 @@ diff -urN tpop3d-1.5.3.org/authswitch.c tpop3d/authswitch.c
  
      a->auth = NULL;
      a->user = NULL;
-diff -urN tpop3d-1.5.3.org/cfgdirectives.c tpop3d/cfgdirectives.c
---- tpop3d-1.5.3.org/cfgdirectives.c	2003-11-24 20:58:28.000000000 +0100
-+++ tpop3d/cfgdirectives.c	2005-12-20 22:41:19.000000000 +0100
+diff -urN tpop3d-1.5.3/cfgdirectives.c tpop3d/cfgdirectives.c
+--- tpop3d-1.5.3/cfgdirectives.c	2003-11-24 20:58:28.000000000 +0100
++++ tpop3d/cfgdirectives.c	2006-06-26 07:30:24.000000000 +0200
 @@ -9,7 +9,7 @@
   *
   */
@@ -538,7 +538,7 @@ diff -urN tpop3d-1.5.3.org/cfgdirectives.c tpop3d/cfgdirectives.c
  
  #ifdef HAVE_CONFIG_H
  #include "configuration.h"
-@@ -25,14 +25,20 @@
+@@ -25,18 +25,28 @@
      "append-domain",
      "strip-domain",
      "timeout-seconds",
@@ -559,7 +559,15 @@ diff -urN tpop3d-1.5.3.org/cfgdirectives.c tpop3d/cfgdirectives.c
   
  #if defined(MBOX_BSD) && defined(MBOX_BSD_SAVE_INDICES)
      "mailspool-index",
-@@ -52,6 +58,10 @@
+ #endif
++
++#ifdef MBOX_BSD
++    "mailspool-no-dotfile-locking",
++#endif
+     
+ #ifdef USE_TCP_WRAPPERS
+     "tcp-wrappers-name",
+@@ -52,6 +62,10 @@
      
  #ifdef MBOX_MAILDIR
      "maildir-exclusive-lock",
@@ -570,7 +578,7 @@ diff -urN tpop3d-1.5.3.org/cfgdirectives.c tpop3d/cfgdirectives.c
  #endif
  
  #ifdef USE_TLS
-@@ -145,6 +155,14 @@
+@@ -145,6 +159,14 @@
      "auth-flatfile-passwd-file",
  #endif /* AUTH_FLATFILE */
  
@@ -585,10 +593,10 @@ diff -urN tpop3d-1.5.3.org/cfgdirectives.c tpop3d/cfgdirectives.c
      /* final entry must be NULL */
      NULL};
  
-diff -urN tpop3d-1.5.3.org/CHANGES tpop3d/CHANGES
---- tpop3d-1.5.3.org/CHANGES	2003-11-24 21:26:07.000000000 +0100
-+++ tpop3d/CHANGES	2006-06-22 19:43:46.000000000 +0200
-@@ -1,5 +1,31 @@
+diff -urN tpop3d-1.5.3/CHANGES tpop3d/CHANGES
+--- tpop3d-1.5.3/CHANGES	2003-11-24 21:26:07.000000000 +0100
++++ tpop3d/CHANGES	2006-06-26 07:30:23.000000000 +0200
+@@ -1,5 +1,32 @@
  Changes for tpop3d
 -$Id$
 +$Id$
@@ -617,12 +625,13 @@ diff -urN tpop3d-1.5.3.org/CHANGES tpop3d/CHANGES
 +compliance with Maildir++ (thanks to Arkadiusz Miskiewicz). Added support
 +for syslog like log levels. (log-level config option) Replace use of select(2)
 +with poll(2), to fix `Bad file descriptor' error on very busy servers (thanks
-+to Arkadiusz Miskiewicz for this patch).
++to Arkadiusz Miskiewicz for this patch). Added mailspool-no-dotfile-locking
++option to switch off dot-locks at runtime (useful for sites using quotas).
  
  1.5.3
  
-diff -urN tpop3d-1.5.3.org/configure.in tpop3d/configure.in
---- tpop3d-1.5.3.org/configure.in	2003-11-24 20:59:13.000000000 +0100
+diff -urN tpop3d-1.5.3/configure.in tpop3d/configure.in
+--- tpop3d-1.5.3/configure.in	2003-11-24 20:59:13.000000000 +0100
 +++ tpop3d/configure.in	2006-06-22 19:43:46.000000000 +0200
 @@ -6,7 +6,7 @@
  dnl
@@ -775,8 +784,8 @@ diff -urN tpop3d-1.5.3.org/configure.in tpop3d/configure.in
  dnl If flock and fcntl are selected, there's a chance that they
  dnl will deadlock.  We do a test for this here...
  
-diff -urN tpop3d-1.5.3.org/connection.c tpop3d/connection.c
---- tpop3d-1.5.3.org/connection.c	2003-11-14 20:15:20.000000000 +0100
+diff -urN tpop3d-1.5.3/connection.c tpop3d/connection.c
+--- tpop3d-1.5.3/connection.c	2003-11-14 20:15:20.000000000 +0100
 +++ tpop3d/connection.c	2004-09-15 21:26:28.000000000 +0200
 @@ -6,7 +6,7 @@
   *
@@ -968,8 +977,8 @@ diff -urN tpop3d-1.5.3.org/connection.c tpop3d/connection.c
  write_failure:
      log_print(LOG_ERR, _("connection_sendmessage: send failure"));
      munmap(filemem, length);
-diff -urN tpop3d-1.5.3.org/connection.h tpop3d/connection.h
---- tpop3d-1.5.3.org/connection.h	2003-01-09 23:59:37.000000000 +0100
+diff -urN tpop3d-1.5.3/connection.h tpop3d/connection.h
+--- tpop3d-1.5.3/connection.h	2003-01-09 23:59:37.000000000 +0100
 +++ tpop3d/connection.h	2006-06-22 19:43:46.000000000 +0200
 @@ -4,7 +4,7 @@
   *
@@ -1005,8 +1014,8 @@ diff -urN tpop3d-1.5.3.org/connection.h tpop3d/connection.h
  
      /* shutdown:
       * Shut down the connection. Returns zero on success, IOABS_WOULDBLOCK if
-diff -urN tpop3d-1.5.3.org/INSTALL tpop3d/INSTALL
---- tpop3d-1.5.3.org/INSTALL	2003-01-10 00:25:59.000000000 +0100
+diff -urN tpop3d-1.5.3/INSTALL tpop3d/INSTALL
+--- tpop3d-1.5.3/INSTALL	2003-01-10 00:25:59.000000000 +0100
 +++ tpop3d/INSTALL	2005-05-22 13:54:12.000000000 +0200
 @@ -1,5 +1,5 @@
  Installation instructions for tpop3d
@@ -1032,9 +1041,9 @@ diff -urN tpop3d-1.5.3.org/INSTALL tpop3d/INSTALL
  
        Note that to use APOP, the plaintext password type must be specified for
        a user, but this does not stop them logging in via any other method with
-diff -urN tpop3d-1.5.3.org/ioabs_tcp.c tpop3d/ioabs_tcp.c
---- tpop3d-1.5.3.org/ioabs_tcp.c	2003-09-30 20:45:46.000000000 +0200
-+++ tpop3d/ioabs_tcp.c	2006-06-22 19:43:46.000000000 +0200
+diff -urN tpop3d-1.5.3/ioabs_tcp.c tpop3d/ioabs_tcp.c
+--- tpop3d-1.5.3/ioabs_tcp.c	2003-09-30 20:45:46.000000000 +0200
++++ tpop3d/ioabs_tcp.c	2006-06-26 07:30:24.000000000 +0200
 @@ -7,7 +7,7 @@
   *
   */
@@ -1083,7 +1092,7 @@ diff -urN tpop3d-1.5.3.org/ioabs_tcp.c tpop3d/ioabs_tcp.c
      io = (struct ioabs_tcp*)c->io;
  
 -    if (FD_ISSET(c->s, readfds)) {
-+    if (pfds[c->s].revents == POLLIN) {
++    if (pfds[c->s].revents & (POLLIN | POLLHUP)) {
          /* Can read data. */
          do {
              char *r;
@@ -1092,13 +1101,13 @@ diff -urN tpop3d-1.5.3.org/ioabs_tcp.c tpop3d/ioabs_tcp.c
      }
  
 -    if (FD_ISSET(c->s, writefds) && buffer_available(c->wrb) > 0) {
-+    if (pfds[c->s].revents == POLLOUT && buffer_available(c->wrb) > 0) {
++    if (pfds[c->s].revents & POLLOUT && buffer_available(c->wrb) > 0) {
          /* Can write data. */
          n = 1;
          do {
-diff -urN tpop3d-1.5.3.org/ioabs_tls.c tpop3d/ioabs_tls.c
---- tpop3d-1.5.3.org/ioabs_tls.c	2003-11-24 20:58:28.000000000 +0100
-+++ tpop3d/ioabs_tls.c	2006-06-22 19:43:46.000000000 +0200
+diff -urN tpop3d-1.5.3/ioabs_tls.c tpop3d/ioabs_tls.c
+--- tpop3d-1.5.3/ioabs_tls.c	2003-11-24 20:58:28.000000000 +0100
++++ tpop3d/ioabs_tls.c	2006-06-26 07:30:24.000000000 +0200
 @@ -11,7 +11,7 @@
  
  #ifdef USE_TLS
@@ -1151,8 +1160,8 @@ diff -urN tpop3d-1.5.3.org/ioabs_tls.c tpop3d/ioabs_tls.c
  
 -    canread  = FD_ISSET(c->s, readfds);
 -    canwrite = FD_ISSET(c->s, writefds);
-+    canread  = pfds[c->s].revents == POLLIN;
-+    canwrite = pfds[c->s].revents == POLLOUT;
++    canread  = pfds[c->s].revents & (POLLIN | POLLHUP);
++    canwrite = pfds[c->s].revents & POLLOUT;
      
      /* First, accept handling. */
      if ((io->accept_blocked_on_read && canread) || (io->accept_blocked_on_write && canwrite)) {
@@ -1177,8 +1186,8 @@ diff -urN tpop3d-1.5.3.org/ioabs_tls.c tpop3d/ioabs_tls.c
                  case SSL_ERROR_SSL:
                  default:
                      log_print(LOG_ERR, _("ioabs_tls_post_select: client %s: SSL_accept: %s; closing connection"), c->idstr, ERR_reason_error_string(ERR_get_error()));
-diff -urN tpop3d-1.5.3.org/logging.c tpop3d/logging.c
---- tpop3d-1.5.3.org/logging.c	2003-07-15 01:31:20.000000000 +0200
+diff -urN tpop3d-1.5.3/logging.c tpop3d/logging.c
+--- tpop3d-1.5.3/logging.c	2003-07-15 01:31:20.000000000 +0200
 +++ tpop3d/logging.c	2005-12-20 22:41:19.000000000 +0100
 @@ -7,7 +7,7 @@
   *
@@ -1279,8 +1288,8 @@ diff -urN tpop3d-1.5.3.org/logging.c tpop3d/logging.c
      va_start(ap, fmt);
      s = verrprintf(fmt, ap);
      va_end(ap);
-diff -urN tpop3d-1.5.3.org/mailbox.c tpop3d/mailbox.c
---- tpop3d-1.5.3.org/mailbox.c	2003-01-09 23:59:37.000000000 +0100
+diff -urN tpop3d-1.5.3/mailbox.c tpop3d/mailbox.c
+--- tpop3d-1.5.3/mailbox.c	2003-01-09 23:59:37.000000000 +0100
 +++ tpop3d/mailbox.c	2005-11-02 17:23:08.000000000 +0100
 @@ -4,7 +4,7 @@
   *
@@ -1349,8 +1358,8 @@ diff -urN tpop3d-1.5.3.org/mailbox.c tpop3d/mailbox.c
      
  #ifdef MAILSPOOL_DIR
      /* Then the compiled-in default. */
-diff -urN tpop3d-1.5.3.org/maildir.c tpop3d/maildir.c
---- tpop3d-1.5.3.org/maildir.c	2003-11-24 21:23:20.000000000 +0100
+diff -urN tpop3d-1.5.3/maildir.c tpop3d/maildir.c
+--- tpop3d-1.5.3/maildir.c	2003-11-24 21:23:20.000000000 +0100
 +++ tpop3d/maildir.c	2005-12-10 12:08:25.000000000 +0100
 @@ -13,7 +13,7 @@
  
@@ -1593,9 +1602,9 @@ diff -urN tpop3d-1.5.3.org/maildir.c tpop3d/maildir.c
      return 1;
  }
  
-diff -urN tpop3d-1.5.3.org/mailspool.c tpop3d/mailspool.c
---- tpop3d-1.5.3.org/mailspool.c	2003-11-06 02:19:27.000000000 +0100
-+++ tpop3d/mailspool.c	2006-01-24 18:23:37.000000000 +0100
+diff -urN tpop3d-1.5.3/mailspool.c tpop3d/mailspool.c
+--- tpop3d-1.5.3/mailspool.c	2003-11-06 02:19:27.000000000 +0100
++++ tpop3d/mailspool.c	2006-06-26 07:30:25.000000000 +0200
 @@ -26,7 +26,7 @@
  #endif /* HAVE_CONFIG_H */
  
@@ -1605,7 +1614,51 @@ diff -urN tpop3d-1.5.3.org/mailspool.c tpop3d/mailspool.c
  
  #include <errno.h>
  #include <fcntl.h>
-@@ -750,6 +750,8 @@
+@@ -60,6 +60,10 @@
+ int mailspool_load_index(mailbox m);
+ #endif /* MBOX_BSD_SAVE_INDICES */
+ 
++/* Don't try to dotfile-lock a mailspool, even if support for doing so is
++ * available. */
++int mailspool_no_dotfile_locking;
++
+ /* file_unlock FD FILENAME
+  * Unlock a mailspool file using the open FD and given FILENAME. Returns 1 on
+  * success or 0 on failure. */
+@@ -74,7 +78,8 @@
+ #endif
+ 
+ #ifdef WITH_DOTFILE_LOCKING
+-    if (name && dotfile_unlock(name) == -1) r = 0;
++    if (!mailspool_no_dotfile_locking
++        && name && dotfile_unlock(name) == -1) r = 0;
+ #endif
+ 
+     return r;
+@@ -97,8 +102,10 @@
+     else l_flock = 1;
+ #endif
+ #ifdef WITH_DOTFILE_LOCKING
+-    if (dotfile_lock(name) == -1) goto fail;
+-    else l_dotfile = 1;
++    if (!mailspool_no_dotfile_locking) {
++        if (dotfile_lock(name) == -1) goto fail;
++        else l_dotfile = 1;
++    }
+ #endif
+ #ifdef WITH_CCLIENT_LOCKING
+     if (cclient_steal_lock(fd) == -1) goto fail;
+@@ -114,7 +121,8 @@
+     if (l_flock) flock_unlock(fd);
+ #endif
+ #ifdef WITH_DOTFILE_LOCKING
+-    if (l_dotfile) dotfile_unlock(name);
++    if (!mailspool_no_dotfile_locking
++        && l_dotfile) dotfile_unlock(name);
+ #endif
+     
+     return 0;
+@@ -750,6 +758,8 @@
      }
  
      if (!feof(fp)) {
@@ -1614,9 +1667,9 @@ diff -urN tpop3d-1.5.3.org/mailspool.c tpop3d/mailspool.c
          log_print(LOG_WARNING, _("mailspool_load_index(%s): index exists, but has some stale or corrupt data"), indexfile);
          goto fail;
      }
-diff -urN tpop3d-1.5.3.org/main.c tpop3d/main.c
---- tpop3d-1.5.3.org/main.c	2003-11-24 20:58:28.000000000 +0100
-+++ tpop3d/main.c	2005-08-25 14:44:07.000000000 +0200
+diff -urN tpop3d-1.5.3/main.c tpop3d/main.c
+--- tpop3d-1.5.3/main.c	2003-11-24 20:58:28.000000000 +0100
++++ tpop3d/main.c	2006-06-26 07:30:25.000000000 +0200
 @@ -7,7 +7,7 @@
   */
  
@@ -1626,7 +1679,31 @@ diff -urN tpop3d-1.5.3.org/main.c tpop3d/main.c
  
  #ifdef HAVE_CONFIG_H
  #include "configuration.h"
-@@ -445,6 +445,8 @@
+@@ -340,6 +340,10 @@
+ extern int mailspool_save_indices;  /* in mailspool.c */
+ #endif
+ 
++#ifdef MBOX_BSD
++extern int mailspool_no_dotfile_locking;    /* in mailspool.c */
++#endif
++
+ int main(int argc, char **argv, char **envp) {
+     int nodaemon = 0;
+     char *configfile = CONFIG_DIR"/tpop3d.conf", *s;
+@@ -427,6 +431,12 @@
+     }
+ #endif
+ 
++    /* Should we skip dotfile-locking. */
++#ifdef MBOX_BSD
++    if (config_get_bool("mailspool-no-dotfile-locking"))
++        mailspool_no_dotfile_locking = 1;
++#endif
++
+     /* We may have been compiled with TCP wrappers support. */
+ #ifdef USE_TCP_WRAPPERS
+     if (!(tcpwrappersname = config_get_string("tcp-wrappers-name")))
+@@ -445,6 +455,8 @@
                  pid_t pid;
                  switch (read_pid_file(pidfile, &pid)) {
                      case pid_file_success:
@@ -1635,7 +1712,7 @@ diff -urN tpop3d-1.5.3.org/main.c tpop3d/main.c
                          if (kill(pid, 0)) {
                              log_print(LOG_ERR, _("%s: stale PID file; removing it"), pidfile);
                              if (unlink(pidfile) == -1) {
-@@ -453,7 +455,7 @@
+@@ -453,7 +465,7 @@
                              } else goto retry_pid_file; /* harmful? */
                              
                          } else {
@@ -1644,8 +1721,8 @@ diff -urN tpop3d-1.5.3.org/main.c tpop3d/main.c
                              return 1;
                          }
                          break;
-diff -urN tpop3d-1.5.3.org/Makefile.am tpop3d/Makefile.am
---- tpop3d-1.5.3.org/Makefile.am	2003-11-24 20:58:28.000000000 +0100
+diff -urN tpop3d-1.5.3/Makefile.am tpop3d/Makefile.am
+--- tpop3d-1.5.3/Makefile.am	2003-11-24 20:58:28.000000000 +0100
 +++ tpop3d/Makefile.am	2006-06-22 19:43:46.000000000 +0200
 @@ -4,24 +4,25 @@
  #
@@ -1678,9 +1755,9 @@ diff -urN tpop3d-1.5.3.org/Makefile.am tpop3d/Makefile.am
  
  CFLAGS += -Wall -g -O2 -DCONFIG_DIR='"@sysconfdir@"' # -Wstrict-prototypes
  
-diff -urN tpop3d-1.5.3.org/netloop.c tpop3d/netloop.c
---- tpop3d-1.5.3.org/netloop.c	2003-11-24 20:58:28.000000000 +0100
-+++ tpop3d/netloop.c	2006-06-22 19:43:46.000000000 +0200
+diff -urN tpop3d-1.5.3/netloop.c tpop3d/netloop.c
+--- tpop3d-1.5.3/netloop.c	2003-11-24 20:58:28.000000000 +0100
++++ tpop3d/netloop.c	2006-06-26 07:30:25.000000000 +0200
 @@ -7,7 +7,7 @@
   *
   */
@@ -1733,7 +1810,7 @@ diff -urN tpop3d-1.5.3.org/netloop.c tpop3d/netloop.c
      vector_iterate(listeners, t) {
          listener L = (listener)t->v;
 -        if (FD_ISSET(L->s, readfds)) {
-+       if (pfds[L->s].revents == POLLIN) {
++       if (pfds[L->s].revents & (POLLIN | POLLHUP)) {
              struct sockaddr_in sin, sinlocal;
              size_t l = sizeof(sin);
 -            int s, a = MAX_DATA_IN_FLIGHT;
@@ -1891,15 +1968,11 @@ diff -urN tpop3d-1.5.3.org/netloop.c tpop3d/netloop.c
      
      sigemptyset(&chmask);
      sigaddset(&chmask, SIGCHLD);
-@@ -498,30 +540,33 @@
+@@ -498,30 +540,30 @@
      max_connections = 2 * max_running_children;
      connections = (connection*)xcalloc(max_connections, sizeof(connection*));
  
-+    pfds = malloc(max_connections * sizeof(struct pollfd));
-+    if (pfds == NULL) {
-+       log_print(LOG_ERR, "net_loop: couldn't allocate memory for poll data");
-+       return;
-+    }
++    pfds = xmalloc(max_connections * sizeof *pfds);
 +
      log_print(LOG_INFO, _("net_loop: tpop3d version %s successfully started"), TPOP3D_VERSION);
      
@@ -1907,11 +1980,13 @@ diff -urN tpop3d-1.5.3.org/netloop.c tpop3d/netloop.c
      while (!foad) {
 -        fd_set readfds, writefds;
 -        struct timeval tv = {1, 0}; /* Must be less than IDLE_TIMEOUT and small enough that termination on receipt of SIGTERM is timely. */
-         int n = 0, e;
+-        int n = 0, e;
++        int n = 0, e, i;
  
 -        FD_ZERO(&readfds);
 -        FD_ZERO(&writefds);
-+       memset(pfds, 0, max_connections * sizeof(struct pollfd));
++        memset(pfds, 0, max_connections * sizeof *pfds); /* XXX */
++        for (i = 0; i < max_connections; ++i) pfds[i].fd = -1;
  
 -        if (!post_fork) listeners_pre_select(&n, &readfds, &writefds, NULL);
 +        if (!post_fork) listeners_pre_select(&n, pfds);
@@ -1920,7 +1995,7 @@ diff -urN tpop3d-1.5.3.org/netloop.c tpop3d/netloop.c
 +        connections_pre_select(&n, pfds);
  
 -        e = select(n + 1, &readfds, &writefds, NULL, &tv);
-+       e = poll(pfds, n + 1, 1000 /* must be smaller than timeout */);
++        e = poll(pfds, n, 1000 /* must be smaller than timeout */);
          if (e == -1 && errno != EINTR) {
 -            log_print(LOG_WARNING, "net_loop: select: %m");
 +            log_print(LOG_WARNING, "net_loop: poll: %m");
@@ -1935,16 +2010,16 @@ diff -urN tpop3d-1.5.3.org/netloop.c tpop3d/netloop.c
          }
  
          sigprocmask(SIG_BLOCK, &chmask, NULL);
-@@ -556,5 +601,7 @@
+@@ -556,5 +598,7 @@
              if (*J) connection_delete(*J);
          xfree(connections);
      }
 +
-+    free(pfds);
++    xfree(pfds);
  }
  
-diff -urN tpop3d-1.5.3.org/password.c tpop3d/password.c
---- tpop3d-1.5.3.org/password.c	2003-09-10 00:52:30.000000000 +0200
+diff -urN tpop3d-1.5.3/password.c tpop3d/password.c
+--- tpop3d-1.5.3/password.c	2003-09-10 00:52:30.000000000 +0200
 +++ tpop3d/password.c	2004-09-29 22:58:00.000000000 +0200
 @@ -31,10 +31,14 @@
  #define _XOPEN_SRC      /* crypt(3), on some systems */
@@ -2001,10 +2076,10 @@ diff -urN tpop3d-1.5.3.org/password.c tpop3d/password.c
              /* Base 64. */
              return strcmp(realhash, md5_digest_str(pass, strlen(pass), 1)) == 0;
          } else
-diff -urN tpop3d-1.5.3.org/poll.c tpop3d/poll.c
---- tpop3d-1.5.3.org/poll.c	1970-01-01 01:00:00.000000000 +0100
-+++ tpop3d/poll.c	2006-06-22 18:57:03.000000000 +0200
-@@ -0,0 +1,82 @@
+diff -urN tpop3d-1.5.3/poll.c tpop3d/poll.c
+--- tpop3d-1.5.3/poll.c	1970-01-01 01:00:00.000000000 +0100
++++ tpop3d/poll.c	2006-06-26 07:30:25.000000000 +0200
+@@ -0,0 +1,88 @@
 +/*
 + * poll.c:
 + * Limited poll(2) implementation with select(2), for systems which lack it.
@@ -2013,6 +2088,10 @@ diff -urN tpop3d-1.5.3.org/poll.c tpop3d/poll.c
 + * Email: chris@ex-parrot.com; WWW: http://www.ex-parrot.com/~chris/
 + *
 + */
++
++#ifdef HAVE_CONFIG_H
++#include <configuration.h>
++#endif
 +
 +#ifndef HAVE_POLL
 +
@@ -2049,8 +2128,7 @@ diff -urN tpop3d-1.5.3.org/poll.c tpop3d/poll.c
 +        fd = ufds[i].fd;
 +
 +        if (fd < 0) {
-+            errno = EBADF;
-+            return -1;
++            next;
 +        }
 +        
 +        if (fd > maxfd)
@@ -2077,6 +2155,9 @@ diff -urN tpop3d-1.5.3.org/poll.c tpop3d/poll.c
 +        fd = ufds[i].fd;
 +
 +        if (FD_ISSET(fd, &rds))
++            /* XXX this is broken -- to comply with the poll(2) semantics we
++             * should test for EOF as well, and set POLLHUP if true. How can
++             * we do that sanely, though? */
 +            ufds[i].revents |= POLLIN;
 +        if (FD_ISSET(fd, &wrs))
 +            ufds[i].revents |= POLLOUT;
@@ -2087,8 +2168,8 @@ diff -urN tpop3d-1.5.3.org/poll.c tpop3d/poll.c
 +
 +#endif /* !HAVE_POLL */
 +
-diff -urN tpop3d-1.5.3.org/poll.h tpop3d/poll.h
---- tpop3d-1.5.3.org/poll.h	1970-01-01 01:00:00.000000000 +0100
+diff -urN tpop3d-1.5.3/poll.h tpop3d/poll.h
+--- tpop3d-1.5.3/poll.h	1970-01-01 01:00:00.000000000 +0100
 +++ tpop3d/poll.h	2006-06-22 18:49:12.000000000 +0200
 @@ -0,0 +1,38 @@
 +/*
@@ -2129,8 +2210,8 @@ diff -urN tpop3d-1.5.3.org/poll.h tpop3d/poll.h
 +#endif
 +
 +#endif /* __POLL_H_ */
-diff -urN tpop3d-1.5.3.org/pop3.c tpop3d/pop3.c
---- tpop3d-1.5.3.org/pop3.c	2003-11-06 02:19:27.000000000 +0100
+diff -urN tpop3d-1.5.3/pop3.c tpop3d/pop3.c
+--- tpop3d-1.5.3/pop3.c	2003-11-06 02:19:27.000000000 +0100
 +++ tpop3d/pop3.c	2005-12-20 22:41:19.000000000 +0100
 @@ -6,7 +6,7 @@
   *
@@ -2324,8 +2405,8 @@ diff -urN tpop3d-1.5.3.org/pop3.c tpop3d/pop3.c
  #endif
                  break;
  
-diff -urN tpop3d-1.5.3.org/README tpop3d/README
---- tpop3d-1.5.3.org/README	2003-11-24 20:59:13.000000000 +0100
+diff -urN tpop3d-1.5.3/README tpop3d/README
+--- tpop3d-1.5.3/README	2003-11-24 20:59:13.000000000 +0100
 +++ tpop3d/README	2004-02-03 20:52:02.000000000 +0100
 @@ -1,7 +1,7 @@
  tpop3d, copyright (c) 2000-2003 Chris Lightfoot <chris@ex-parrot.com>
@@ -2344,8 +2425,8 @@ diff -urN tpop3d-1.5.3.org/README tpop3d/README
      auth-ldap           an LDAP directory
      auth-flatfile       /etc/passwd-style flat files
      auth-other          an external program
-diff -urN tpop3d-1.5.3.org/README.auth_mysql tpop3d/README.auth_mysql
---- tpop3d-1.5.3.org/README.auth_mysql	2001-11-07 01:50:41.000000000 +0100
+diff -urN tpop3d-1.5.3/README.auth_mysql tpop3d/README.auth_mysql
+--- tpop3d-1.5.3/README.auth_mysql	2001-11-07 01:50:41.000000000 +0100
 +++ tpop3d/README.auth_mysql	2004-09-29 22:57:59.000000000 +0200
 @@ -1,5 +1,5 @@
  README for MySQL authentication in tpop3d
@@ -2378,8 +2459,8 @@ diff -urN tpop3d-1.5.3.org/README.auth_mysql tpop3d/README.auth_mysql
  
     Now, we compare the user's password against the stored hash or password,
     and decide whether to authenticate the user or not. If this does not
-diff -urN tpop3d-1.5.3.org/README.bulletins tpop3d/README.bulletins
---- tpop3d-1.5.3.org/README.bulletins	1970-01-01 01:00:00.000000000 +0100
+diff -urN tpop3d-1.5.3/README.bulletins tpop3d/README.bulletins
+--- tpop3d-1.5.3/README.bulletins	1970-01-01 01:00:00.000000000 +0100
 +++ tpop3d/README.bulletins	2003-08-25 20:01:12.000000000 +0200
 @@ -0,0 +1,16 @@
 +Implementing POP3 server bulletins using tpop3d
@@ -2398,8 +2479,8 @@ diff -urN tpop3d-1.5.3.org/README.bulletins tpop3d/README.bulletins
 +bulletin delivery. A simple example of a bulletin script is in
 +scripts/bulletins.
 +
-diff -urN tpop3d-1.5.3.org/scripts/bulletins tpop3d/scripts/bulletins
---- tpop3d-1.5.3.org/scripts/bulletins	1970-01-01 01:00:00.000000000 +0100
+diff -urN tpop3d-1.5.3/scripts/bulletins tpop3d/scripts/bulletins
+--- tpop3d-1.5.3/scripts/bulletins	1970-01-01 01:00:00.000000000 +0100
 +++ tpop3d/scripts/bulletins	2003-08-25 20:01:12.000000000 +0200
 @@ -0,0 +1,96 @@
 +#!/usr/bin/perl -w
@@ -2498,118 +2579,9 @@ diff -urN tpop3d-1.5.3.org/scripts/bulletins tpop3d/scripts/bulletins
 +}
 +
 +1;
-diff -urN tpop3d-1.5.3.org/scripts/flat_file tpop3d/scripts/flat_file
---- tpop3d-1.5.3.org/scripts/flat_file	1970-01-01 01:00:00.000000000 +0100
-+++ tpop3d/scripts/flat_file	2002-04-25 21:14:41.000000000 +0200
-@@ -0,0 +1,105 @@
-+#!/usr/bin/perl -w
-+#
-+# flat_file:
-+# Authenticate users against a list of users stored in flat files.
-+#
-+# This script was contributed by Chris E. Stith <mischief@motion.net>.
-+# Users are authenticated by looking them up in
-+#   /var/spool/mail/$(domain)/users,
-+# which contains lines of the form
-+#   user:crypt'd password
-+#
-+# The relevant config section is--
-+#
-+#   # This must be set to yes, or we have to make all our users put
-+#   # `user@domain.tld' in the username field of their mail clients instead
-+#   # of just `user'.
-+#   append-domain: yes
-+#
-+#   # The only method enabled for POP3 auth is the custom Perl script through
-+#   # tpop3d's embedded Perl interpeter. All of this has to do with that.
-+#   auth-perl-enable: yes
-+#   auth-perl-start: do '/etc/tpop3d/tpop3d.pl';
-+#   auth-perl-finish: stop();
-+#   auth-perl-pass: pass
-+#
-+use strict;
-+use TPOP3D::AuthDriver;
-+use Crypt::PasswdMD5;
-+use Fcntl qw{ :flock };
-+
-+my $maildir = '/var/spool/mail';
-+
-+### check on validity of username and password
-+sub auth_ok {
-+    my ( $user, $domain, $pass ) = @_;
-+    my $file = "$maildir/$domain/users";
-+    my $fh;
-+    unless ( open $fh, "< $file" ) {
-+	TPOP3D::print_log ("Sorry, can't read `$file'\n");
-+        return 0;
-+    }
-+    flock( $fh, LOCK_SH );
-+    while ( <$fh> ) {
-+        my ( $un, $pw, undef ) = split/:/;
-+        if ( $un eq $user ) {
-+            my $pass1 = crypt($pass, $pw);
-+            my $pass2 = Crypt::PasswdMD5::unix_md5_crypt($pass, $pw);
-+            if ( ($pw eq $pass1) || ($pw eq $pass2) ) {
-+                close $fh;
-+                return 1;
-+            }
-+        }
-+    }
-+    close $fh;
-+    return 0;
-+}
-+     
-+### report on validity of user and password
-+sub pass {
-+    my $href = $_[0];
-+    my ($local, $domain) = ($href->{'local_part'}, $href->{'domain'});
-+    unless ( length $local ) { $local = $href->{'user'} }
-+    $domain = lc $domain;
-+    unless ( length $domain ) {
-+        return {
-+            'result' => 'NO',
-+            'logmsg' => "failed auth without explicit domain, will retry"
-+        };
-+    }
-+    my $pass = $href->{'pass'};
-+    undef %{$href};
-+    if ( auth_ok($local, $domain, $pass) ) {
-+        # Success.
-+        return {
-+            'result' => 'YES',
-+            'logmsg' => "authenticated $local in domain $domain",
-+            'uid' => 'tpop3d',   # pop server's assigned uid
-+            'gid' => 'mail',
-+            'mboxtype' => 'bsd',
-+            'mailbox' => "/var/spool/mail/$domain/mailboxes/$local"
-+        };
-+    } else {
-+        # Failure.
-+        return {
-+            'result' => 'NO',
-+            'logmsg' => "auth failed for user $local in domain $domain"
-+        };
-+    }
-+}
-+
-+### let the log know we're back
-+sub start {
-+    TPOP3D::print_log ("Embedded Perl auth mechanism for tpop3d starting.\n");
-+}
-+### let the log know we're gone
-+sub stop {
-+    TPOP3D::print_log ("Embedded Perl auth mechanism for tpop3d ending.\n");
-+}
-+
-+if (defined($ENV{TPOP3D_CONTEXT}) and $ENV{TPOP3D_CONTEXT} eq 'auth_other') {
-+  no strict 'subs';
-+  TPOP3D::AuthDriver::run(TPOP3D::AuthDriver);
-+  exit 0;
-+}
-+
-diff -urN tpop3d-1.5.3.org/TODO tpop3d/TODO
---- tpop3d-1.5.3.org/TODO	2003-11-24 20:58:28.000000000 +0100
-+++ tpop3d/TODO	2004-06-20 02:06:30.000000000 +0200
+diff -urN tpop3d-1.5.3/TODO tpop3d/TODO
+--- tpop3d-1.5.3/TODO	2003-11-24 20:58:28.000000000 +0100
++++ tpop3d/TODO	2006-06-26 07:30:23.000000000 +0200
 @@ -1,5 +1,5 @@
  Things To Do
 -$Id$
@@ -2617,13 +2589,22 @@ diff -urN tpop3d-1.5.3.org/TODO tpop3d/TODO
  
  * A proper code audit
  
-@@ -96,3 +96,18 @@
+@@ -86,13 +86,20 @@
  
- * Latency vs. throughput tradeoff under high load?
+ * Log statistics on transactions (email of 20031013)
  
+-* Cache results of authentication for a few minutes, to improve performance
+-  under high load?
++* Latency vs. throughput tradeoff under high load?
+ 
+-  The problem with this is that, to be useful, we need to cache the information
+-  for a time which is long by comparison with the interval between mail checks.
+-  The latter is a few minutes, so we'd need the things to stay in cache for an
+-  hour or so. Is a one-hour latency in propagating password changes acceptable?
 +* Deferred writes in connection_sendmessage -- that should bring the cost of
 +  sending messages down to the cost of substituting \r\n for \n, etc.
-+
+ 
+-* Latency vs. throughput tradeoff under high load?
 +* Configurable (or adaptive?) SO_SNDBUF
 +  We probably don't have enough information to measure the necessary
 +  parameters (though in principle we could measure the delay between sending
@@ -2634,11 +2615,11 @@ diff -urN tpop3d-1.5.3.org/TODO tpop3d/TODO
 +* STLS+APOP issue (email of 20040306)
 +
 +* Repeated messages (email of 20040325)
-+
+ 
 +* Maildir semantics (email of 20040331)
-diff -urN tpop3d-1.5.3.org/tpop3d.conf.5 tpop3d/tpop3d.conf.5
---- tpop3d-1.5.3.org/tpop3d.conf.5	2003-11-24 21:26:07.000000000 +0100
-+++ tpop3d/tpop3d.conf.5	2005-12-20 22:41:19.000000000 +0100
+diff -urN tpop3d-1.5.3/tpop3d.conf.5 tpop3d/tpop3d.conf.5
+--- tpop3d-1.5.3/tpop3d.conf.5	2003-11-24 21:26:07.000000000 +0100
++++ tpop3d/tpop3d.conf.5	2006-06-26 07:30:26.000000000 +0200
 @@ -5,7 +5,7 @@
  .\"
  .\" Copyright (c) 2001-2 Chris Lightfoot. All rights reserved.
@@ -2701,7 +2682,26 @@ diff -urN tpop3d-1.5.3.org/tpop3d.conf.5 tpop3d/tpop3d.conf.5
  .nf
  \fBmailspool-index:\fP \fIpath-spec\fP
  .fi
-@@ -236,6 +261,65 @@
+@@ -230,12 +255,84 @@
+ that the mailspool index files be stored in a directory to which users would
+ not customarily have access, for instance /var/spool/tpop3d.
+ .TP
++\fBmailspool-no-dotfile-locking\fP: (\fByes\fP|\fBtrue\fP)
++By default \fBtpop3d\fP will try to lock a mailspool for exclusive access using
++all methods available on the local system:
++.BR fcntl (2),
++.BR flock (2),
++and creating a lockfile for the mailspool with a `.lock' suffix. This option
++allows you to switch off the last of these without recompiling the daemon, and
++is recommended \fIif you are absolutely certain that no other programs rely on
++dotfile-locking to synchronise access to mailspools.\fP In particular, if you
++use lockfiles, it is possible for an over-quota user to be unable to log in to
++the POP3 server, because creation of the lockfile is prohibited; switching on
++this option eliminates that possibility.
++.TP
+ \fBmaildir-exclusive-lock\fP: (\fByes\fP|\fBtrue\fP)
+ Indicates that \fBtpop3d\fP should attempt to lock maildir mailboxes for
+ exclusive access, so that it more closely follows the behaviour described in
  RFC1939. Even if not specified, \fBtpop3d\fP behaves intelligently when a
  message in a maildir is moved or deleted, so this option is not necessary.
  .TP
@@ -2767,7 +2767,7 @@ diff -urN tpop3d-1.5.3.org/tpop3d.conf.5 tpop3d/tpop3d.conf.5
  .nf
  \fBtcp-wrappers-name\fP: \fIname\fP
  .fi
-@@ -342,6 +426,16 @@
+@@ -342,6 +439,16 @@
  Log incorrect passwords supplied by users who fail to log in. Use of this
  option is an invasion of privacy, but may be useful for debugging client
  configuration problems.
@@ -2784,7 +2784,7 @@ diff -urN tpop3d-1.5.3.org/tpop3d.conf.5 tpop3d/tpop3d.conf.5
  .PP
  \fBtpop3d\fP can cache the results of successful login attempts, and re-use
  them when the same user logs in again. This is probably not useful except
-@@ -819,6 +913,37 @@
+@@ -819,6 +926,37 @@
  \fBkill(1, $$)\fP, but it would probably be preferable to use \fBauth-other\fP
  in this case.
  
@@ -2822,7 +2822,7 @@ diff -urN tpop3d-1.5.3.org/tpop3d.conf.5 tpop3d/tpop3d.conf.5
  .SH FILES
  .B /etc/tpop3d.conf
  
-@@ -855,7 +980,7 @@
+@@ -855,7 +993,7 @@
  .IR http://lists.beasts.org/pipermail/tpop3d-discuss/ .
  
  .SH VERSION
@@ -2831,8 +2831,8 @@ diff -urN tpop3d-1.5.3.org/tpop3d.conf.5 tpop3d/tpop3d.conf.5
  
  .SH COPYING
  This program is free software; you can redistribute it and/or modify
-diff -urN tpop3d-1.5.3.org/tpop3d.conf.sample tpop3d/tpop3d.conf.sample
---- tpop3d-1.5.3.org/tpop3d.conf.sample	2003-11-24 20:58:28.000000000 +0100
+diff -urN tpop3d-1.5.3/tpop3d.conf.sample tpop3d/tpop3d.conf.sample
+--- tpop3d-1.5.3/tpop3d.conf.sample	2003-11-24 20:58:28.000000000 +0100
 +++ tpop3d/tpop3d.conf.sample	2005-12-20 22:41:19.000000000 +0100
 @@ -2,7 +2,7 @@
  # tpop3d.conf.sample:
@@ -2907,8 +2907,8 @@ diff -urN tpop3d-1.5.3.org/tpop3d.conf.sample tpop3d/tpop3d.conf.sample
 +# auth-gdbm-mail-user: (user-name | uid)
 +# auth-gdbm-mail-group: (group-name | gid)
 +# User and group under which access to the mailbox will take place.
-diff -urN tpop3d-1.5.3.org/util.c tpop3d/util.c
---- tpop3d-1.5.3.org/util.c	2003-11-06 02:19:27.000000000 +0100
+diff -urN tpop3d-1.5.3/util.c tpop3d/util.c
+--- tpop3d-1.5.3/util.c	2003-11-06 02:19:27.000000000 +0100
 +++ tpop3d/util.c	2005-08-25 14:44:07.000000000 +0200
 @@ -6,7 +6,7 @@
   *
