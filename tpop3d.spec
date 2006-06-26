@@ -25,13 +25,11 @@ Source1:	%{name}.pamd
 Source2:	%{name}.init
 Source3:	%{name}.conf
 Patch0:		%{name}-ac_am_fixes.patch
-Patch1:		%{name}-cvs20060622.patch
+Patch1:		%{name}-cvs20060626.patch
 Patch2:		%{name}-resolv.patch
 Patch3:		%{name}-pam-vdomain.patch
-Patch4:		%{name}-disable-dotfile-locking.patch
 Patch5:		%{name}-sql-getpwuid-optional.patch
 Patch6:		%{name}-loglevel.patch
-Patch7:		%{name}-poll.patch
 URL:		http://www.ex-parrot.com/~chris/tpop3d/
 BuildRequires:	autoconf
 BuildRequires:	automake
@@ -119,12 +117,10 @@ pomiêdzy sesjami.
 %patch1 -p1
 %patch2 -p1
 %patch3 -p1
-%patch4 -p1
 %if %{with skipgetpwcheck}
 %patch5 -p0
 %endif
 %patch6 -p1
-%patch7 -p1
 
 %build
 %{__aclocal}
