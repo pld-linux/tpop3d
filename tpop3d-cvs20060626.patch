@@ -1995,7 +1995,7 @@ diff -urN tpop3d-1.5.3/netloop.c tpop3d/netloop.c
 +        connections_pre_select(&n, pfds);
  
 -        e = select(n + 1, &readfds, &writefds, NULL, &tv);
-+        e = poll(pfds, n, 1000 /* must be smaller than timeout */);
++        e = poll(pfds, n + 1, 1000 /* must be smaller than timeout */);
          if (e == -1 && errno != EINTR) {
 -            log_print(LOG_WARNING, "net_loop: select: %m");
 +            log_print(LOG_WARNING, "net_loop: poll: %m");
