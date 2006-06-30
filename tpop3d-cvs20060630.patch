@@ -1,0 +1,3089 @@
+diff -urN tpop3d-1.5.3.org/auth_flatfile.c tpop3d/auth_flatfile.c
+--- tpop3d-1.5.3.org/auth_flatfile.c	2003-02-18 00:18:32.000000000 +0100
++++ tpop3d/auth_flatfile.c	2004-06-20 02:06:30.000000000 +0200
+@@ -11,7 +11,7 @@
+ #endif /* HAVE_CONFIG_H */
+ 
+ #ifdef AUTH_FLATFILE
+-static const char rcsid[] = "$Id$";
++static const char rcsid[] = "$Id$";
+ 
+ #include <sys/types.h>
+ 
+@@ -86,7 +86,7 @@
+  * second field to the password hash. Any subsequent fields are ignored. */
+ static char *read_user_passwd(const char *local_part, const char *domain) {
+     FILE *fp = NULL;
+-    char *filename = NULL;
++    char *filename = NULL, *result = NULL;
+     struct sverr err;
+     static char *buf, *pwhash;
+     static size_t buflen;
+@@ -149,6 +149,8 @@
+         if ((end = strchr(pwhash, ':')))
+             *end = 0;
+ 
++        result = pwhash;
++
+         break;
+     }
+     
+@@ -159,7 +161,7 @@
+     if (filename)
+         xfree(filename);
+ 
+-    return pwhash;
++    return result;
+ }
+ 
+ /* auth_flatfile_new_user_pass:
+diff -urN tpop3d-1.5.3.org/auth_gdbm.c tpop3d/auth_gdbm.c
+--- tpop3d-1.5.3.org/auth_gdbm.c	1970-01-01 01:00:00.000000000 +0100
++++ tpop3d/auth_gdbm.c	2005-08-05 16:48:22.000000000 +0200
+@@ -0,0 +1,196 @@
++/*
++ * auth_gdbm.c:
++ * Authenticate users using a GNU dbm file
++ *
++ * Based on auth_flatfile.h by Angel Marin, designed for tpop3d by
++ * Daniel Tiefnig at Inode, Austria. <d.tiefnig@inode.at>
++ *
++ * Copyright (c) 2004 Daniel Tiefnig. All rights reserved. This
++ * software is free software, you can modify and/or redistribute
++ * it as tpop3d itself. See the file COPYING in the base directory
++ * of your tpop3d distribution.
++ */
++
++#ifdef HAVE_CONFIG_H
++#include "configuration.h"
++#endif /* HAVE_CONFIG_H */
++
++#ifdef AUTH_GDBM
++
++#include <sys/types.h>
++
++#ifdef HAVE_CRYPT_H /* XXX */
++#include <crypt.h>
++#endif
++
++#include <unistd.h>
++#include <grp.h>
++#include <pwd.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#include <syslog.h>
++#include <gdbm.h>
++
++#include "auth_gdbm.h"
++#include "authswitch.h"
++#include "password.h"
++#include "config.h"
++#include "util.h"
++
++static gid_t virtual_gid;
++static uid_t virtual_uid;
++static char *user_passwd_file;
++GDBM_FILE dbf;
++int persistent;
++
++/* auth_gdbm_init:
++ * Initialise the driver. Reads the config directives. */
++int auth_gdbm_init() {
++    char *s;
++
++    /* Obtain uid to use */
++    if ((s = config_get_string("auth-gdbm-mail-user"))) {
++        if (!parse_uid(s, &virtual_uid)) {
++            log_print(LOG_ERR, _("auth_gdbm_init: auth-gdbm-mail-user directive `%s' does not make sense"), s);
++            return 0;
++        }
++    } else {
++        log_print(LOG_ERR, _("auth_gdbm_init: no auth-gdbm-mail-user directive in config"));
++        return 0;
++    }
++
++    /* Obtain gid to use */
++    if ((s = config_get_string("auth-gdbm-mail-group"))) {
++        if (!parse_gid(s, &virtual_gid)) {
++            log_print(LOG_ERR, _("auth_gdbm_init: auth-gdbm-mail-group directive `%s' does not make sense"), s);
++            return 0;
++        }
++    } else {
++        log_print(LOG_ERR, _("auth_gdbm_init: no auth-gdbm-mail-group directive in config"));
++        return 0;
++    }
++
++    /* Obtain path to passwd file */
++    if ((s = config_get_string("auth-gdbm-passwd-file"))) {
++        user_passwd_file = s;
++    } else {
++        log_print(LOG_ERR, _("auth_gdbm_init: no auth-gdbm-passwd-file directive in config"));
++        return 0;
++    }
++
++    /* persistent GDBM filehandle? */
++    if (config_get_bool("auth-gdbm-persistent")) {
++        persistent = 1;
++        if((dbf=gdbm_open(user_passwd_file, 0, GDBM_READER, 0644, 0)) == NULL) {
++            log_print(LOG_ERR, _("auth_gdbm_init: could not open GNU dbm file"));
++            return 0;
++        }
++    } else {
++        persistent = 0;
++    }
++
++    return 1;
++}
++
++/* auth_gdbm_new_user_pass:
++ * Attempt to authenticate user and pass using a GNU dbm file,
++ * as configured at compile-time.
++ * This is a virtual-domains authenticator. */
++authcontext auth_gdbm_new_user_pass(const char *user, const char *local_part, const char *domain, const char *pass, const char *clienthost /* unused */, const char *serverhost /* unused */) {
++    authcontext a = NULL;
++    char *who, *address;
++    datum key, value;
++
++    if (!local_part) return NULL;
++    
++    who = username_string(user, local_part, domain);
++
++    address = xmalloc(strlen(local_part) + strlen(domain) +2);
++    sprintf(address, "%s@%s", local_part, domain);
++    key.dptr = address;
++    key.dsize = strlen(address);
++
++    if (persistent) {
++        value = gdbm_fetch(dbf,key);
++    } else {
++        if((dbf=gdbm_open(user_passwd_file, 0, GDBM_READER, 0644, 0)) == NULL) {
++            log_print(LOG_ERR, _("auth_gdbm_init: could not open GNU dbm file"));
++            return 0;
++        }
++        value = gdbm_fetch(dbf,key);
++        gdbm_close(dbf);
++    }
++
++    xfree(address);
++    if(value.dptr == NULL) {
++        log_print(LOG_ERR, _("auth_gdbm_new_user_pass: could not find user %s"), who);
++        return a;
++    }
++
++    if (check_password(who, value.dptr, pass, "{crypt}"))
++        a = authcontext_new(virtual_uid, virtual_gid, NULL, NULL, NULL);
++    else
++        log_print(LOG_ERR, _("auth_gdbm_new_user_pass: failed login for %s"), who);
++
++    xfree(value.dptr);
++
++    return a;
++}
++
++/* auth_gdbm_new_apop:
++ * Attempt to authenticate user via APOP using a GNU dbm file,
++ * as configured at compile-time.
++ * This is a virtual-domains authenticator. */
++authcontext auth_gdbm_new_apop(const char *user, const char *local_part, const char *domain, const char *timestamp, const unsigned char *digest, const char *clienthost /* unused */, const char *serverhost /* unused */) {
++    authcontext a = NULL;
++    char *who, *address;
++    datum key, value;
++
++    if (!local_part) return NULL;
++
++    who = username_string(user, local_part, domain);
++
++    address = xmalloc(strlen(local_part) + strlen(domain) +2);
++    sprintf(address, "%s@%s", local_part, domain);
++    key.dptr = address;
++    key.dsize = strlen(address);
++
++    if (persistent) {
++        value = gdbm_fetch(dbf,key);
++    } else {
++        if((dbf=gdbm_open(user_passwd_file, 0, GDBM_READER, 0644, 0)) == NULL) {
++            log_print(LOG_ERR, _("auth_gdbm_init: could not open GNU dbm file"));
++            return 0;
++        }
++        value = gdbm_fetch(dbf,key);
++        gdbm_close(dbf);
++    }
++
++    xfree(address);
++    if(value.dptr == NULL) {
++        log_print(LOG_ERR, _("auth_gdbm_new_apop: could not find user %s"), who);
++        return a;
++    }
++
++    if (check_password_apop(who, value.dptr, timestamp, digest))
++        a = authcontext_new(virtual_uid, virtual_gid, NULL, NULL, NULL);
++    else
++        log_print(LOG_ERR, _("auth_gdbm_new_apop: failed login for %s"), who);
++
++    xfree(value.dptr);
++
++    return a;
++}
++
++void auth_gdbm_postfork() {
++    if (persistent)
++        gdbm_close(dbf);
++}
++
++void auth_gdbm_close() {
++    if (persistent)
++        gdbm_close(dbf);
++}
++
++#endif /* AUTH_GDBM */
+diff -urN tpop3d-1.5.3.org/auth_gdbm.h tpop3d/auth_gdbm.h
+--- tpop3d-1.5.3.org/auth_gdbm.h	1970-01-01 01:00:00.000000000 +0100
++++ tpop3d/auth_gdbm.h	2005-08-05 16:48:22.000000000 +0200
+@@ -0,0 +1,35 @@
++/*
++ * auth_gdbm.h:
++ * Authenticate users using a GNU dbm file
++ *
++ * Based on auth_flatfile.h by Angel Marin, designed for tpop3d by
++ * Daniel Tiefnig at Inode, Austria. <d.tiefnig@inode.at>
++ *
++ * Copyright (c) 2004 Daniel Tiefnig. All rights reserved. This
++ * software is free software, you can modify and/or redistribute
++ * it as tpop3d itself. See the file COPYING in the base directory
++ * of your tpop3d distribution.
++ */
++
++#ifndef __AUTH_GDBM_H_ /* include guard */
++#define __AUTH_GDBM_H_
++
++#ifdef HAVE_CONFIG_H
++#include "configuration.h"
++#endif /* HAVE_CONFIG_H */
++
++#ifdef AUTH_GDBM
++
++#include "authswitch.h"
++
++/* auth_gdbm.c */
++int auth_gdbm_init(void);
++authcontext auth_gdbm_new_user_pass(const char *user, const char *local_part, const char *domain, const char *pass, const char *clienthost, const char *serverhost);
++authcontext auth_gdbm_new_apop(const char *user, const char *local_part, const char *domain, const char *timestamp, const unsigned char *digest, const char *clienthost, const char *serverhost);
++void auth_gdbm_postfork(void);
++void auth_gdbm_close(void);
++
++
++#endif /* AUTH_GDBM */
++
++#endif /* __AUTH_GDBM_H_ */
+diff -urN tpop3d-1.5.3.org/auth_ldap.c tpop3d/auth_ldap.c
+--- tpop3d-1.5.3.org/auth_ldap.c	2003-10-23 15:13:59.000000000 +0200
++++ tpop3d/auth_ldap.c	2006-06-26 15:33:43.000000000 +0200
+@@ -12,10 +12,14 @@
+ #endif /* HAVE_CONFIG_H */
+ 
+ #ifdef AUTH_LDAP
+-static const char rcsid[] = "$Id$";
++static const char rcsid[] = "$Id$";
+ 
+ #include <sys/types.h> /* BSD needs this here, apparently. */
+ 
++/* Some of the LDAP APIs we're using are deprecated, sadly. Without this they
++ * don't get defined in the header files. */
++#define LDAP_DEPRECATED 1
++
+ #include <lber.h>
+ #include <ldap.h>
+ #include <pwd.h>
+diff -urN tpop3d-1.5.3.org/auth_mysql.c tpop3d/auth_mysql.c
+--- tpop3d-1.5.3.org/auth_mysql.c	2003-07-15 01:31:20.000000000 +0200
++++ tpop3d/auth_mysql.c	2004-08-20 01:57:05.000000000 +0200
+@@ -11,7 +11,7 @@
+ #endif /* HAVE_CONFIG_H */
+ 
+ #ifdef AUTH_MYSQL
+-static const char rcsid[] = "$Id$";
++static const char rcsid[] = "$Id$";
+ 
+ #include <sys/types.h> /* BSD needs this here, apparently. */
+ 
+@@ -44,7 +44,7 @@
+  *  [2] unix user
+  *  [3] mailbox type
+  */
+-char *user_pass_query_template =
++static char *user_pass_query_template =
+     "SELECT concat(domain.path, '/', popbox.mbox_name), popbox.password_hash, "
+             "domain.unix_user, 'bsd' "
+       "FROM popbox, domain "
+@@ -52,7 +52,7 @@
+        "AND popbox.domain_name = '$(domain)' "
+        "AND popbox.domain_name = domain.domain_name";
+        
+-char *apop_query_template =
++static char *apop_query_template =
+     "SELECT concat(domain.path, '/', popbox.mbox_name), popbox.password_hash, "
+             "domain.unix_user, 'bsd' "
+       "FROM popbox, domain "
+@@ -60,20 +60,20 @@
+        "AND popbox.domain_name = '$(domain)' "
+        "AND popbox.domain_name = domain.domain_name";
+ 
+-char *onlogin_query_template = NULL;
++static char *onlogin_query_template = NULL;
+ 
+ /* GID used to access mail spool (if any). */
+-int use_gid;
+-gid_t mail_gid;
++static int use_gid;
++static gid_t mail_gid;
+ 
+ static char *substitute_query_params(const char *temp, const char *user, const char *local_part, const char *domain, const char *clienthost, const char *serverhost);
+ 
+ /*
+  * Connection to the MySQL server.
+  */
+-MYSQL *mysql = NULL;
+-tokens mysql_servers;
+-char mysql_driver_active = 0;
++static MYSQL *mysql = NULL;
++static tokens mysql_servers;
++static char mysql_driver_active = 0;
+ 
+ /* get_mysql_server:
+  * If we are not currently connected to a MySQL server, or if the current MySQL
+@@ -267,7 +267,7 @@
+ 
+                 /* User was not lying (about her password) */
+                 if (!parse_uid((const char*)row[2], &uid)) {
+-                    log_print(LOG_ERR, _("auth_mysql_new_apop: unix user `%s' for %s does not make sense"), row[3], who);
++                    log_print(LOG_ERR, _("auth_mysql_new_apop: unix user `%s' for %s does not make sense"), row[2], who);
+                     break;
+                 }
+ 
+@@ -367,7 +367,7 @@
+                 }
+ 
+                 if (!parse_uid((const char*)row[2], &uid)) {
+-                    log_print(LOG_ERR, _("auth_mysql_new_user_pass: unix user `%s' for %s does not make sense"), row[3], who);
++                    log_print(LOG_ERR, _("auth_mysql_new_user_pass: unix user `%s' for %s does not make sense"), row[2], who);
+                     break;
+                 }
+ 
+diff -urN tpop3d-1.5.3.org/auth_pgsql.c tpop3d/auth_pgsql.c
+--- tpop3d-1.5.3.org/auth_pgsql.c	2003-07-15 01:31:20.000000000 +0200
++++ tpop3d/auth_pgsql.c	2004-08-20 01:57:05.000000000 +0200
+@@ -13,7 +13,7 @@
+ #endif /* HAVE_CONFIG_H */
+ 
+ #ifdef AUTH_PGSQL
+-static const char rcsid[] = "$Id$";
++static const char rcsid[] = "$Id$";
+ 
+ #include <sys/types.h> /* BSD needs this here, apparently. */
+ 
+@@ -105,7 +105,7 @@
+  *  [2] unix user
+  *  [3] mailbox type
+  */
+-char *user_pass_query_template =
++static char *user_pass_query_template =
+     "SELECT domain.path || '/'  || popbox.mbox_name, popbox.password_hash, "
+             "domain.unix_user, 'bsd' "
+       "FROM popbox, domain "
+@@ -113,7 +113,7 @@
+        "AND popbox.domain_name = '$(domain)' "
+        "AND popbox.domain_name = domain.domain_name";
+        
+-char *apop_query_template =
++static char *apop_query_template =
+     "SELECT domain.path || '/' || popbox.mbox_name, popbox.password_hash, "
+             "domain.unix_user, 'bsd' "
+       "FROM popbox, domain "
+@@ -121,11 +121,11 @@
+        "AND popbox.domain_name = '$(domain)' "
+        "AND popbox.domain_name = domain.domain_name";
+ 
+-char *onlogin_query_template = NULL;
++static char *onlogin_query_template = NULL;
+ 
+ /* GID used to access mail spool (if any). */
+-int use_gid;
+-gid_t mail_gid;
++static int use_gid;
++static gid_t mail_gid;
+ 
+ static char *substitute_query_params(const char *temp, const char *user, const char *local_part, const char *domain, const char *clienthost, const char *serverhost);
+ 
+@@ -148,7 +148,7 @@
+  * Initialise the database connection driver. Clears the config directives
+  * associated with the database so that a user cannot recover them with a
+  * debugger. */
+-PGconn *pg_conn;
++static PGconn *pg_conn;
+ 
+ int auth_pgsql_init(void) {
+     char *username = NULL, *password = NULL, *hostname = NULL, *database = NULL, *localhost = "localhost", *s;
+diff -urN tpop3d-1.5.3.org/authswitch.c tpop3d/authswitch.c
+--- tpop3d-1.5.3.org/authswitch.c	2003-11-24 20:58:28.000000000 +0100
++++ tpop3d/authswitch.c	2005-08-25 15:21:58.000000000 +0200
+@@ -6,7 +6,7 @@
+  *
+  */
+ 
+-static const char rcsid[] = "$Id$";
++static const char rcsid[] = "$Id$";
+ 
+ #ifdef HAVE_CONFIG_H
+ #include "configuration.h"
+@@ -19,6 +19,7 @@
+ 
+ #include <unistd.h>
+ #include <sys/types.h>
++#include <ctype.h>
+ 
+ #ifdef AUTH_LDAP
+ #include "auth_ldap.h"
+@@ -52,6 +53,10 @@
+ #include "auth_passwd.h"
+ #endif /* AUTH_PASSWD */
+ 
++#ifdef AUTH_GDBM
++#include "auth_gdbm.h"
++#endif /* AUTH_GDBM */
++
+ #ifdef USE_WHOSON
+ #include <whoson.h>
+ #endif
+@@ -122,6 +127,13 @@
+             "flatfile",
+             _X("Uses /etc/passwd-style flat files")},
+ #endif /* AUTH_FLATFILE */
++
++#ifdef AUTH_GDBM
++        /* Authenticate against GNU dbm files. */
++        {auth_gdbm_init, auth_gdbm_new_apop, auth_gdbm_new_user_pass, NULL, auth_gdbm_postfork, auth_gdbm_close,
++            "gdbm",
++            _X("Uses GNU dbm files")},
++#endif /* AUTH_GDBM */
+ };
+ 
+ int *auth_drivers_running;
+@@ -290,25 +302,26 @@
+             l = NULL;
+     }
+ 
+-    if ((a = authcache_new_user_pass(user, l, d, pass, clienthost, serverhost)))
+-        return a;
+-
+-    for (aa = auth_drivers, aar = auth_drivers_running; aa < auth_drivers_end; ++aa, ++aar)
+-        if (*aar && aa->auth_new_user_pass && (a = aa->auth_new_user_pass(user, l, d, pass, clienthost, serverhost))) {
+-            a->auth = xstrdup(aa->name);
+-            a->user = xstrdup(user);
+-            if (!a->local_part) {
+-                if (l)
+-                    a->local_part = xstrdup(l);
+-                else
+-                    a->local_part = xstrdup(user);
++    /* Try auth cache, then actual auth drivers. */
++    if (!(a = authcache_new_user_pass(user, l, d, pass, clienthost, serverhost))) {
++        for (aa = auth_drivers, aar = auth_drivers_running; aa < auth_drivers_end; ++aa, ++aar) {
++            if (*aar && aa->auth_new_user_pass && (a = aa->auth_new_user_pass(user, l, d, pass, clienthost, serverhost))) {
++                a->auth = xstrdup(aa->name);
++                a->user = xstrdup(user);
++                if (!a->local_part) {
++                    if (l)
++                        a->local_part = xstrdup(l);
++                    else
++                        a->local_part = xstrdup(user);
++                }
++                if (!a->domain && d)
++                    a->domain = xstrdup(d);
++                authcache_save(a, user, l, d, pass, clienthost, serverhost);
++                log_print(LOG_INFO, _("authcontext_new_user_pass: began session for `%s' with %s; uid %d, gid %d"), a->user, a->auth, a->uid, a->gid);
++                break;
+             }
+-            if (!a->domain && d)
+-                a->domain = xstrdup(d);
+-            authcache_save(a, user, l, d, pass, clienthost, serverhost);
+-            log_print(LOG_INFO, _("authcontext_new_user_pass: began session for `%s' with %s; uid %d, gid %d"), a->user, a->auth, a->uid, a->gid);
+-            break;
+         }
++    }
+ 
+     xfree(x);
+     
+@@ -330,7 +343,7 @@
+ #ifdef USE_WHOSON
+     char buf[128] = {0};
+     /* Notify whoson server the user has logged in correctly */
+-    if (wso_login(clienthost, A->user, buf, sizeof(buf)) == -1)
++    if (whoson_enable && wso_login(clienthost, A->user, buf, sizeof(buf)) == -1)
+         log_print(LOG_ERR, "authswitch_onlogin: wso_login: %s", buf);
+ #endif /* USE_WHOSON */
+     
+@@ -377,6 +390,7 @@
+  * Fill in a new authentication context structure with the given information. */
+ authcontext authcontext_new(const uid_t uid, const gid_t gid, const char *mboxdrv, const char *mailbox, const char *home) {
+     authcontext a;
++    char *mp;
+ 
+     alloc_struct(_authcontext, a);
+ 
+@@ -385,8 +399,13 @@
+ 
+     if (mboxdrv)
+         a->mboxdrv = xstrdup(mboxdrv);
+-    if (mailbox)
++    if (mailbox) {
+         a->mailbox = xstrdup(mailbox);
++        if (config_get_bool("lowercase-mailbox"))
++            for (mp = a->mailbox; *mp; *mp++)
++                *mp = tolower(*mp);
++    }
++
+ 
+     a->auth = NULL;
+     a->user = NULL;
+diff -urN tpop3d-1.5.3.org/cfgdirectives.c tpop3d/cfgdirectives.c
+--- tpop3d-1.5.3.org/cfgdirectives.c	2003-11-24 20:58:28.000000000 +0100
++++ tpop3d/cfgdirectives.c	2006-06-26 07:30:24.000000000 +0200
+@@ -9,7 +9,7 @@
+  *
+  */
+ 
+-static const char rcsid[] = "$Id$";
++static const char rcsid[] = "$Id$";
+ 
+ #ifdef HAVE_CONFIG_H
+ #include "configuration.h"
+@@ -25,18 +25,28 @@
+     "append-domain",
+     "strip-domain",
+     "timeout-seconds",
++    "tcp-send-buffer",
+     "log-facility",
+     "log-stderr",
++    "log-level",
+     "apop-only",
+     "mailbox",
+     "no-detach",
+     "permit-empty-passwords",
+     "onlogin-child-wait",
+     "log-bad-passwords",
++    "no-commit-on-early-close",
++    "lowercase-user",
++    "lowercase-mailbox",
++    "uidl-style",
+  
+ #if defined(MBOX_BSD) && defined(MBOX_BSD_SAVE_INDICES)
+     "mailspool-index",
+ #endif
++
++#ifdef MBOX_BSD
++    "mailspool-no-dotfile-locking",
++#endif
+     
+ #ifdef USE_TCP_WRAPPERS
+     "tcp-wrappers-name",
+@@ -52,6 +62,10 @@
+     
+ #ifdef MBOX_MAILDIR
+     "maildir-exclusive-lock",
++    "maildir-recursion",
++    "maildir-ignore-folders",
++    "maildir-evaluate-filename",
++    "maildir-size-string",
+ #endif
+ 
+ #ifdef USE_TLS
+@@ -145,6 +159,14 @@
+     "auth-flatfile-passwd-file",
+ #endif /* AUTH_FLATFILE */
+ 
++#ifdef AUTH_GDBM
++    "auth-gdbm-enable",
++    "auth-gdbm-mail-user",
++    "auth-gdbm-mail-group",
++    "auth-gdbm-passwd-file",
++    "auth-gdbm-persistent",
++#endif
++
+     /* final entry must be NULL */
+     NULL};
+ 
+diff -urN tpop3d-1.5.3.org/CHANGES tpop3d/CHANGES
+--- tpop3d-1.5.3.org/CHANGES	2003-11-24 21:26:07.000000000 +0100
++++ tpop3d/CHANGES	2006-06-26 07:30:23.000000000 +0200
+@@ -1,5 +1,32 @@
+ Changes for tpop3d
+-$Id$
++$Id$
++
++Removed the test which ignored messages in a maildir having modification times
++in the future, replacing it with a warning about possible clock synchronisation
++errors, following a suggestion of Matthew Trent. Fixed a (recently-introduced)
++bug in the maildir code which could cause a segmentation fault on misconfigured
++systems. Made a minor change to the way multi-line responses are transmitted,
++which may help some broken clients to work with tpop3d. Made some changes to
++the transmission of messages which may improve performance for clients on very
++fast networks, and added a tcp-send-buffer configuration option to control the
++SO_SNDBUF socket parameter. Fixed a couple of memory leaks; thanks to Richard
++Fuchs and Daniel Tiefnig from Inode for identifying those and supplying a
++patch. The same authors also supplied code to enable recursion into subfolders
++of a maildir mailbox (maildir-recursion config option). Added support for SHA1
++passwords, and fixed a bug in the MD5 base64 password code. By default, commit
++changes on close-after-QUIT (`Microsoft Outlook bug' workaround), with an
++option to restore the previous, correct, behaviour. Added support for
++intelligent filenames in maildirs (maildir-evaluate-filename config option) to
++avoid calls to stat(). New authenticator auth_gdbm added. Fixed bug with PID
++file handling after HUP signals. Added lowercase options for POP3 USER command
++and maildir database lookups. Added support for qmail-pop3d style UIDLs. (Adds
++uidl-style config option) maildir-ignore-folders now uses tokens_new so
++folders may be separated by spaces or tabs. Remove any maildirsize file, for
++compliance with Maildir++ (thanks to Arkadiusz Miskiewicz). Added support
++for syslog like log levels. (log-level config option) Replace use of select(2)
++with poll(2), to fix `Bad file descriptor' error on very busy servers (thanks
++to Arkadiusz Miskiewicz for this patch). Added mailspool-no-dotfile-locking
++option to switch off dot-locks at runtime (useful for sites using quotas).
+ 
+ 1.5.3
+ 
+diff -urN tpop3d-1.5.3.org/configure.in tpop3d/configure.in
+--- tpop3d-1.5.3.org/configure.in	2003-11-24 20:59:13.000000000 +0100
++++ tpop3d/configure.in	2006-06-22 19:43:46.000000000 +0200
+@@ -6,7 +6,7 @@
+ dnl
+ dnl Copyright (c) 2001 Mark Longair, Chris Lightfoot. All Rights Reserved.
+ dnl
+-dnl $Id$
++dnl $Id$
+ dnl
+ 
+ AC_INIT(auth_mysql.c)
+@@ -108,7 +108,7 @@
+     [pgsql_include_dir="/usr/include"])
+ 
+ AC_ARG_WITH(pgsql-lib-dir,
+-        [    --with-pgsql-lib-dir=DIR  Set Postgreslibrary directory, which should
++        [    --with-pgsql-lib-dir=DIR  Set Postgres library directory, which should
+                               contain libpq.so. [default=/usr/lib]
+ ],
+     [pgsql_lib_dir=$withval],
+@@ -150,6 +150,13 @@
+     [enable_auth_perl=$enableval],
+     [enable_auth_perl="no"])
+ 
++AC_ARG_ENABLE(auth-gdbm,
++        [  --enable-auth-gdbm      Enable authentication against GNU dbm files.
++                          [default=no]
++],
++    [enable_auth_gdbm=$enableval],
++    [enable_auth_gdbm="no"])
++
+ dnl Mailbox types.
+ 
+ AC_ARG_ENABLE(mbox-bsd,
+@@ -283,6 +290,16 @@
+     [enable_masshosting=$enableval],
+     [enable_masshosting=yes])
+ 
++dnl SHA1 passwords
++AC_ARG_ENABLE(sha1-passwords,
++        [  --disable-sha1-passwords
++                          Don't allow the SHA1 message digest algorithm to to
++                          be used for password hashes. The only reason to do so
++                          is if you don't want tpop3d to be linked against
++                          OpenSSL.
++],
++    [enable_sha1_passwords=$enableval],
++    [enable_sha1_passwords=yes])
+ 
+ dnl Some options mainly useful for development/debugging.
+ 
+@@ -364,6 +381,12 @@
+     AC_DEFINE(AUTH_PERL,1,[Use an embedded perl interpreter for authentication.])
+ fi
+ 
++if test x"$enable_auth_gdbm" = x"yes"
++then
++    AC_DEFINE(AUTH_GDBM,1,[Use GNU dbm for authentication.])
++fi
++
++
+ if test x"$enable_auth_pam" != x"yes" \
+ && test x"$enable_auth_passwd" != x"yes" \
+ && test x"$enable_shadow" != x"yes" \
+@@ -371,7 +394,8 @@
+ && test x"$enable_auth_ldap" != x"yes" \
+ && test x"$enable_auth_flatfile" != x"yes" \
+ && test x"$enable_auth_other" != x"yes" \
+-&& test x"$enable_auth_perl" != x"yes"
++&& test x"$enable_auth_perl" != x"yes" \
++&& test x"$enable_auth_gdbm" != x"yes"
+ then
+     AC_MSG_ERROR([No authentication driver is enabled. At least one is required.])
+ fi
+@@ -452,6 +476,11 @@
+ then
+     AC_DEFINE(MASS_HOSTING,1,[Enable regex matching of inverse DNS results for domain names])
+ fi
++
++if test x"$enable_sha1_passwords" = x"yes"
++then
++    AC_DEFINE(SHA1_PASSWORDS,1,[Enable SHA1-format password hashes])
++fi
+     
+ if test x"$enable_backtrace" = x"yes"
+ then
+@@ -556,11 +585,18 @@
+ fi
+ 
+ # OpenSSL
+-if test x"$enable_tls" = x"yes"
++if test x"$enable_tls" = x"yes" || test x"$enable_sha1_passwords" = x"yes"
+ then
+-    AC_CHECK_LIB2(ssl, SSL_new, [], AC_MSG_ERROR([[TLS enabled, but can't find libssl]]), -lcrypto)
++    AC_CHECK_LIB2(ssl, SSL_new, [], AC_MSG_ERROR([[TLS/SHA1 passwords enabled, but can't find libssl]]), -lcrypto)
+ fi
+ 
++# GNU dbm
++if test x"$enable_auth_gdbm" = x"yes"
++  then
++    AC_CHECK_LIB(gdbm, main, [], AC_MSG_ERROR([[GNU dbm authentication enabled, but can't find libgdbm]]) )
++fi
++
++
+ # Where is nanosleep?
+ if test x"$enable_auth_other" = x"yes"
+ then
+@@ -600,7 +636,7 @@
+ AC_HEADER_STDC
+ AC_HEADER_SYS_WAIT
+ 
+-AC_CHECK_HEADERS(fcntl.h limits.h sys/file.h sys/time.h syslog.h unistd.h crypt.h execinfo.h security/pam_appl.h ldap.h mysql.h tcpd.h openssl/ssl.h libpq-fe.h)
++AC_CHECK_HEADERS(fcntl.h limits.h sys/file.h sys/time.h syslog.h unistd.h crypt.h execinfo.h security/pam_appl.h ldap.h mysql.h tcpd.h openssl/ssl.h libpq-fe.h gdbm.h)
+ 
+ if test x"$enable_backtrace" = x"yes"
+ then
+@@ -689,6 +725,14 @@
+     fi
+ fi
+ 
++if test x"$enable_auth_gdbm" = x"yes"
++then
++    if test x"$ac_cv_header_gdbm_h" != x"yes"
++    then
++        AC_MSG_ERROR( [GNU dbm authentication enabled but can't find gdbm.h] )
++    fi
++fi
++
+ dnl Checks for typedefs, structures, and compiler characteristics.
+ AC_C_CONST
+ AC_TYPE_UID_T
+@@ -700,7 +744,7 @@
+ AC_FUNC_MEMCMP
+ AC_FUNC_MMAP
+ 
+-AC_CHECK_FUNCS(gettimeofday select socket strcspn strdup strerror strspn strstr strtol uname strtok_r inet_aton)
++AC_CHECK_FUNCS(gettimeofday select socket strcspn strdup strerror strspn strstr strtol uname strtok_r inet_aton poll)
+ 
+ if test x"$enable_backtrace" = x"yes"
+ then
+@@ -744,6 +788,12 @@
+ 
+ fi
+ 
++if test x"$enable_auth_gdbm" = x"yes"
++then
++    AC_CHECK_FUNC(gdbm_open, [], AC_MSG_ERROR([[GNU dbm authentication enabled, but gdbm_open doesn't seem to be available.]]))
++    AC_CHECK_FUNC(gdbm_fetch, [], AC_MSG_ERROR([[GNU dbm authentication enabled, but gdbm_fetch doesn't seem to be available.]]))
++fi
++
+ dnl If flock and fcntl are selected, there's a chance that they
+ dnl will deadlock.  We do a test for this here...
+ 
+diff -urN tpop3d-1.5.3.org/connection.c tpop3d/connection.c
+--- tpop3d-1.5.3.org/connection.c	2003-11-14 20:15:20.000000000 +0100
++++ tpop3d/connection.c	2004-09-15 21:26:28.000000000 +0200
+@@ -6,7 +6,7 @@
+  *
+  */
+ 
+-static const char rcsid[] = "$Id$";
++static const char rcsid[] = "$Id$";
+ 
+ #ifdef HAVE_CONFIG_H
+ #include "configuration.h"
+@@ -127,7 +127,7 @@
+ 
+     /* Read and write buffers */
+     c->rdb = buffer_new(1024);
+-    c->wrb = buffer_new(1024);
++    c->wrb = buffer_new(32768);
+ 
+     c->timestamp = make_timestamp(c->domain);
+     if (!c->timestamp) goto fail;
+@@ -238,7 +238,8 @@
+         } /* else IOABS_WOULDBLOCK */
+     }
+ 
+-    buffer_push_data(c->wrb, data, len);
++    if (len > 0)
++        buffer_push_data(c->wrb, data, len);
+         /* XXX should try a write from the buffer now...? */
+     return 1;
+ }
+@@ -302,8 +303,10 @@
+      * latter case we must be careful not to interpret command1\ncommand2\r\n
+      * as a single command. So always use \n as the line ending and strip off
+      * any trailing \r. */
+-    if (!(line = buffer_consume_to_mark(c->rdb, "\n", 1, line, &llen)))
++    if (!(p = buffer_consume_to_mark(c->rdb, "\n", 1, line, &llen)))
+         return NULL;
++    else
++        line = p;
+ 
+     /* remove trailing eol */
+     for (i = llen - 1; i > 0 && strchr("\r\n", line[i]); --i)
+@@ -416,7 +419,18 @@
+  * Send an arbitrary line to a connected peer. Returns 1 on success or 0 on
+  * failure. Used to send multiline responses. */
+ int connection_sendline(connection c, const char *s) {
+-    return connection_send(c, s, strlen(s)) && connection_send(c, "\r\n", 2);
++    /* Buffer copy, for reasons as given in connection_sendresponse. */
++    static char *buf;
++    static size_t buflen;
++    size_t l;
++    
++    l = strlen(s) + 2;
++    
++    if (!buf || buflen < l + 1)
++        buf = xrealloc(buf, buflen = l + 1);
++
++    sprintf(buf, "%s\r\n", s);
++    return connection_send(c, buf, l);
+ }
+ 
+ /* connection_sendmessage:
+@@ -439,7 +453,42 @@
+     char *p, *q, *r;
+     size_t length, offset;
+     ssize_t nwritten = 0;
+-    
++    /* Doing lots of small writes is bad for performance, so buffer here and
++     * only write data when we've accumulated a large chunk of data. Use our
++     * own buffer here, rather than the connection IO buffer, since we don't
++     * want to use as much memory as a single message. */
++    static char *buffer;
++    static size_t buflen;
++    char *bufptr, *msg = NULL;
++
++    if (!buffer) buffer = xmalloc(buflen = 32768);
++    bufptr = buffer;
++
++#define buffer_push(sa, na) \
++        do { \
++            char *s; \
++            size_t n; \
++            s = sa; \
++            n = na; \
++            /* Unlikely but must deal with this case. */ \
++            if (n > buflen) { \
++                if (bufptr > buffer && !connection_send(c, buffer, bufptr - buffer)) \
++                    goto write_failure; \
++                bufptr = buffer; \
++                if (!connection_send(c, s, n)) \
++                    goto write_failure; \
++            } else { \
++                if ((bufptr + n) > (buffer + buflen)) { \
++                    if (!connection_send(c, buffer, bufptr - buffer)) \
++                        goto write_failure; \
++                    bufptr = buffer; \
++                } \
++                memcpy(bufptr, s, n); \
++                bufptr += n; \
++            } \
++            nwritten += n; \
++        } while (0)
++
+     offset = msgoffset - (msgoffset % PAGESIZE);
+     length = (msgoffset + msglength + PAGESIZE) ;
+     length -= length % PAGESIZE;
+@@ -451,8 +500,9 @@
+         return -1; /* Failure before +OK sent. */
+     }
+ 
+-    connection_sendresponse(c, 1, _("Message follows"));
+-    
++    msg = _("+OK Message follows\r\n");
++    buffer_push(msg, strlen(msg));
++
+     /* Find the beginning of the message headers */
+     p = filemem + (msgoffset % PAGESIZE);
+     r = p + msglength;
+@@ -465,14 +515,12 @@
+         errno = 0;
+         
+         /* Escape a leading ., if present. */
+-        if (*p == '.' && !connection_send(c, ".", 1))
+-            goto write_failure;
+-        ++nwritten;
++        if (*p == '.')
++            buffer_push(".", 1);
+         
+         /* Send line itself. */
+-        if (!connection_send(c, p, q - p) || !connection_send(c, "\r\n", 2))
+-            goto write_failure;
+-        nwritten += q - p + 2;
++        buffer_push(p, q - p);
++        buffer_push("\r\n", 2);
+ 
+         p = q + 1;
+     }
+@@ -480,11 +528,7 @@
+     ++p;
+ 
+     errno = 0;
+-    if (!connection_send(c, "\r\n", 2)) {
+-        log_print(LOG_ERR, _("connection_sendmessage: send failure"));
+-        munmap(filemem, length);
+-        return -2;
+-    }
++    buffer_push("\r\n", 2);
+     
+     /* Now send the message itself */
+     while (p < r && n) {
+@@ -495,27 +539,31 @@
+         errno = 0;
+ 
+         /* Escape a leading ., if present. */
+-        if (*p == '.' && !connection_send(c, ".", 1))
+-            goto write_failure;
+-        ++nwritten;
++        if (*p == '.')
++            buffer_push(".", 1);
+         
+         /* Send line itself. */
+-        if (!connection_send(c, p, q - p) || !connection_send(c, "\r\n", 2))
+-            goto write_failure;
+-        nwritten += q - p + 2;
++        buffer_push(p, q - p);
++        buffer_push("\r\n", 2);
+ 
+         p = q + 1;
+     }
++
++    /* Finish up. */
++    buffer_push(".\r\n", 3);
++
++    if (bufptr > buffer && !connection_send(c, buffer, bufptr - buffer))
++        goto write_failure;
++    
+     if (munmap(filemem, length) == -1)
+         log_print(LOG_ERR, "connection_sendmessage: munmap: %m");
+     
+     errno = 0;
+ 
+-    if (!connection_send(c, ".\r\n", 3)) {
+-        log_print(LOG_ERR, _("connection_sendmessage: send failure"));
+-        return -2;
+-    } else return nwritten + 3;
++    return nwritten + 3;
+ 
++#undef buffer_push
++    
+ write_failure:
+     log_print(LOG_ERR, _("connection_sendmessage: send failure"));
+     munmap(filemem, length);
+diff -urN tpop3d-1.5.3.org/connection.h tpop3d/connection.h
+--- tpop3d-1.5.3.org/connection.h	2003-01-09 23:59:37.000000000 +0100
++++ tpop3d/connection.h	2006-06-22 19:43:46.000000000 +0200
+@@ -4,7 +4,7 @@
+  *
+  * Copyright (c) 2001 Chris Lightfoot. All rights reserved.
+  *
+- * $Id$
++ * $Id$
+  *
+  */
+ 
+@@ -16,6 +16,8 @@
+ #include <sys/socket.h>
+ #include <sys/types.h>
+ 
++#include "poll.h"
++
+ #include "authswitch.h"
+ #include "buffer.h"
+ #include "listener.h"
+@@ -89,13 +91,13 @@
+      * buffering and state issues. post_select should return a combination of
+      * the flags defined below, as well as doing any I/O-layer specific
+      * handling. */
+-    void (*pre_select)(connection c, int *n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds);
++    void (*pre_select)(connection c, int *n, struct pollfd *pfds);
+     
+     /* post_select:
+      * Do handling after select has completed. Returns 1 if new data have been
+      * read, 0 if not. May alter the connection_state of the associated
+      * connection. */
+-    int (*post_select)(connection c, fd_set *readfds, fd_set *writefds, fd_set *exceptfds);
++    int (*post_select)(connection c, struct pollfd *pfds);
+ 
+     /* shutdown:
+      * Shut down the connection. Returns zero on success, IOABS_WOULDBLOCK if
+diff -urN tpop3d-1.5.3.org/INSTALL tpop3d/INSTALL
+--- tpop3d-1.5.3.org/INSTALL	2003-01-10 00:25:59.000000000 +0100
++++ tpop3d/INSTALL	2005-05-22 13:54:12.000000000 +0200
+@@ -1,5 +1,5 @@
+ Installation instructions for tpop3d
+-$Id$
++$Id$
+ 
+ Thanks to the efforts of Mark Longair, tpop3d can now be configured and built
+ using the standard GNU autoconf approach. For most users, it should be
+@@ -19,7 +19,7 @@
+ also review the contents of README.darwin.
+ 
+ NB that tpop3d now obeys the --sysconfdir of configure, so you will need to
+-set --sysconfidr=/etc if you already have a /etc/tpop3d.conf and do not wish to
++set --sysconfdir=/etc if you already have a /etc/tpop3d.conf and do not wish to
+ move it.
+ 
+ * Authentication
+@@ -56,6 +56,7 @@
+           {plaintext}...    plain text password used for APOP
+           {mysql}...        password hashed using MySQL's PASSWORD()
+           {md5}...          straight MD5 hash
++          {sha1}...         straight SHA1 hash
+ 
+       Note that to use APOP, the plaintext password type must be specified for
+       a user, but this does not stop them logging in via any other method with
+diff -urN tpop3d-1.5.3.org/ioabs_tcp.c tpop3d/ioabs_tcp.c
+--- tpop3d-1.5.3.org/ioabs_tcp.c	2003-09-30 20:45:46.000000000 +0200
++++ tpop3d/ioabs_tcp.c	2006-06-26 07:30:24.000000000 +0200
+@@ -7,7 +7,7 @@
+  *
+  */
+ 
+-static const char rcsid[] = "$Id$";
++static const char rcsid[] = "$Id$";
+ 
+ #include <sys/types.h>
+ 
+@@ -17,7 +17,7 @@
+ #include <time.h>
+ #include <unistd.h>
+ 
+-#include <sys/select.h>
++#include "poll.h"
+ 
+ #include "connection.h"
+ #include "util.h"
+@@ -61,13 +61,14 @@
+ 
+ /* ioabs_tcp_pre_select:
+  * Simple pre-select handling for TCP. */
+-static void ioabs_tcp_pre_select(connection c, int *n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds) {
++static void ioabs_tcp_pre_select(connection c, int *n, struct pollfd *pfds) {
+     struct ioabs_tcp *io;
+     io = (struct ioabs_tcp*)c->io;
+ 
+-    FD_SET(c->s, readfds);
++    pfds[c->s].fd = c->s;
++    pfds[c->s].events |= POLLIN;
+     if (buffer_available(c->wrb) > 0)
+-        FD_SET(c->s, writefds);
++       pfds[c->s].events |= POLLOUT;
+     
+     if (c->s > *n)
+         *n = c->s;
+@@ -75,13 +76,13 @@
+ 
+ /* ioabs_tcp_post_select:
+  * Simple post-select handling for TCP. */
+-static int ioabs_tcp_post_select(connection c, fd_set *readfds, fd_set *writefds, fd_set *exceptfds) {
++static int ioabs_tcp_post_select(connection c, struct pollfd *pfds) {
+     int ret = 0;
+     ssize_t n;
+     struct ioabs_tcp *io;
+     io = (struct ioabs_tcp*)c->io;
+ 
+-    if (FD_ISSET(c->s, readfds)) {
++    if (pfds[c->s].revents & (POLLIN | POLLHUP)) {
+         /* Can read data. */
+         do {
+             char *r;
+@@ -110,7 +111,7 @@
+         }
+     }
+ 
+-    if (FD_ISSET(c->s, writefds) && buffer_available(c->wrb) > 0) {
++    if (pfds[c->s].revents & POLLOUT && buffer_available(c->wrb) > 0) {
+         /* Can write data. */
+         n = 1;
+         do {
+diff -urN tpop3d-1.5.3.org/ioabs_tls.c tpop3d/ioabs_tls.c
+--- tpop3d-1.5.3.org/ioabs_tls.c	2003-11-24 20:58:28.000000000 +0100
++++ tpop3d/ioabs_tls.c	2006-06-26 07:30:24.000000000 +0200
+@@ -11,7 +11,7 @@
+ 
+ #ifdef USE_TLS
+ 
+-static const char rcsid[] = "$Id$";
++static const char rcsid[] = "$Id$";
+ 
+ #include <sys/types.h>
+ 
+@@ -21,7 +21,7 @@
+ 
+ #include <openssl/ssl.h>
+ 
+-#include <sys/select.h>
++#include "poll.h"
+ 
+ #include "connection.h"
+ #include "listener.h"
+@@ -228,15 +228,16 @@
+ 
+ /* ioabs_tls_pre_select:
+  * Pre-select handling for TLS, taking account of the rehandshaking nonsense. */
+-static void ioabs_tls_pre_select(connection c, int *n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds) {
++static void ioabs_tls_pre_select(connection c, int *n, struct pollfd *pfds) {
+     struct ioabs_tls *io;
+     io = (struct ioabs_tls*)c->io;
+ 
+-    FD_SET(c->s, readfds);  /* always want to read */
++    pfds[c->s].fd = c->s;
++    pfds[c->s].events |= POLLIN; /* always want to read */
+     if (!io->write_blocked_on_read &&
+         (buffer_available(c->wrb) > 0 || io->accept_blocked_on_write
+          || io->read_blocked_on_write || io->shutdown_blocked_on_write))
+-        FD_SET(c->s, writefds);
++        pfds[c->s].events |= POLLOUT;
+ 
+     if (c->s > *n)
+         *n = c->s;
+@@ -244,15 +245,15 @@
+ 
+ /* ioabs_tls_post_select:
+  * Post-select handling for TLS, with its complicated logic. */
+-static int ioabs_tls_post_select(connection c, fd_set *readfds, fd_set *writefds, fd_set *exceptfds) {
++static int ioabs_tls_post_select(connection c, struct pollfd *pfds) {
+     int ret = 0, R = 0;
+     ssize_t n, wtotal;
+     int canread, canwrite;
+     struct ioabs_tls *io;
+     io = (struct ioabs_tls*)c->io;
+ 
+-    canread  = FD_ISSET(c->s, readfds);
+-    canwrite = FD_ISSET(c->s, writefds);
++    canread  = pfds[c->s].revents & (POLLIN | POLLHUP);
++    canwrite = pfds[c->s].revents & POLLOUT;
+     
+     /* First, accept handling. */
+     if ((io->accept_blocked_on_read && canread) || (io->accept_blocked_on_write && canwrite)) {
+@@ -276,14 +277,12 @@
+                     return 0;
+ 
+                 case SSL_ERROR_SYSCALL:
+-                    if (!e) {
+-                        if (ERR_get_error() == 0)
+-                            log_print(LOG_ERR, _("ioabs_tls_post_select: client %s: SSL_accept: connection unexpectedly closed by peer"), c->idstr);
+-                        else
+-                            log_print(LOG_ERR, _("ioabs_tls_post_select: client %s: SSL_accept: %m; closing connection"), c->idstr);
+-                        break;
+-                    }
+-                    /* fall through */
++                    if (ERR_get_error() == 0)
++                        log_print(LOG_ERR, _("ioabs_tls_post_select: client %s: SSL_accept: connection unexpectedly closed by peer"), c->idstr);
++                    else
++                        log_print(LOG_ERR, _("ioabs_tls_post_select: client %s: SSL_accept: %m; closing connection"), c->idstr);
++                    break;
++                        
+                 case SSL_ERROR_SSL:
+                 default:
+                     log_print(LOG_ERR, _("ioabs_tls_post_select: client %s: SSL_accept: %s; closing connection"), c->idstr, ERR_reason_error_string(ERR_get_error()));
+diff -urN tpop3d-1.5.3.org/logging.c tpop3d/logging.c
+--- tpop3d-1.5.3.org/logging.c	2003-07-15 01:31:20.000000000 +0200
++++ tpop3d/logging.c	2005-12-20 22:41:19.000000000 +0100
+@@ -7,7 +7,7 @@
+  *
+  */
+ 
+-static const char rcsid[] = "$Id$";
++static const char rcsid[] = "$Id$";
+ 
+ #include <errno.h>
+ #include <stdarg.h>
+@@ -51,30 +51,69 @@
+ 
+ #define NFACIL      (sizeof(facil) / sizeof(struct logfac))
+ 
++/* level:
++ * Log level names and constants, used to allow configurable logging at
++ * run time. */
++static struct loglev {
++    char *name;
++    int lev;
++} level[] = {
++        {"debug",       LOG_DEBUG},
++        {"info",        LOG_INFO},
++        {"notice",      LOG_NOTICE},
++        {"warning",     LOG_WARNING},
++        {"warn",        LOG_WARNING}, /* DEPRECATED */
++        {"err",         LOG_ERR},
++        {"error",       LOG_ERR},     /* DEPRECATED */
++        {"crit",        LOG_CRIT},
++        {"alert",       LOG_ALERT},
++        {"emerg",       LOG_EMERG},
++        {"panic",       LOG_EMERG},   /* DEPRECATED */
++    };
++
++#define NLEVEL      (sizeof(level) / sizeof(struct loglev))
++
+ static int log_fac;
++static int log_lev;
+ 
+ /* log_init:
+  * Start up logging. */
+ void log_init(void) {
+-    int fac = LOG_MAIL, warn = 0;
+-    char *s;
++    int fac = LOG_MAIL, lev = LOG_DEBUG, warn_fac = 0, warn_lev = 0;
++    char *sfac, *slev;
+ 
+-    if ((s = config_get_string("log-facility"))) {
++    if ((sfac = config_get_string("log-facility"))) {
+         struct logfac *l;
+-        warn = 1;
++        warn_fac = 1;
+         for (l = facil; l < facil + NFACIL; ++l)
+-            if (strcasecmp(l->name, s) == 0) {
+-                warn = 0;
++            if (strcasecmp(l->name, sfac) == 0) {
++                warn_fac = 0;
+                 fac = l->fac;
+                 break;
+             }
+     }
+ 
+-    openlog("tpop3d", LOG_PID | LOG_NDELAY, fac);
+-    if (warn == 1)
+-        log_print(LOG_ERR, _("log_init: log-facility `%s' unknown, using `mail'"), s);
++    if ((slev = config_get_string("log-level"))) {
++        struct loglev *l;
++        warn_lev = 1;
++        for (l = level; l < level + NLEVEL; ++l)
++            if (strcasecmp(l->name, slev) == 0) {
++                warn_lev = 0;
++                lev = l->lev;
++                break;
++            }
++    }
+ 
+     log_fac = fac;
++    log_lev = lev;
++
++    openlog("tpop3d", LOG_PID | LOG_NDELAY, fac);
++
++    if (warn_fac == 1)
++        log_print(LOG_ERR, _("log_init: log-facility `%s' unknown, using `mail'"), sfac);
++    if (warn_lev == 1)
++        log_print(LOG_ERR, _("log_init: log-level `%s' unknown, using `debug'"), slev);
++
+ }
+ 
+ 
+@@ -112,6 +151,10 @@
+ void log_print(int priority, const char *fmt, ...) {
+     char *s;
+     va_list ap;
++
++    if(priority > log_lev)
++        return;
++
+     va_start(ap, fmt);
+     s = verrprintf(fmt, ap);
+     va_end(ap);
+diff -urN tpop3d-1.5.3.org/mailbox.c tpop3d/mailbox.c
+--- tpop3d-1.5.3.org/mailbox.c	2003-01-09 23:59:37.000000000 +0100
++++ tpop3d/mailbox.c	2005-11-02 17:23:08.000000000 +0100
+@@ -4,7 +4,7 @@
+  *
+  * Copyright (c) 2001 Chris Lightfoot, Paul Makepeace. All rights reserved.
+  *
+- * $Id$
++ * $Id$
+  *
+  */
+ 
+@@ -138,7 +138,7 @@
+ 
+ /* try_mailbox_locations:
+  * Helper function for find_mailbox. */
+-static mailbox try_mailbox_locations(const char *specs, const char *user, const char *local_part, const char *domain, const char *home) {
++static mailbox try_mailbox_locations(const char *specs, authcontext a) {
+     tokens t;
+     mailbox m = NULL;
+     int i;
+@@ -155,17 +155,30 @@
+         if (subspec) {
+             mdrv = str;
+             *subspec++ = 0;
+-        } else subspec = str;
++        } else {
++            subspec = str;
++            mdrv = mbox_drivers[0].name;
++        }
+ 
+-        path = substitute_variables(subspec, &err, 4, "user", user, "local_part", local_part, "domain", domain, "home", home);
++        path = substitute_variables(subspec, &err, 4, "user", a->user, "local_part", a->local_part, "domain", a->domain, "home", a->home);
+ 
+         if (!path)
+             /* Some sort of syntax error. */
+             log_print(LOG_ERR, _("try_mailbox_locations: %s near `%.16s'"), err.msg, subspec + err.offset);
+         else {
+             m = mailbox_new(path, mdrv);
++            /* Return in case of error ... */
++            if (!m) {
++                xfree(path);
++                break;
++            }
++            /* ... or if we found the mailspool. */
++            if(m != MBOX_NOENT) {
++                a->mboxdrv = strdup(mdrv);
++                a->mailbox = path;
++                break;
++            }
+             xfree(path);
+-            if (!m || m != MBOX_NOENT) break; /* Return in case of error or if we found the mailspool. */
+         }
+     }
+     
+@@ -198,12 +211,12 @@
+     buffer = xmalloc(strlen("auth--mailbox") + strlen(a->auth) + 1);
+     sprintf(buffer, "auth-%s-mailbox", a->auth);
+     if ((s = config_get_string(buffer)))
+-        m = try_mailbox_locations(s, a->user, a->local_part, a->domain, a->home);
++        m = try_mailbox_locations(s, a);
+     xfree(buffer);
+ 
+     /* Then the global one. */
+     if (m == MBOX_NOENT && (s = config_get_string("mailbox")))
+-        m = try_mailbox_locations(s, a->user, a->local_part, a->domain, a->home);
++        m = try_mailbox_locations(s, a);
+     
+ #ifdef MAILSPOOL_DIR
+     /* Then the compiled-in default. */
+diff -urN tpop3d-1.5.3.org/maildir.c tpop3d/maildir.c
+--- tpop3d-1.5.3.org/maildir.c	2003-11-24 21:23:20.000000000 +0100
++++ tpop3d/maildir.c	2005-12-10 12:08:25.000000000 +0100
+@@ -13,7 +13,7 @@
+ 
+ #ifdef MBOX_MAILDIR
+ 
+-static const char rcsid[] = "$Id$";
++static const char rcsid[] = "$Id$";
+ 
+ #include <sys/types.h>
+ 
+@@ -145,10 +145,10 @@
+ }
+ 
+ /* maildir_build_index MAILDIR SUBDIR TIME
+- * Build an index of the MAILDIR; SUBDIRis one of cur, tmp or new; TIME is the
++ * Build an index of the MAILDIR; SUBDIR is one of cur, tmp or new; TIME is the
+  * time at which the operation started, used to ignore messages delivered
+- * during processes. Returns 0 on success, -1 otherwise. */
+-int maildir_build_index(mailbox M, const char *subdir, time_t time) {
++ * during processing. Returns 0 on success, -1 otherwise. */
++int maildir_build_index(mailbox M, const char *subdir, time_t T) {
+     DIR *dir;
+     struct dirent *d;
+ 
+@@ -156,23 +156,53 @@
+ 
+     dir = opendir(subdir);
+     if (!dir) {
+-        log_print(LOG_ERR, "maildir_build_index: opendir(%s): %m", subdir);
++        log_print(LOG_ERR, "maildir_build_index: opendir(%s/%s): %m", M->name, subdir);
+         return -1;
+     }
+     
+     while ((d = readdir(dir))) {
+         struct stat st;
+-        char *filename;
++        char *filename, *seq;
++        int ret,seql;
+         
+         if (d->d_name[0] == '.') continue;
+         filename = xmalloc(strlen(subdir) + strlen(d->d_name) + 2);
+         sprintf(filename, "%s/%s", subdir, d->d_name);
+         if (!filename) return -1;
+-        if (stat(filename, &st) == 0 && st.st_mtime < time) {
+-            /* These get sorted by mtime later. */
++
++        if(config_get_bool("maildir-evaluate-filename")) {
++            memset(&st, 0, sizeof(st));
++            st.st_mtime = strtoul(d->d_name, NULL, 10);
++            if(!(seq = config_get_string("maildir-size-string")))
++                seq = ",S=";
++
++            seql = strlen(seq);
++            if(seq = strstr(d->d_name, seq))
++                st.st_size = strtoul(seq + seql, NULL, 10);
++
++            if (st.st_size && st.st_mtime)
++                ret = 0;
++            else {
++                ret = stat(filename, &st);
++                log_print(LOG_DEBUG, "maildir_build_index: Falling back on stat()!");
++            }
++        } else {
++            ret = stat(filename, &st);
++        }
++
++        if (0 == ret) {
+             struct indexpoint pt;
++
++            /* XXX Previously, we ignored messages from the future, since
++             * that's what qmail-pop3d does. But it's not clear why this is
++             * useful, so turn the check into a warning. */
++            if (st.st_mtime > T)
++                log_print(LOG_WARNING, _("maildir_build_index: %s: mtime is %d seconds in the future; this condition may indicate that you have a clock synchronisation error, especially if you are using NFS-mounted mail directories"), filename, (int)(st.st_mtime - T));
++            
++            /* These get sorted by mtime later. */
+             maildir_make_indexpoint(&pt, filename, st.st_size, st.st_mtime);
+             mailbox_add_indexpoint(M, &pt);
++
+             /* Accumulate size of messages. */
+             M->totalsize += st.st_size;
+         }
+@@ -192,6 +222,82 @@
+     return 0;
+ }
+ 
++/* maildir_recurse MAILBOX DIRECTORY TIME
++ * Recurses through IMAP folders to search for messages.  Returns 0 on success
++ * and minor errors, -1 on fatal errors. */
++static int maildir_recurse(mailbox M, char *current, time_t time, tokens ignorefolders) {
++    DIR *dir;
++    struct dirent *d;
++    char *folder, *match, *recursefolder;
++    int foldersl, dirl;
++    struct stat st;
++
++    if (!M) return -1;
++
++    dir = opendir(current);
++    if (!dir) {
++        /* We ignore subdirectories with errors, therefor we return 0 here. */
++        log_print(LOG_ERR, "maildir_recurse: opendir(.): %m");
++        return 0;
++    }
++
++    while ((d = readdir(dir))) {
++        int i, ignore = 0;
++        if (d->d_name[0] != '.')
++            continue;
++
++        folder = d->d_name + 1;
++        if (!*folder || !strcmp(".", folder))
++            continue;
++
++        foldersl = strlen(folder);
++
++        for (i = 0; i < ignorefolders->num; i++) {
++            if(0 == strcmp(folder, ignorefolders->toks[i])) {
++                ignore = 1;
++                break;
++            }
++        }
++        if (ignore)
++            continue;
++
++        dirl = strlen(current) + foldersl + 3;
++
++        recursefolder = xmalloc(dirl);
++        if (!recursefolder)
++            return -1;
++
++        sprintf(recursefolder, "%s/.%s", current, folder);
++
++        if(stat(recursefolder, &st) == 0 && S_ISDIR(st.st_mode)) {
++            if(maildir_recurse(M, recursefolder, time, ignorefolders) != 0) {
++                xfree(recursefolder);
++                return -1;
++            }
++
++            recursefolder = xrealloc(recursefolder, dirl + 4);
++            if (!recursefolder)
++                return -1;
++
++            /* We ignore subdirectories with errors, therefore we don't
++             * fail on maildir_build_index problems here. */
++            sprintf(recursefolder, "%s/.%s/new", current, folder);
++            if (stat(recursefolder, &st) == 0 && S_ISDIR(st.st_mode))
++                maildir_build_index(M, recursefolder, time);
++
++            sprintf(recursefolder, "%s/.%s/cur", current, folder);
++            if (stat(recursefolder, &st) == 0 && S_ISDIR(st.st_mode))
++                maildir_build_index(M, recursefolder, time);
++        }
++
++        xfree(recursefolder);
++    }
++
++    closedir(dir);
++    return 0;
++}
++
++
+ /* maildir_sort_callback A B
+  * qsort(3) callback for ordering messages in a maildir. */
+ int maildir_sort_callback(const void *a, const void *b) {
+@@ -205,7 +311,7 @@
+     mailbox M, failM = NULL;
+     struct timeval tv1, tv2;
+     float f;
+-    int locked;
++    int locked = 0;
+  
+     alloc_struct(_mailbox, M);
+     
+@@ -235,6 +341,19 @@
+     /* Build index of maildir. */
+     if (maildir_build_index(M, "new", tv1.tv_sec) != 0) goto fail;
+     if (maildir_build_index(M, "cur", tv1.tv_sec) != 0) goto fail;
++    if (config_get_bool("maildir-recursion")) {
++        char *ign;
++        tokens ignorefolders;
++        if (NULL == (ign = config_get_string("maildir-ignore-folders")))
++            ign = "Trash Sent";
++        if (!(ignorefolders = tokens_new(ign, " \t")))
++            goto fail;
++        if (maildir_recurse(M, ".", tv1.tv_sec, ignorefolders) != 0) {
++            tokens_delete(ignorefolders);
++            goto fail;
++        }
++        tokens_delete(ignorefolders);
++    }
+ 
+     /* Now sort the messages. */
+     qsort(M->index, M->num, sizeof(struct indexpoint), maildir_sort_callback);
+@@ -247,8 +366,10 @@
+ 
+ fail:
+     if (M) {
+-        if (locked) maildir_unlock(M->name);
+-        if (M->name) xfree(M->name);
++        if (M->name) {
++            if (locked) maildir_unlock(M->name);
++            xfree(M->name);
++        }
+         if (M->index) xfree(M->index);
+         xfree(M);
+     }
+@@ -381,13 +502,16 @@
+  * Apply deletions to a maildir. */
+ int maildir_apply_changes(mailbox M) {
+     struct indexpoint *m;
++    int did_deletions = 0;
+     if (!M) return 1;
+ 
+     for (m = M->index; m < M->index + M->num; ++m) {
+         if (m->deleted) {
+             if (unlink(m->filename) == -1)
+-                log_print(LOG_ERR, "maildir_apply_changes: unlink(%s): %m", m->filename);
+                 /* Warn but proceed anyway. */
++                log_print(LOG_ERR, "maildir_apply_changes: unlink(%s): %m", m->filename);
++            else
++                did_deletions = 1;
+         } else {
+             /* Mark message read. */
+             if (strncmp(m->filename, "new/", 4) == 0) {
+@@ -400,6 +524,16 @@
+         }
+     }
+ 
++    /* This handles the maildirsize file which appears in Maildir++ mailboxes.
++     * We delete it; a later delivery by a compliant MDA will recreate it. */
++    if (did_deletions) {
++        char *name;
++        name = xmalloc(strlen(M->name) + sizeof "/maildirsize");
++        sprintf(name, "%s/maildirsize", M->name);
++        unlink(name);
++        xfree(name);
++    }
++
+     return 1;
+ }
+ 
+diff -urN tpop3d-1.5.3.org/mailspool.c tpop3d/mailspool.c
+--- tpop3d-1.5.3.org/mailspool.c	2003-11-06 02:19:27.000000000 +0100
++++ tpop3d/mailspool.c	2006-06-26 07:30:25.000000000 +0200
+@@ -26,7 +26,7 @@
+ #endif /* HAVE_CONFIG_H */
+ 
+ #ifdef MBOX_BSD
+-static const char rcsid[] = "$Id$";
++static const char rcsid[] = "$Id$";
+ 
+ #include <errno.h>
+ #include <fcntl.h>
+@@ -60,6 +60,10 @@
+ int mailspool_load_index(mailbox m);
+ #endif /* MBOX_BSD_SAVE_INDICES */
+ 
++/* Don't try to dotfile-lock a mailspool, even if support for doing so is
++ * available. */
++int mailspool_no_dotfile_locking;
++
+ /* file_unlock FD FILENAME
+  * Unlock a mailspool file using the open FD and given FILENAME. Returns 1 on
+  * success or 0 on failure. */
+@@ -74,7 +78,8 @@
+ #endif
+ 
+ #ifdef WITH_DOTFILE_LOCKING
+-    if (name && dotfile_unlock(name) == -1) r = 0;
++    if (!mailspool_no_dotfile_locking
++        && name && dotfile_unlock(name) == -1) r = 0;
+ #endif
+ 
+     return r;
+@@ -97,8 +102,10 @@
+     else l_flock = 1;
+ #endif
+ #ifdef WITH_DOTFILE_LOCKING
+-    if (dotfile_lock(name) == -1) goto fail;
+-    else l_dotfile = 1;
++    if (!mailspool_no_dotfile_locking) {
++        if (dotfile_lock(name) == -1) goto fail;
++        else l_dotfile = 1;
++    }
+ #endif
+ #ifdef WITH_CCLIENT_LOCKING
+     if (cclient_steal_lock(fd) == -1) goto fail;
+@@ -114,7 +121,8 @@
+     if (l_flock) flock_unlock(fd);
+ #endif
+ #ifdef WITH_DOTFILE_LOCKING
+-    if (l_dotfile) dotfile_unlock(name);
++    if (!mailspool_no_dotfile_locking
++        && l_dotfile) dotfile_unlock(name);
+ #endif
+     
+     return 0;
+@@ -750,6 +758,8 @@
+     }
+ 
+     if (!feof(fp)) {
++        --m->num;
++
+         log_print(LOG_WARNING, _("mailspool_load_index(%s): index exists, but has some stale or corrupt data"), indexfile);
+         goto fail;
+     }
+diff -urN tpop3d-1.5.3.org/main.c tpop3d/main.c
+--- tpop3d-1.5.3.org/main.c	2003-11-24 20:58:28.000000000 +0100
++++ tpop3d/main.c	2006-06-26 07:30:25.000000000 +0200
+@@ -7,7 +7,7 @@
+  */
+ 
+ static const char copyright[] = "$Copyright: (c) 2001 Chris Lightfoot. All rights reserved. $";
+-static const char rcsid[] = "$Id$";
++static const char rcsid[] = "$Id$";
+ 
+ #ifdef HAVE_CONFIG_H
+ #include "configuration.h"
+@@ -340,6 +340,10 @@
+ extern int mailspool_save_indices;  /* in mailspool.c */
+ #endif
+ 
++#ifdef MBOX_BSD
++extern int mailspool_no_dotfile_locking;    /* in mailspool.c */
++#endif
++
+ int main(int argc, char **argv, char **envp) {
+     int nodaemon = 0;
+     char *configfile = CONFIG_DIR"/tpop3d.conf", *s;
+@@ -427,6 +431,12 @@
+     }
+ #endif
+ 
++    /* Should we skip dotfile-locking. */
++#ifdef MBOX_BSD
++    if (config_get_bool("mailspool-no-dotfile-locking"))
++        mailspool_no_dotfile_locking = 1;
++#endif
++
+     /* We may have been compiled with TCP wrappers support. */
+ #ifdef USE_TCP_WRAPPERS
+     if (!(tcpwrappersname = config_get_string("tcp-wrappers-name")))
+@@ -445,6 +455,8 @@
+                 pid_t pid;
+                 switch (read_pid_file(pidfile, &pid)) {
+                     case pid_file_success:
++                        if (getpid() == pid)
++                            break;
+                         if (kill(pid, 0)) {
+                             log_print(LOG_ERR, _("%s: stale PID file; removing it"), pidfile);
+                             if (unlink(pidfile) == -1) {
+@@ -453,7 +465,7 @@
+                             } else goto retry_pid_file; /* harmful? */
+                             
+                         } else {
+-                            log_print(LOG_ERR, _("%s: tpop3d already running, with process ID %d; exiting"), (int)pid);
++                            log_print(LOG_ERR, _("tpop3d already running, with process ID %d; exiting"), (int)pid);
+                             return 1;
+                         }
+                         break;
+diff -urN tpop3d-1.5.3.org/Makefile.am tpop3d/Makefile.am
+--- tpop3d-1.5.3.org/Makefile.am	2003-11-24 20:58:28.000000000 +0100
++++ tpop3d/Makefile.am	2006-06-22 19:43:46.000000000 +0200
+@@ -4,24 +4,25 @@
+ #
+ # Copyright (c) 2001 Chris Lightfoot, Mark Longair. All rights reserved.
+ #
+-# $Id$
++# $Id$
+ #
+ 
+ sbin_PROGRAMS = tpop3d
+ 
+-tpop3d_SOURCES = auth_mysql.c auth_pgsql.c auth_ldap.c auth_other.c \
++tpop3d_SOURCES = auth_mysql.c auth_pgsql.c auth_ldap.c auth_other.c auth_gdbm.c \
+                  auth_perl.c auth_pam.c auth_passwd.c auth_flatfile.c \
+                  authcache.c authswitch.c buffer.c cfgdirectives.c config.c \
+                  connection.c ioabs_tcp.c ioabs_tls.c listener.c locks.c \
+                  logging.c mailbox.c maildir.c mailspool.c main.c md5c.c \
+-                 netloop.c password.c pidfile.c pop3.c signals.c stringmap.c \
+-                 strtok_r.c substvars.c tls.c tokenise.c util.c vector.c
++                 netloop.c password.c pidfile.c poll.c pop3.c signals.c \
++                 stringmap.c strtok_r.c substvars.c tls.c tokenise.c util.c \
++                 vector.c
+ 
+ noinst_HEADERS = auth_mysql.h auth_ldap.h auth_other.h auth_perl.h auth_pam.h \
+                  auth_passwd.h auth_flatfile.h auth_pgsql.h authswitch.h \
+                  buffer.h config.h connection.h listener.h locks.h mailbox.h \
+                  md5.h password.h pidfile.h signals.h stringmap.h tls.h \
+-                 tokenise.h vector.h util.h
++                 tokenise.h vector.h util.h auth_gdbm.h
+ 
+ CFLAGS += -Wall -g -O2 -DCONFIG_DIR='"@sysconfdir@"' # -Wstrict-prototypes
+ 
+diff -urN tpop3d-1.5.3.org/netloop.c tpop3d/netloop.c
+--- tpop3d-1.5.3.org/netloop.c	2003-11-24 20:58:28.000000000 +0100
++++ tpop3d/netloop.c	2006-06-28 21:30:32.000000000 +0200
+@@ -7,7 +7,7 @@
+  *
+  */
+ 
+-static const char rcsid[] = "$Id$";
++static const char rcsid[] = "$Id$";
+ 
+ #ifdef HAVE_CONFIG_H
+ #include "configuration.h"
+@@ -31,6 +31,8 @@
+ #include <sys/socket.h>
+ #include <sys/time.h>
+ 
++#include "poll.h"
++
+ #include "config.h"
+ #include "connection.h"
+ #include "listener.h"
+@@ -41,7 +43,7 @@
+ /* The socket send buffer is set to this, so that we don't end up in a
+  * position that we send so much data that the client will not have received
+  * all of it before we time them out. */
+-#define MAX_DATA_IN_FLIGHT      8192
++#define DEFAULT_TCP_SEND_BUFFER     16384
+ 
+ int max_running_children = 16;          /* How many children may exist at once. */
+ volatile int num_running_children = 0;  /* How many children are active. */
+@@ -105,11 +107,12 @@
+ 
+ /* listeners_pre_select:
+  * Called before the main select(2) so listening sockets can be polled. */
+-static void listeners_pre_select(int *n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds) {
++static void listeners_pre_select(int *n, struct pollfd *pfds) {
+     item *t;
+     vector_iterate(listeners, t) {
+         int s = ((listener)t->v)->s;
+-        FD_SET(s, readfds);
++       pfds[s].fd = s;
++       pfds[s].events |= POLLIN;
+         if (s > *n) *n = s;
+     }
+ }
+@@ -117,16 +120,27 @@
+ /* listeners_post_select:
+  * Called after the main select(2) to allow listening sockets to sort
+  * themselves out. */
+-static void listeners_post_select(fd_set *readfds, fd_set *writefds, fd_set *exceptfds) {
++static void listeners_post_select(struct pollfd *pfds) {
+     item *t;
+     vector_iterate(listeners, t) {
+         listener L = (listener)t->v;
+-        if (FD_ISSET(L->s, readfds)) {
++       if (pfds[L->s].revents & (POLLIN | POLLHUP)) {
+             struct sockaddr_in sin, sinlocal;
+             size_t l = sizeof(sin);
+-            int s, a = MAX_DATA_IN_FLIGHT;
++            static int tcp_send_buf = -1;
++            int s;
+             time_t start;
+ 
++            if (tcp_send_buf == -1) {
++                int q;
++                q = config_get_int("tcp-send-buffer", &tcp_send_buf);
++                if (q <= 0 || tcp_send_buf < 0) {
++                    tcp_send_buf = DEFAULT_TCP_SEND_BUFFER;
++                    if (q == -1 || tcp_send_buf < 0)
++                        log_print(LOG_WARNING, "listeners_post_select: bad value for tcp-send-buffer; using default");
++                }
++            }
++
+             time(&start);
+             errno = 0;
+             
+@@ -144,7 +158,8 @@
+                     close(s);
+                 }
+ #endif
+-                else if (setsockopt(s, SOL_SOCKET, SO_SNDBUF, &a, sizeof(a)) == -1) {
++                else if (tcp_send_buf != 0
++                         && setsockopt(s, SOL_SOCKET, SO_SNDBUF, &tcp_send_buf, sizeof(tcp_send_buf)) == -1) {
+                     /* Set a small send buffer so that we get EAGAIN if the client
+                      * isn't acking our data. */
+                     log_print(LOG_ERR, "listeners_post_select: setsockopt: %m");
+@@ -171,7 +186,7 @@
+                 }
+             }
+ 
+-            if (errno != EAGAIN)
++            if (errno != EAGAIN && errno != EINTR)
+                 log_print(LOG_ERR, "net_loop: accept: %m");
+             
+         }
+@@ -180,12 +195,12 @@
+ 
+ /* connections_pre_select:
+  * Called before the main select(2) so connections can be polled. */
+-static void connections_pre_select(int *n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds) {
++static void connections_pre_select(int *n, struct pollfd *pfds) {
+     connection *J;
+     for (J = connections; J < connections + max_connections; ++J)
+         /* Don't add frozen connections to the select masks. */
+         if (*J && !connection_isfrozen(*J) && (*J)->cstate != closed)
+-            (*J)->io->pre_select(*J, n, readfds, writefds, exceptfds);
++            (*J)->io->pre_select(*J, n, pfds);
+ }
+ 
+ /* fork_child CONNECTION
+@@ -327,7 +342,7 @@
+             /* Began session. We log a message in a known format, and call
+              * into the authentication drivers in case they want to do
+              * something with the information for POP-before-SMTP relaying. */
+-            log_print(LOG_INFO, _("fork_child: %s: began session for `%s' with %s; child PID is %d"), c->idstr, c->a->user, c->a->auth, (int)ch);
++            log_print(LOG_NOTICE, _("fork_child: %s: began session for `%s' with %s; child PID is %d"), c->idstr, c->a->user, c->a->auth, (int)ch);
+             authswitch_onlogin(c->a, c->remote_ip, c->local_ip);
+ 
+             if (childwait) {
+@@ -363,31 +378,37 @@
+ /* connections_post_select:
+  * Called after the main select(2) to do stuff with connections.
+  *
+- * For each connection, we call its own post_select routine. This will do all sorts
+- * of stuff which is hidden to us, including pushing the running/closing/closed
+- * state machine around and reading and writing the I/O buffers. We need to try to
+- * parse commands when it's indicated that data have been read, and react to the
+- * changed state of any connection. */
+-static void connections_post_select(fd_set *readfds, fd_set *writefds, fd_set *exceptfds) {
++ * For each connection, we call its own post_select routine. This will do all
++ * sorts of stuff which is hidden to us, including pushing the
++ * running/closing/closed state machine around and reading and writing the I/O
++ * buffers. We need to try to parse commands when it's indicated that data have
++ * been read, and react to the changed state of any connection. */
++static void connections_post_select(struct pollfd *pfds) {
+     static size_t i;
+     size_t i0;
+     time_t start;
+ 
+     time(&start);
+ 
+-    for (i0 = (i + max_connections - 1) % max_connections; time(NULL) < start + LATENCY && i != i0; i = (i + 1) % max_connections) {
++    for (i0 = (i + max_connections - 1) % max_connections; i != i0; i = (i + 1) % max_connections) {
+         connection c;
+         int r;
+ 
+         if (!(c = connections[i]))
+             continue;
+ 
++        /* Don't spend too long in this loop. */
++        if (time(NULL) >= start + LATENCY)
++            break;
++
++        if (i > 0 && post_fork) {
++            connections[0] = c;
++            connections[i] = NULL;
++        }
++
+         /* Handle all post-select I/O. */
+-        r = c->io->post_select(c, readfds, writefds, exceptfds);
++        r = c->io->post_select(c, pfds);
+ 
+-        /* At this stage, the connection may be closed or closing. But we
+-         * should try to interpret commands anyway, in case the client sends
+-         * QUIT and immediately closes the connection. */
+         if (r && !connection_isfrozen(c)) {
+             /*
+              * Handling of POP3 commands, and forking children to handle
+@@ -426,6 +447,15 @@
+                     break;
+             }
+ 
++            if (post_fork) {
++                if (i != 0) {
++                    connections[0] = connections[i];
++                    connections[i] = NULL;
++                }
++                i = 0;
++                break;
++            }
++
+             if (!c)
+                 continue; /* if connection has been destroyed, do next one */
+         }
+@@ -462,8 +492,18 @@
+         if (c->cstate == closed) {
+             /* We should now log the closure of the connection and ending
+              * of any authenticated session. */
+-            if (c->a)
++            if (c->a) {
++                /* Microsoft Outlook closes connections immediately after
++                 * issuing QUIT. By default we'd lose any message deletions
++                 * that were pending, so add an option to apply them even
++                 * so. */
++                if (!config_get_bool("no-commit-on-early-close")) {
++                    pop3command p;
++                    if ((p = connection_parsecommand(c)) && p->cmd == QUIT)
++                        c->m->apply_changes(c->m);
++                }
+                 log_print(LOG_INFO, _("connections_post_select: client %s: finished session for `%s' with %s"), c->idstr, c->a->user, c->a->auth);
++            }
+             log_print(LOG_INFO, _("connections_post_select: client %s: disconnected; %d/%d bytes read/written"), c->idstr, c->nrd, c->nwr);
+ 
+ /*            remove_connection(c);*/
+@@ -473,6 +513,11 @@
+             if (post_fork)
+                 _exit(0);
+         }
++
++        if (post_fork) {
++            i = 0;
++            break;
++        }
+     }
+ }
+ 
+@@ -490,6 +535,7 @@
+     extern pid_t child_died;
+     extern int child_died_signal;
+     sigset_t chmask;
++    struct pollfd *pfds;
+     
+     sigemptyset(&chmask);
+     sigaddset(&chmask, SIGCHLD);
+@@ -498,30 +544,32 @@
+     max_connections = 2 * max_running_children;
+     connections = (connection*)xcalloc(max_connections, sizeof(connection*));
+ 
++    pfds = xmalloc(max_connections * sizeof *pfds);
++
+     log_print(LOG_INFO, _("net_loop: tpop3d version %s successfully started"), TPOP3D_VERSION);
+     
+     /* Main select() loop */
+     while (!foad) {
+-        fd_set readfds, writefds;
+-        struct timeval tv = {1, 0}; /* Must be less than IDLE_TIMEOUT and small enough that termination on receipt of SIGTERM is timely. */
+-        int n = 0, e;
++        int n = 0, e, i;
+ 
+-        FD_ZERO(&readfds);
+-        FD_ZERO(&writefds);
++        for (i = 0; i < max_connections; ++i) {
++            pfds[i].fd = -1;
++            pfds[i].events = pfds[i].revents = 0;
++        }
+ 
+-        if (!post_fork) listeners_pre_select(&n, &readfds, &writefds, NULL);
++        if (!post_fork) listeners_pre_select(&n, pfds);
+ 
+-        connections_pre_select(&n, &readfds, &writefds, NULL);
++        connections_pre_select(&n, pfds);
+ 
+-        e = select(n + 1, &readfds, &writefds, NULL, &tv);
++        e = poll(pfds, n + 1, 1000 /* must be smaller than timeout */);
+         if (e == -1 && errno != EINTR) {
+-            log_print(LOG_WARNING, "net_loop: select: %m");
++            log_print(LOG_WARNING, "net_loop: poll: %m");
+         } else if (e >= 0) {
+             /* Check for new incoming connections */
+-            if (!post_fork) listeners_post_select(&readfds, &writefds, NULL);
++            if (!post_fork) listeners_post_select(pfds);
+ 
+             /* Monitor existing connections */
+-            connections_post_select(&readfds, &writefds, NULL);
++            connections_post_select(pfds);
+         }
+ 
+         sigprocmask(SIG_BLOCK, &chmask, NULL);
+@@ -556,5 +604,7 @@
+             if (*J) connection_delete(*J);
+         xfree(connections);
+     }
++
++    xfree(pfds);
+ }
+ 
+diff -urN tpop3d-1.5.3.org/password.c tpop3d/password.c
+--- tpop3d-1.5.3.org/password.c	2003-09-10 00:52:30.000000000 +0200
++++ tpop3d/password.c	2004-09-29 22:58:00.000000000 +0200
+@@ -31,10 +31,14 @@
+ #define _XOPEN_SRC      /* crypt(3), on some systems */
+ #include <unistd.h>
+ 
++#ifdef SHA1_PASSWORDS
++#include <openssl/sha.h>
++#endif /* SHA1_PASSWORDS */
++
+ #include "md5.h"
+ #include "util.h"
+ 
+-static const char rcsid[] = "$Id$";
++static const char rcsid[] = "$Id$";
+ 
+ /* 
+  * MD5 crypt(3) routines. This is here so that you can migrate passwords from
+@@ -272,13 +276,37 @@
+                 log_print(LOG_ERR, _("password: %s has password type mysql, but hash is of incorrect length %d (expecting 8 or 16)"), who, n);
+                 return 0;
+         }
++#ifdef SHA1_PASSWORDS
++    } else if (IS_SCHEME(pwhash, "{sha1}", default_crypt_scheme)) {
++        /* XXX Messy. We should generalise hashing, probably by just using
++         * OpenSSL's code for it. Further, this only supports hex-encoded
++         * passwords, not base64 as well, because the base64 code is tied to
++         * the MD5 code.... */
++        unsigned char h[20], hh[41];
++        SHA_CTX c;
++        int i;
++
++        if (strlen(realhash) != 40) {
++            log_print(LOG_ERR, _("password: %s has password type sha1, but has is of incorrect length"), who);
++            return 0;
++        }
++        
++        SHA1_Init(&c);
++        SHA1_Update(&c, pass, strlen(pass));
++        SHA1_Final(h, &c);
++
++        for (i = 0; i < 20; ++i)
++            sprintf(hh + 2 * i, "%02x", (unsigned int)h[i]);
++
++        return strcasecmp(realhash, hh) == 0;
++#endif /* SHA1_PASSWORDS */
+     } else if (IS_SCHEME(pwhash, "{md5}", default_crypt_scheme)) {
+         /* Straight MD5 password. But this might be either in hex or base64
+          * encoding. */
+         if (strlen(realhash) == 32) {
+             /* Hex. */
+             return strcasecmp(realhash, md5_digest_str(pass, strlen(pass), 0)) == 0;
+-        } else if (strlen(pwhash) == 24) {
++        } else if (strlen(realhash) == 24) {
+             /* Base 64. */
+             return strcmp(realhash, md5_digest_str(pass, strlen(pass), 1)) == 0;
+         } else
+diff -urN tpop3d-1.5.3.org/poll.c tpop3d/poll.c
+--- tpop3d-1.5.3.org/poll.c	1970-01-01 01:00:00.000000000 +0100
++++ tpop3d/poll.c	2006-06-26 07:30:25.000000000 +0200
+@@ -0,0 +1,88 @@
++/*
++ * poll.c:
++ * Limited poll(2) implementation with select(2), for systems which lack it.
++ *
++ * Copyright (c) 2006 Chris Lightfoot. All rights reserved.
++ * Email: chris@ex-parrot.com; WWW: http://www.ex-parrot.com/~chris/
++ *
++ */
++
++#ifdef HAVE_CONFIG_H
++#include <configuration.h>
++#endif
++
++#ifndef HAVE_POLL
++
++static const char rcsid[] = "$Id$";
++
++#include <sys/types.h>
++
++#include <errno.h>
++#include <unistd.h>
++
++#include <sys/time.h>
++
++#include "poll.h"
++
++/* poll FDS NUM TIMEOUT
++ * Wait for event on the NUM FDS, returning after TIMEOUT milliseconds if no
++ * events have occurred, or waiting forever if TIMEOUT is negative. Returns
++ * the number of FDS on which there are events pending, or -1 on error. This
++ * is an implementation of the standard poll(2) function in terms of select(2),
++ * for systems which have the latter but not the former. */
++int poll(struct pollfd *ufds, unsigned int nfds, int timeout) {
++    fd_set rds, wrs;
++    struct timeval tv = {0}, *ptv = NULL;
++    unsigned int i;
++    int maxfd = -1, res;
++
++    FD_ZERO(&rds);
++    FD_ZERO(&wrs);
++    
++    /* Make a mapping from fd to slot number, and insert the file descriptors
++     * in the fd_sets. */
++    for (i = 0; i < nfds; ++i) {
++        int fd;
++        fd = ufds[i].fd;
++
++        if (fd < 0) {
++            next;
++        }
++        
++        if (fd > maxfd)
++            maxfd = fd;
++
++        ufds[i].revents = 0;
++        if (ufds[i].events & POLLIN)
++            FD_SET(fd, &rds);
++        if (ufds[i].events & POLLOUT)
++            FD_SET(fd, &wrs);
++    }
++
++    if (timeout >= 0) {
++        tv.tv_sec = timeout / 1000;
++        tv.tv_usec = (timeout % 1000) * 1000;
++        ptv = &tv;
++    }
++    
++    if (-1 == (res = select(maxfd + 1, &rds, &wrs, NULL, ptv)))
++        return -1;
++
++    for (i = 0; i < nfds; ++i) {
++        int fd;
++        fd = ufds[i].fd;
++
++        if (FD_ISSET(fd, &rds))
++            /* XXX this is broken -- to comply with the poll(2) semantics we
++             * should test for EOF as well, and set POLLHUP if true. How can
++             * we do that sanely, though? */
++            ufds[i].revents |= POLLIN;
++        if (FD_ISSET(fd, &wrs))
++            ufds[i].revents |= POLLOUT;
++    }
++
++    return res;
++}
++
++#endif /* !HAVE_POLL */
++
+diff -urN tpop3d-1.5.3.org/poll.h tpop3d/poll.h
+--- tpop3d-1.5.3.org/poll.h	1970-01-01 01:00:00.000000000 +0100
++++ tpop3d/poll.h	2006-06-22 18:49:12.000000000 +0200
+@@ -0,0 +1,38 @@
++/*
++ * poll.h:
++ *
++ * Copyright (c) 2006 Chris Lightfoot. All rights reserved.
++ * Email: chris@ex-parrot.com; WWW: http://www.ex-parrot.com/~chris/
++ *
++ * $Id$
++ *
++ */
++
++#ifndef __POLL_H_ /* include guard */
++#define __POLL_H_
++
++#ifdef HAVE_POLL
++
++#include <sys/poll.h>
++
++#else
++
++/* from poll(2) */
++#define POLLIN      0x0001    /* There is data to read */
++#define POLLPRI     0x0002    /* There is urgent data to read */
++#define POLLOUT     0x0004    /* Writing now will not block */
++#define POLLERR     0x0008    /* Error condition */
++#define POLLHUP     0x0010    /* Hung up */
++#define POLLNVAL    0x0020    /* Invalid request: fd not open */
++    /* -- actually we only implement POLLIN and POLLOUT... */
++
++struct pollfd {
++    int fd;
++    short events, revents;
++};
++
++int poll(struct pollfd *ufds, unsigned int nfds, int timeout);
++
++#endif
++
++#endif /* __POLL_H_ */
+diff -urN tpop3d-1.5.3.org/pop3.c tpop3d/pop3.c
+--- tpop3d-1.5.3.org/pop3.c	2003-11-06 02:19:27.000000000 +0100
++++ tpop3d/pop3.c	2005-12-20 22:41:19.000000000 +0100
+@@ -6,7 +6,7 @@
+  *
+  */
+ 
+-static const char rcsid[] = "$Id$";
++static const char rcsid[] = "$Id$";
+ 
+ #ifdef HAVE_CONFIG_H
+ #include "configuration.h"
+@@ -22,10 +22,12 @@
+ #include <arpa/inet.h>
+ #include <sys/socket.h>
+ #include <sys/types.h>
++#include <ctype.h>
+ 
+ #include "authswitch.h"
+ #include "connection.h"
+ #include "util.h"
++#include "config.h"
+ 
+ extern int verbose;
+ 
+@@ -70,6 +72,7 @@
+  * USER command; supply username of client. Returns 1 on success or 0 on
+  * failure. */
+ static int do_user(connection c, const pop3command p) {
++    char *up;
+     if (p->toks->num != 2) {
+         connection_sendresponse(c, 0, _("No, that's not right."));
+         return 0;
+@@ -78,6 +81,9 @@
+         return 0;
+     } else {
+         c->user = xstrdup((char*)p->toks->toks[1]);
++        if (config_get_bool("lowercase-user"))
++            for (up = c->user; *up; *up++)
++                *up = tolower(*up);
+         if (!c->user)
+ #ifndef NO_SNIDE_COMMENTS
+             connection_sendresponse(c, 0, _("Tell me your name, knave!"));
+@@ -246,30 +252,99 @@
+ /* do_uidl CONNECTION MSGNUM
+  * UIDL command: MSGNUM is the argument or -1 if none was specified. */
+ static void do_uidl(connection c, const int msg_num) {
+-    /* It isn't guaranteed that these IDs are unique; it is likely, though.
+-     * See RFC1939. */
+     if (msg_num != -1) {
+         struct indexpoint *curmsg;
+         curmsg = c->m->index + msg_num;
+         if (curmsg->deleted)
+             connection_sendresponse(c, 0, _("That message is no more."));
+         else {
+-            char response[64] = {0};
+-            snprintf(response, 63, "%d %s", 1 + msg_num, hex_digest(curmsg->hash));
++            char *idstyle;
++            char response[128] = {0};
++            if (!(idstyle = config_get_string("uidl-style")))
++                idstyle = "tpop3d";
++
++            /* qmail-pop3d style unique-ids */
++            if(   strcmp(idstyle, "qmail") == 0
++               && strcmp(c->a->mboxdrv, "maildir") == 0)
++            {
++                /* qmail-pop3d creates IDs by printing the filename of the message.
++                 * We have to care about suffixes like ":<something>", that e.g.
++                 * qmail-pop3d appends to messages it has read, because in uidl lists
++                 * these suffixes don't get printed.
++                 * Additionally, qmail-pop3d doesn't seem to limit the length of
++                 * unique-ids, violating RFC1939. We cut of uinique-id listings at 127
++                 * characters here, for the sake of compatibility to qmail, with the
++                 * penalty of slight RFC-ignorance. It's very unlikely, but we're still
++                 * not compatible to qmail-pop3d uinique-ids for very long filenames.
++                 *
++                 * So there are two steps we have to take:
++                 * First we print the complete filename, without any leading directory
++                 * parts. This will give uniform IDs even with maildir recursion.
++                 * Then we omit the suffixes by zero-terminating the string at the
++                 * first ':' we find, if any. (That's what qmail-pop3d does too.)
++                 */
++                snprintf(response, 127, "%d %s", 1 + msg_num, 1 + strrchr(curmsg->filename, '/'));
++                response[strcspn(response, ":")] = '\0';
++
++            /*
++             * any unique-id format other than tpop3ds native should go here
++             */
++
++            /* "tpop3d" and fallback for unknown uidl formats */
++            } else {
++                if(strcmp(idstyle, "tpop3d") != 0)
++                    log_print(LOG_WARNING, _("do_uidl: '%s' UIDLs not implemented, or not supported with '%s' mailbox, using fallback."), idstyle, c->a->mboxdrv);
++
++                /* It isn't guaranteed that these IDs are unique; it is likely, though.
++                 * See RFC1939. */
++                snprintf(response, 63, "%d %s", 1 + msg_num, hex_digest(curmsg->hash));
++            }
++
+             connection_sendresponse(c, 1, response);
+         }
+     } else {
+         struct indexpoint *m;
+         int nn = 0;
++        char *idstyle;
++
+         if (!(connection_sendresponse(c, 1, _("ID list follows:"))))
+             return;
+-        for (m = c->m->index; m < c->m->index + c->m->num; ++m) {
+-            if (!m->deleted) {
+-                char response[64] = {0};
+-                snprintf(response, 63, "%d %s", 1 + m - c->m->index, hex_digest(m->hash));
+-                if (!connection_sendline(c, response))
+-                    return;
+-                ++nn;
++
++        if (!(idstyle = config_get_string("uidl-style")))
++            idstyle = "tpop3d";
++
++        if(   strcmp(idstyle, "qmail") == 0
++           && strcmp(c->a->mboxdrv, "maildir") == 0)
++        {
++            char response[128] = {0};
++            for (m = c->m->index; m < c->m->index + c->m->num; ++m) {
++                if (!m->deleted) {
++                    snprintf(response, 127, "%d %s", 1 + m - c->m->index, 1 + strrchr(m->filename, '/'));
++                    response[strcspn(response, ":")] = '\0';
++                    if (!connection_sendline(c, response))
++                        return;
++                    ++nn;
++                }
++            }
++
++        /*
++         * any unique-id format other than tpop3ds native should go here
++         */
++
++        /* "tpop3d" and fallback for unknown uidl formats */
++        } else {
++            char response[64] = {0};
++
++            if(strcmp(idstyle, "tpop3d") != 0)
++                log_print(LOG_WARNING, _("do_uidl: '%s' UIDLs not implemented, or not supported with '%s' mailbox, using fallback."), idstyle, c->a->mboxdrv);
++
++            for (m = c->m->index; m < c->m->index + c->m->num; ++m) {
++                if (!m->deleted) {
++                    snprintf(response, 63, "%d %s", 1 + m - c->m->index, hex_digest(m->hash));
++                    if (!connection_sendline(c, response))
++                        return;
++                    ++nn;
++                }
+             }
+         }
+         connection_sendline(c, ".");
+@@ -295,10 +370,10 @@
+             if (verbose)
+                 log_print(LOG_DEBUG, _("do_retr: client %s: sending message %d (%d bytes)"),
+                         c->idstr, msg_num + 1, (int)curmsg->msglength);
+-        
++            
+             if ((n = c->m->sendmessage(c->m, c, msg_num, -1)) == -2)
+                 return close_connection;
+-            
++
+             /* That might have taken a long time. */
+             c->idlesince = time(NULL);
+             if (verbose) {
+@@ -421,7 +496,7 @@
+                     } else {
+                         /* Otherwise we've issued an OK response but haven't
+                          * managed to negotiate a TLS connection. */
+-                        log_print(LOG_INFO, _("connection_do: client %s: tried and failed to negotiate TLS connection; closing connection"), c->idstr);
++                        log_print(LOG_NOTICE, _("connection_do: client %s: tried and failed to negotiate TLS connection; closing connection"), c->idstr);
+                         return close_connection;
+                     }
+                 }
+@@ -583,6 +658,9 @@
+         }
+         
+         switch (p->cmd) {
++            case CAPA:
++                return do_capa(c);
++
+             case LIST:
+                 do_list(c, msg_num);
+                 break;
+@@ -631,7 +709,7 @@
+ #ifndef NO_SNIDE_COMMENTS
+                 connection_sendresponse(c, 0, _("It's a bit late for that now, isn't it?"));
+ #else
+-                connection_sendresponse(c, 0, _("STLS command available only in AUTHORIZATION stat"));
++                connection_sendresponse(c, 0, _("STLS command available only in AUTHORIZATION state"));
+ #endif
+                 break;
+ 
+diff -urN tpop3d-1.5.3.org/README tpop3d/README
+--- tpop3d-1.5.3.org/README	2003-11-24 20:59:13.000000000 +0100
++++ tpop3d/README	2004-02-03 20:52:02.000000000 +0100
+@@ -1,7 +1,7 @@
+ tpop3d, copyright (c) 2000-2003 Chris Lightfoot <chris@ex-parrot.com>
+   http://www.ex-parrot.com/~chris/tpop3d/
+ 
+-$Id$
++$Id$
+ 
+ This program is free software; you can redistribute it and/or modify it under
+ the terms of the GNU General Public License as published by the Free Software
+@@ -23,6 +23,7 @@
+     auth-mysql          a vmail-sql style MySQL database; see
+                             http://www.ex-parrot.com/~chris/vmail-sql/
+                         or another database with user-specified SQL queries
++    auth-pgsql          a PostgreSQL database
+     auth-ldap           an LDAP directory
+     auth-flatfile       /etc/passwd-style flat files
+     auth-other          an external program
+diff -urN tpop3d-1.5.3.org/README.auth_mysql tpop3d/README.auth_mysql
+--- tpop3d-1.5.3.org/README.auth_mysql	2001-11-07 01:50:41.000000000 +0100
++++ tpop3d/README.auth_mysql	2004-09-29 22:57:59.000000000 +0200
+@@ -1,5 +1,5 @@
+ README for MySQL authentication in tpop3d
+-$Id$
++$Id$
+ 
+ The auth-mysql authentication driver was developed for use with the vmail-sql
+ database schema for virtual domains, though it is easy to adjust for a
+@@ -80,6 +80,7 @@
+       {crypt_md5}...      crypt_md5 hash
+       {plaintext}...      plaintext password
+       {mysql}...          password hashed using MySQL's PASSWORD()
++      {sha1}              simple SHA1 password
+       {md5} or no prefix  old-style simple MD5 password
+ 
+    {crypt} is the format of the system crypt(3) function-- two salt characters
+@@ -89,10 +90,11 @@
+    in crypt(3), but for portability it is included as a separate case.
+    {plaintext} is a password saved in plain text; this format is useful if you
+    want to support authentication by the APOP shared-secret mechanism. {mysql}
+-   is the format produced by the PASSWORD() function in MySQL.  {md5} is a
+-   simple MD5 hash of the password, without salt, saved as a 32-character hex
+-   string. This is the historical format for vmail-sql, and so is the default
+-   if no prefix is used. This may go away at some point.
++   is the format produced by the PASSWORD() function in MySQL. {sha1} is a
++   simple 20-character hex SHA1 hash of the password. {md5} is a simple MD5
++   hash of the password, without salt, saved as a 32-character hex string or a
++   24-character base64 one. This is the historical format for vmail-sql, and so
++   is the default if no prefix is used. This may go away at some point.
+ 
+    Now, we compare the user's password against the stored hash or password,
+    and decide whether to authenticate the user or not. If this does not
+diff -urN tpop3d-1.5.3.org/README.bulletins tpop3d/README.bulletins
+--- tpop3d-1.5.3.org/README.bulletins	1970-01-01 01:00:00.000000000 +0100
++++ tpop3d/README.bulletins	2003-08-25 20:01:12.000000000 +0200
+@@ -0,0 +1,16 @@
++Implementing POP3 server bulletins using tpop3d
++$Id$
++
++At many large sites it is useful to be able to distribute a `bulletin' message
++to all mail users. tpop3d can provide this functionality by having user login
++trigger delivery of any outstanding bulletin messages via the onlogin
++handler mechanism, as for POP-before-SMTP.
++
++This is new and untested functionality, but the basic idea is that you specify
++
++    onlogin-child-wait: yes
++
++in tpop3d.conf, then write an auth-perl or auth-other onlogin action to handle
++bulletin delivery. A simple example of a bulletin script is in
++scripts/bulletins.
++
+diff -urN tpop3d-1.5.3.org/scripts/bulletins tpop3d/scripts/bulletins
+--- tpop3d-1.5.3.org/scripts/bulletins	1970-01-01 01:00:00.000000000 +0100
++++ tpop3d/scripts/bulletins	2003-08-25 20:01:12.000000000 +0200
+@@ -0,0 +1,96 @@
++#!/usr/bin/perl -w
++#
++# bulletins:
++# Deliver bulletins to POP3 users.
++#
++# This is designed to be used with auth-perl, though with a simple
++# modification (making the function below a method of a TPOP3D::AuthDriver
++# subclass) it could run in auth-other, too.
++#
++# Configuration options:
++#
++#   onlogin-child-wait:     yes     # delay mailbox locking
++#   auth-perl-enable:       yes
++#   auth-perl-start:        do '/etc/mail/bulletins';   # or whatever
++#   auth-perl-onlogin:      onlogin_bulletins_handler
++#
++#
++# Copyright (c) 2003 Chris Lightfoot. All rights reserved.
++# Email: chris@ex-parrot.com; WWW: http://www.ex-parrot.com/~chris/
++#
++
++my $rcsid = ''; $rcsid .= '$Id$';
++
++use strict;
++
++use GDBM_File;
++
++# onlogin_bulletins_handler REQUEST
++# Deliver any bulletins which are pending for the authenticated user identified
++# in the REQUEST. This subroutine is called by tpop3d, which will set
++# REQUEST->{local_part} and REQUEST->{domain} to the proper values. Bulletins
++# should be complete RFC822 messages stored in flat text files under
++# /etc/mail/bulletins, each with the extension .msg. This function will use a
++# GDBM database for each bulletin to record the addresses of users to whom it
++# has been delivered, so as to ensure that each user receives only one copy of
++# each bulletin. Bulletins are delivered to user mailboxes using the local mail
++# transport agent. If your MTA queues locally submitted messages, rather than
++# delivering them immediately, the bulletins may not in fact be read until a
++# later POP3 session. If this is a problem, either reconfigure your MTA for
++# immediate delivery or modify the below to perform message delivery itself.
++sub onlogin_bulletins_handler ($) {
++    my $req = shift;
++    my $resp = { };
++    
++    #
++    # Iterate over list of bulletins.
++    #
++    foreach my $bull (glob("/etc/mail/bulletins/*.msg")) {
++        my $recips = $bull;
++        
++        # Obtain and tie delivery database, creating it if it does not
++        # already exist.
++
++        $recips =~ s/msg$/db/;
++        my $r = $req->{local_part} . '@' . $req->{domain};
++        my %rr;
++        tie(%rr, 'GDBM_File', $recips, &GDBM_WRCREAT, 0600);
++
++        # Attempt delivery if this user has not already been sent a copy
++        # of this message.
++
++        if (!exists($rr{$r})) {
++
++            # Invoke sendmail. There are better ways of doing this, but this is
++            # simplest. Note that it wouldn't usually be safe to call sendmail
++            # in this way, but tpop3d has already authenticated somebody using
++            # the given local-part and domain, so they're presumably safe
++            # strings.
++
++            system("sendmail -oi '$r' < $bull");
++            if ($? == 0) {
++
++                # Sendmail exits with code 0 on success.
++
++                # Record delivery of this bulletin to this user.
++                $rr{$r} = 1;
++
++            } else {
++
++                # Sendmail (or system(3)) failed. There's not a whole lot we
++                # can do here, but we log a message and abort sending any other
++                # bulletins to this user for the moment.
++
++                untie(%rr);
++                return { logmsg => "sendmail failed; error code $?" };
++            }
++        }
++        untie(%rr);
++    }
++    
++    # Don't log anything in case of success; we might want to note how
++    # many bulletins were delivered or something, of course.
++    return { };
++}
++
++1;
+diff -urN tpop3d-1.5.3.org/scripts/flat_file tpop3d/scripts/flat_file
+--- tpop3d-1.5.3.org/scripts/flat_file	1970-01-01 01:00:00.000000000 +0100
++++ tpop3d/scripts/flat_file	2002-04-25 21:14:41.000000000 +0200
+@@ -0,0 +1,105 @@
++#!/usr/bin/perl -w
++#
++# flat_file:
++# Authenticate users against a list of users stored in flat files.
++#
++# This script was contributed by Chris E. Stith <mischief@motion.net>.
++# Users are authenticated by looking them up in
++#   /var/spool/mail/$(domain)/users,
++# which contains lines of the form
++#   user:crypt'd password
++#
++# The relevant config section is--
++#
++#   # This must be set to yes, or we have to make all our users put
++#   # `user@domain.tld' in the username field of their mail clients instead
++#   # of just `user'.
++#   append-domain: yes
++#
++#   # The only method enabled for POP3 auth is the custom Perl script through
++#   # tpop3d's embedded Perl interpeter. All of this has to do with that.
++#   auth-perl-enable: yes
++#   auth-perl-start: do '/etc/tpop3d/tpop3d.pl';
++#   auth-perl-finish: stop();
++#   auth-perl-pass: pass
++#
++use strict;
++use TPOP3D::AuthDriver;
++use Crypt::PasswdMD5;
++use Fcntl qw{ :flock };
++
++my $maildir = '/var/spool/mail';
++
++### check on validity of username and password
++sub auth_ok {
++    my ( $user, $domain, $pass ) = @_;
++    my $file = "$maildir/$domain/users";
++    my $fh;
++    unless ( open $fh, "< $file" ) {
++	TPOP3D::print_log ("Sorry, can't read `$file'\n");
++        return 0;
++    }
++    flock( $fh, LOCK_SH );
++    while ( <$fh> ) {
++        my ( $un, $pw, undef ) = split/:/;
++        if ( $un eq $user ) {
++            my $pass1 = crypt($pass, $pw);
++            my $pass2 = Crypt::PasswdMD5::unix_md5_crypt($pass, $pw);
++            if ( ($pw eq $pass1) || ($pw eq $pass2) ) {
++                close $fh;
++                return 1;
++            }
++        }
++    }
++    close $fh;
++    return 0;
++}
++     
++### report on validity of user and password
++sub pass {
++    my $href = $_[0];
++    my ($local, $domain) = ($href->{'local_part'}, $href->{'domain'});
++    unless ( length $local ) { $local = $href->{'user'} }
++    $domain = lc $domain;
++    unless ( length $domain ) {
++        return {
++            'result' => 'NO',
++            'logmsg' => "failed auth without explicit domain, will retry"
++        };
++    }
++    my $pass = $href->{'pass'};
++    undef %{$href};
++    if ( auth_ok($local, $domain, $pass) ) {
++        # Success.
++        return {
++            'result' => 'YES',
++            'logmsg' => "authenticated $local in domain $domain",
++            'uid' => 'tpop3d',   # pop server's assigned uid
++            'gid' => 'mail',
++            'mboxtype' => 'bsd',
++            'mailbox' => "/var/spool/mail/$domain/mailboxes/$local"
++        };
++    } else {
++        # Failure.
++        return {
++            'result' => 'NO',
++            'logmsg' => "auth failed for user $local in domain $domain"
++        };
++    }
++}
++
++### let the log know we're back
++sub start {
++    TPOP3D::print_log ("Embedded Perl auth mechanism for tpop3d starting.\n");
++}
++### let the log know we're gone
++sub stop {
++    TPOP3D::print_log ("Embedded Perl auth mechanism for tpop3d ending.\n");
++}
++
++if (defined($ENV{TPOP3D_CONTEXT}) and $ENV{TPOP3D_CONTEXT} eq 'auth_other') {
++  no strict 'subs';
++  TPOP3D::AuthDriver::run(TPOP3D::AuthDriver);
++  exit 0;
++}
++
+diff -urN tpop3d-1.5.3.org/stamp-h.in tpop3d/stamp-h.in
+--- tpop3d-1.5.3.org/stamp-h.in	2003-11-24 21:00:10.000000000 +0100
++++ tpop3d/stamp-h.in	1970-01-01 01:00:00.000000000 +0100
+@@ -1 +0,0 @@
+-timestamp
+diff -urN tpop3d-1.5.3.org/TODO tpop3d/TODO
+--- tpop3d-1.5.3.org/TODO	2003-11-24 20:58:28.000000000 +0100
++++ tpop3d/TODO	2006-06-26 07:30:23.000000000 +0200
+@@ -1,5 +1,5 @@
+ Things To Do
+-$Id$
++$Id$
+ 
+ * A proper code audit
+ 
+@@ -86,13 +86,20 @@
+ 
+ * Log statistics on transactions (email of 20031013)
+ 
+-* Cache results of authentication for a few minutes, to improve performance
+-  under high load?
++* Latency vs. throughput tradeoff under high load?
+ 
+-  The problem with this is that, to be useful, we need to cache the information
+-  for a time which is long by comparison with the interval between mail checks.
+-  The latter is a few minutes, so we'd need the things to stay in cache for an
+-  hour or so. Is a one-hour latency in propagating password changes acceptable?
++* Deferred writes in connection_sendmessage -- that should bring the cost of
++  sending messages down to the cost of substituting \r\n for \n, etc.
+ 
+-* Latency vs. throughput tradeoff under high load?
++* Configurable (or adaptive?) SO_SNDBUF
++  We probably don't have enough information to measure the necessary
++  parameters (though in principle we could measure the delay between sending
++  +OK... and receiving a new command), so just make this a config file option.
++
++* NTLM authentication
++
++* STLS+APOP issue (email of 20040306)
++
++* Repeated messages (email of 20040325)
+ 
++* Maildir semantics (email of 20040331)
+diff -urN tpop3d-1.5.3.org/tpop3d.conf.5 tpop3d/tpop3d.conf.5
+--- tpop3d-1.5.3.org/tpop3d.conf.5	2003-11-24 21:26:07.000000000 +0100
++++ tpop3d/tpop3d.conf.5	2006-06-26 07:30:26.000000000 +0200
+@@ -5,7 +5,7 @@
+ .\"
+ .\" Copyright (c) 2001-2 Chris Lightfoot. All rights reserved.
+ .\"
+-.\" $Id$
++.\" $Id$
+ .\"
+ 
+ .\" Text begins
+@@ -134,6 +134,11 @@
+ passwords over the network, so it has no effect when a user is connected over a
+ TLS-secured connection.
+ .TP
++\fBlowercase-user\fP: (\fByes\fP|\fBtrue\fP)
++Convert the string provided with the POP3 USER command to lowercase letters.
++This may be usefull with case-sensitive operations like authentication against
++dbm files or case-sensitive SQL databases.
++.TP
+ \fBtimeout-seconds\fP: \fInumber\fP
+ This is the number of seconds for which a connection may be idle for before it
+ is closed.  If it is set to 0, then timeouts are disabled.  The default value
+@@ -142,6 +147,16 @@
+ timeout), then specify 600 seconds. This may be necessary with some clients
+ which pause randomly whilst downloading messages.
+ .TP
++\fBtcp-send-buffer\fp: \fInumber\fP
++This is the largest number of bytes which may be `in flight' between the server
++and a client at any time. Setting this to larger values may improve the
++performance of \fBtpop3d\fP, but at the risk of timing out clients connected by
++slow networks. You should not set this parameter to anything larger than the
++timeout multiplied by the data rate (in bytes per second) of the slowest
++network through which clients will connect to the POP3 server. This is set using
++the SO_SNDBUF socket option; see \fBsocket\fP(7) for more information. The
++default is 16,384 bytes; set this to 0 to use the system default.
++.TP
+ \fBlog-facility\fP: \fIfacility\fP
+ This selects the `facility' as which \fBtpop3d\fP emits system log messages.
+ Possible values for \fIfacility\fP are: \fBmail\fP, \fBauthpriv\fP,
+@@ -149,6 +164,10 @@
+ (Although other possibilities are mentioned in \fBopenlog\fP(3), they don't
+ make much sense for a POP3 server.)
+ .TP
++\fBlog-level\fP: \fIlevel\fP
++This selects the `level' at which \fBtpop3d\fP logs system log messages.
++Possible values for \fIlevel\fP are described in \fBsyslog.conf\fP(5).
++.TP
+ \fBlog-stderr\fP: (\fByes\fP|\fBtrue\fP)
+ Send log messages to standard error as well as the system log. This makes sense
+ only when \fBtpop3d\fP is running with a controlling terminal.
+@@ -196,6 +215,12 @@
+ option. Those that do not also have a specific option, of the form
+ \fBauth-foo-mailbox:\fP which overrides the global setting.
+ .TP
++\fBlowercase-mailbox\fP: (\fByes\fP|\fBtrue\fP)
++Convert the directory/file part of the mailbox specification (see above) to
++lowercase letters, if retrieved by an authentication driver. (E.g. due to a
++database lookup.) Usefull only in cases where case-sensitive filesystems are
++in use, of course.
++.TP
+ .nf
+ \fBmailspool-index:\fP \fIpath-spec\fP
+ .fi
+@@ -230,12 +255,84 @@
+ that the mailspool index files be stored in a directory to which users would
+ not customarily have access, for instance /var/spool/tpop3d.
+ .TP
++\fBmailspool-no-dotfile-locking\fP: (\fByes\fP|\fBtrue\fP)
++By default \fBtpop3d\fP will try to lock a mailspool for exclusive access using
++all methods available on the local system:
++.BR fcntl (2),
++.BR flock (2),
++and creating a lockfile for the mailspool with a `.lock' suffix. This option
++allows you to switch off the last of these without recompiling the daemon, and
++is recommended \fIif you are absolutely certain that no other programs rely on
++dotfile-locking to synchronise access to mailspools.\fP In particular, if you
++use lockfiles, it is possible for an over-quota user to be unable to log in to
++the POP3 server, because creation of the lockfile is prohibited; switching on
++this option eliminates that possibility.
++.TP
+ \fBmaildir-exclusive-lock\fP: (\fByes\fP|\fBtrue\fP)
+ Indicates that \fBtpop3d\fP should attempt to lock maildir mailboxes for
+ exclusive access, so that it more closely follows the behaviour described in
+ RFC1939. Even if not specified, \fBtpop3d\fP behaves intelligently when a
+ message in a maildir is moved or deleted, so this option is not necessary.
+ .TP
++\fBmaildir-recursion\fP: (\fByes\fP|\fBtrue\fP)
++Tells \fBtpop3d\fP to display messages in IMAP folders as if they were in the
++INBOX. Useful if you mix POP3 with IMAP clients such as webmail systems.
++.TP
++\fBmaildir-ignore-folders\fP: [\fIfoldername\fP [...]]
++Specifies IMAP folders (without the leading dot) that should be excluded from
++\fBmaildir-recursion\fP. May be empty; more than one folder should be separated
++by spaces or tabs.
++
++The default is:
++.nf
++  maildir-ignore-folders: Trash Sent
++.fi
++
++.TP
++\fBmaildir-evaluate-filename\fP: (\fByes\fP|\fBtrue\fP)
++If enabled, \fBtpop3d\fP tries to extract information about modification time
++and message size out of the message filenames when reading a maildir. This saves
++some disk I/O, as we don't have to stat() on each file. Extraction of
++information from the unique filenames in a maildir is NOT common practise, so
++use with care! You have to ensure, that message filenames conform to the
++following pattern:
++
++The message filename has to begin with the UNIX timestamp of the time the
++message was delivered. The size of the message in bytes may appear anywhere in
++the filename but has to be preceded with a unique string, which can be altered
++by \fBmaildir-size-string\fP in \fBtpop3d.conf\fP.
++
++If a message filename does not conform correctly, \fBtpop3d\fP may misinterprete
++what it found, allthough if the filename turns out to be definately unusable
++(e.g. the unique string is not found, or it doesn't start with digits) it will
++fall back on using stat().
++
++Message filenames are by default set correct by reasonable recent versions of
++qmail-ldap, exim users may use the maildir_tag option of the appendfile
++transport to conform.
++.TP
++\fBmaildir-size-string\fP: \fIstring\fP
++Specifies the unique string \fBtpop3d\fP will search for when evaluating message
++filenames to find the messages size.
++See \fBmaildir-evaluate-filename\fP for information on how this is used.
++
++The default is:
++.nf
++  maildir-size-string: ,S=
++.fi
++
++.TP
++\fBuidl-style\fP: \fIstylename\fP
++The UIDL command is used by POP3 clients to distinguish messages they allready
++downloaded from new ones. If you switch between POP3 server software that
++produce different unique-ids, these clients will download all messages again.
++To avoid this, tpop3d supports different unique-id formats.
++
++The available formats are:
++  tpop3d: tpop3ds native format, the default and fallback.
++  qmail: qmail-pop3ds format, uses message-filenames as unique-ids.
++
++.TP
+ .nf
+ \fBtcp-wrappers-name\fP: \fIname\fP
+ .fi
+@@ -342,6 +439,16 @@
+ Log incorrect passwords supplied by users who fail to log in. Use of this
+ option is an invasion of privacy, but may be useful for debugging client
+ configuration problems.
++.TP
++\fBno-commit-on-early-close\fP: (\fByes\fP|\fBtrue\fP)
++Some POP3 clients (most notably Microsoft `Outlook') will close their
++connection to the server immediately after issuing a QUIT command and before
++receiving any response. Strictly they oughtn't to do that, and historically if
++they did, \fBtpop3d\fP would abort the connection and not delete messages for
++which DELE commands had been issued during the session. That behaviour has been
++changed for greater compatibility with broken clients; you can set this option
++to restore the previous behaviour. Doing so will reduce the chance that your
++clients will lose mail due to flakey network connectivity.
+ .PP
+ \fBtpop3d\fP can cache the results of successful login attempts, and re-use
+ them when the same user logs in again. This is probably not useful except
+@@ -819,6 +926,37 @@
+ \fBkill(1, $$)\fP, but it would probably be preferable to use \fBauth-other\fP
+ in this case.
+ 
++.SS GNU dbm authentication options
++
++These are only available if you compiled \fBtpop3d\fP with support for
++\fBauth-gdbm\fP.
++.TP
++\fBauth-gdbm-enable\fP: (\fByes\fP | \fBtrue\fP)
++Enable authentication via a GNU dbm file.
++.TP
++\fBauth-gdbm-passwd-file\fP: \fIstring\fP
++Specify the dbm file in which \fBtpop3d\fP will search for a user's password.
++.TP
++\fBauth-gdbm-persistent\fP: (\fByes\fP | \fBtrue\fP)
++Tells whether tpop3d should keep the GDBM file open (persistent: yes) all the time,
++or whether it should be reopened for each authentication request. The former should
++give slight better performance on heavy loaded servers, the latter is easier to
++handle. If you use persistent filehandles, you'll have to send a HUP signal to the
++listener process every time after replacing the GDBM file.
++.TP
++\fBauth-gdbm-mail-user\fP: (\fIuser-name\fP | \fIuid\fP)
++.TP
++\fBauth-gdbm-mail-group\fP: (\fIgroup-name\fP | \fIgid\fP)
++User and group under which access to the mailbox will take place.
++
++.SS A note on GNU dbm authentication
++
++The dbm file has to store password hashes as zero-terminated strings. The
++specified password hash is interpreted as a hash produced using \fBcrypt\fP(3),
++unless it is preceded by a hashing scheme in \fB{}\fP. The user and group under
++which access to the mailbox takes place with \fBauth-gdbm\fP are always as
++specified in the configuration file.
++
+ .SH FILES
+ .B /etc/tpop3d.conf
+ 
+@@ -855,7 +993,7 @@
+ .IR http://lists.beasts.org/pipermail/tpop3d-discuss/ .
+ 
+ .SH VERSION
+-$Id$
++$Id$
+ 
+ .SH COPYING
+ This program is free software; you can redistribute it and/or modify
+diff -urN tpop3d-1.5.3.org/tpop3d.conf.sample tpop3d/tpop3d.conf.sample
+--- tpop3d-1.5.3.org/tpop3d.conf.sample	2003-11-24 20:58:28.000000000 +0100
++++ tpop3d/tpop3d.conf.sample	2005-12-20 22:41:19.000000000 +0100
+@@ -2,7 +2,7 @@
+ # tpop3d.conf.sample:
+ # Sample configuration file for tpop3d.
+ #
+-# $Id$
++# $Id$
+ #
+ 
+ #
+@@ -44,6 +44,10 @@
+ # The `facility' as which tpop3d emits system log messages.
+ #log-facility: mail
+ 
++# log-level: level
++# The `level' at which tpop3d logs system log messages.
++#log-level: debug
++
+ # log-stderr: (yes|true)
+ # Send log messages to standard error as well as the system log.
+ #log-stderr: true
+@@ -68,6 +72,28 @@
+ # [default: no]
+ #maildir-exclusive-lock: true
+ 
++# maildir-recursion: (yes|true)
++# Tells tpop3d to recurse into IMAP folders when searching for messages.
++# [default: no]
++#maildir-recursion: true
++
++# maildir-ignore-folders: foldername
++# Specifies IMAP Folders that should be excluded when recursing into IMAP
++# folders. (separated by spaces or tabs, may be emtpy)
++# [default: Trash Sent]
++#maildir-ignore-folders: Trash Sent Draft Spam
++
++# maildir-evaluate-filename: (yes|true)
++# If enabled, tpop3d tries to extract modification time and message size out
++# of message filenames instead of doing a stat() on the file.
++# [default: no]
++#maildir-evaluate-filename: true
++
++# maildir-size-string: string
++# Tells tpop3d where to find the message size in the filename.
++# [default: ,S=]
++#maildir-size-string: ,S=
++
+ # tcp-wrappers-name: name
+ # Selects the `daemon name' used by tpop3d with TCP Wrappers. [default: tpop3d]
+ #tcp-wrappers-name: tpop3d
+@@ -340,3 +366,23 @@
+ # a successful login for POP-before-SMTP operation.
+ #auth-perl-onlogin:
+ 
++
++#
++# GDBM authentication options
++#
++
++# auth-gdbm-enable: (yes | true)
++# Enable authentication via GNU dbm files.
++#auth-gdbm-enable: true
++
++# auth-gdbm-passwd-file: string
++# Specify the dbm file in whichtpop3d will search for a user's password.
++#auth-gdbm-passwd-file: /var/lib/gdbm/...
++
++# auth-gdbm-persistent: (yes | true)
++# Tell tpop3d to use persistent filehandles.
++#auth-gdbm-enable: true
++
++# auth-gdbm-mail-user: (user-name | uid)
++# auth-gdbm-mail-group: (group-name | gid)
++# User and group under which access to the mailbox will take place.
+diff -urN tpop3d-1.5.3.org/util.c tpop3d/util.c
+--- tpop3d-1.5.3.org/util.c	2003-11-06 02:19:27.000000000 +0100
++++ tpop3d/util.c	2005-08-25 14:44:07.000000000 +0200
+@@ -6,7 +6,7 @@
+  *
+  */
+ 
+-static const char rcsid[] = "$Id$";
++static const char rcsid[] = "$Id$";
+ 
+ #ifdef HAVE_CONFIG_H
+ #include "configuration.h"
+@@ -47,6 +47,8 @@
+ /* daemon:
+  * Become a daemon. From `The Unix Programming FAQ', Andrew Gierth et al. */
+ int daemon(int nochdir, int noclose) {
++    pid_t parent_pid = getpid();
++
+     switch (fork()) {
+         case 0:  break;
+         case -1: return -1;
+@@ -71,6 +73,12 @@
+         dup(0); dup(0);
+     }
+ 
++    /* wait for parent to exit, to avoid race condition
++     * with PID file handling main.c */
++    while(!kill(parent_pid,0)) {
++        usleep(10);
++    }
++
+     return 0;
+ }
+ 
