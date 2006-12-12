@@ -24,6 +24,7 @@ Source0:	http://www.ex-parrot.com/~chris/tpop3d/%{name}-%{version}.tar.gz
 Source1:	%{name}.pamd
 Source2:	%{name}.init
 Source3:	%{name}.conf
+Source4:	%{name}.sysconfig
 Patch0:		%{name}-ac_am_fixes.patch
 Patch1:		%{name}-cvs20060630.patch
 Patch2:		%{name}-resolv.patch
@@ -148,14 +149,15 @@ pomiêdzy sesjami.
 
 %install
 rm -rf $RPM_BUILD_ROOT
-install -d $RPM_BUILD_ROOT{/etc/{pam.d,security,rc.d/init.d},%{_sysconfdir}}
+install -d $RPM_BUILD_ROOT{/etc/{pam.d,security,rc.d/init.d,sysconfig},%{_sysconfdir}}
 
 %{__make} install \
 	DESTDIR=$RPM_BUILD_ROOT
 
-install %{SOURCE1} $RPM_BUILD_ROOT/etc/pam.d/tpop3d
-install %{SOURCE2} $RPM_BUILD_ROOT/etc/rc.d/init.d/tpop3d
+install %{SOURCE1} $RPM_BUILD_ROOT/etc/pam.d/%{name}
+install %{SOURCE2} $RPM_BUILD_ROOT/etc/rc.d/init.d/%{name}
 install %{SOURCE3} $RPM_BUILD_ROOT%{_sysconfdir}
+install %{SOURCE4} $RPM_BUILD_ROOT/etc/sysconfig/%{name}
 
 touch $RPM_BUILD_ROOT/etc/security/blacklist.pop3
 
@@ -175,9 +177,10 @@ fi
 %files
 %defattr(644,root,root,755)
 %doc README* TPOP3D-AuthDriver scripts FAQ CHANGES CREDITS TODO PORTABILITY
-%{?with_pam:%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) /etc/pam.d/tpop3d}
+%{?with_pam:%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) /etc/pam.d/%{name}}
 %{?with_pam:%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) /etc/security/blacklist.pop3}
+%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/%{name}
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/tpop3d.conf
-%attr(754,root,root) /etc/rc.d/init.d/tpop3d
+%attr(754,root,root) /etc/rc.d/init.d/%{name}
 %attr(755,root,root) %{_sbindir}/*
 %{_mandir}/man*/*

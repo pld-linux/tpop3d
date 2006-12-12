@@ -1,0 +1,6 @@
+# $Id$
+# Customized settings for tpop3d
+
+# Nice level for tpop3d
+SERVICE_RUN_NICE_LEVEL="+0"
+
