@@ -10,7 +10,7 @@ diff -u -u -r1.56 auth_mysql.c
      static MYSQL mysql_handle;
      char *password;
      unsigned int timeout;
-+    my_bool my_true = 1;
++    my_bool my_true = 0;
  
      if (mysql && mysql_ping(mysql) == 0)
          /* The current server is up and running. */
