@@ -1,4 +1,3 @@
-? tpop3d-mysql-reconnect.patch
 Index: auth_mysql.c
 ===================================================================
 RCS file: /home/chris/vcvs/repos/tpop3d/auth_mysql.c,v
@@ -10,7 +9,7 @@ diff -u -u -r1.56 auth_mysql.c
      static MYSQL mysql_handle;
      char *password;
      unsigned int timeout;
-+    my_bool my_true = 0;
++    my_bool want_reconnect = 0;
  
      if (mysql && mysql_ping(mysql) == 0)
          /* The current server is up and running. */
@@ -18,8 +17,8 @@ diff -u -u -r1.56 auth_mysql.c
          timeout = 5;
          mysql_options(mysql, MYSQL_OPT_CONNECT_TIMEOUT, (char*)&(timeout));
  
-+	/* We want reconnect to happen. */
-+	mysql_options(mysql, MYSQL_OPT_RECONNECT, &my_true);
++	/* We do not want automatic reconnect to happen. */
++	mysql_options(mysql, MYSQL_OPT_RECONNECT, &want_reconnect);
 +
          if (mysql_real_connect(mysql, mysql_servers->toks[n],
                  config_get_string("auth-mysql-username"),
