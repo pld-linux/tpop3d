@@ -13,7 +13,7 @@
 %bcond_with	skipgetpwcheck	# with getpwuid returned struct check ommited (see patch for details)
 #
 Summary:	POP3 server
-Summary(pl):	Serwer POP3
+Summary(pl.UTF-8):   Serwer POP3
 Name:		tpop3d
 Version:	1.5.3
 Release:	29
@@ -85,33 +85,33 @@ tpop3d implements an optional metadata caching scheme for BSD
 mailspools, which offers improved performance in cases where many
 users leave large numbers of messages on the server between sessions.
 
-%description -l pl
-tpop3d to jeszcze-jeden-serwer-pop3. Intencj± by³o napisanie serwera,
-który jest szybki, rozszerzalny i bezpieczny. `Rozszerzalny' jest tu
-u¿yte w kontek¶cie formatów skrzynek. Obecnie pakiet dystrybucyjny
-wspiera nastêpuj±ce mechanizmy autentykacji:
+%description -l pl.UTF-8
+tpop3d to jeszcze-jeden-serwer-pop3. IntencjÄ… byÅ‚o napisanie serwera,
+ktÃ³ry jest szybki, rozszerzalny i bezpieczny. `Rozszerzalny' jest tu
+uÅ¼yte w kontekÅ›cie formatÃ³w skrzynek. Obecnie pakiet dystrybucyjny
+wspiera nastÄ™pujÄ…ce mechanizmy autentykacji:
 
-- auth_pam - u¿ywa Wymiennych Modu³ów Autentykacji (PAM)
+- auth_pam - uÅ¼ywa Wymiennych ModuÅ‚Ã³w Autentykacji (PAM)
 - auth_passwd - /etc/passwd (i opcjonalnie /etc/shadow)
 - auth_mysql - baza MySQL w stylu vmail-sql ; obejrzyj
   http://www.ex-parrot.com/~chris/vmail-sql/
 - auth_pgsql - baza PostgreSQL
-- auth_other - zewnêtrzny program
+- auth_other - zewnÄ™trzny program
 - auth_perl - zakorzenione podprogramy Perla
 
-Ostatnie cztery opcje pozwalaj± wspieraæ wirtualne domeny; pierwsze
-dwie za¶ s± stworzone by autentykowaæ lokalnych (uniksowych)
-u¿ytkowników.
+Ostatnie cztery opcje pozwalajÄ… wspieraÄ‡ wirtualne domeny; pierwsze
+dwie zaÅ› sÄ… stworzone by autentykowaÄ‡ lokalnych (uniksowych)
+uÅ¼ytkownikÃ³w.
 
-Wspierane s± nastêpuj±ce formaty skrzynek:
+Wspierane sÄ… nastÄ™pujÄ…ce formaty skrzynek:
 - bsd - dla kolejkowych skrzynek w stylu BSD (`Unix')
 - maildir - format maildir znany z Qmail
 - empty - pusty sterownik
 
-tpop3d implementuje opcjonalne zapamiêtywanie (caching) meta-danych
-dla skrzynek BSD, które znacznie poprawia wydajno¶æ w przypadku, gdy
-wielu u¿ytkowników zostawia du¿± liczbê wiadomo¶ci na serwerze
-pomiêdzy sesjami.
+tpop3d implementuje opcjonalne zapamiÄ™tywanie (caching) meta-danych
+dla skrzynek BSD, ktÃ³re znacznie poprawia wydajnoÅ›Ä‡ w przypadku, gdy
+wielu uÅ¼ytkownikÃ³w zostawia duÅ¼Ä… liczbÄ™ wiadomoÅ›ci na serwerze
+pomiÄ™dzy sesjami.
 
 %prep
 %setup -q
