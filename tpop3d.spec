@@ -13,7 +13,7 @@
 %bcond_with	skipgetpwcheck	# with getpwuid returned struct check ommited (see patch for details)
 #
 Summary:	POP3 server
-Summary(pl.UTF-8):   Serwer POP3
+Summary(pl.UTF-8):	Serwer POP3
 Name:		tpop3d
 Version:	1.5.3
 Release:	29
