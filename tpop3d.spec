@@ -38,7 +38,7 @@ BuildRequires:	automake
 %{?with_gdbm:BuildRequires:	gdbm-devel}
 %{?with_libevent:BuildRequires:	libevent-devel}
 %{?with_mysql:BuildRequires:	mysql-devel}
-%{?with_ldap:BuildRequires:	openldap-devel >= 2.3.0}
+%{?with_ldap:BuildRequires:	openldap-devel >= 2.4.6}
 %{?with_ssl:BuildRequires:	openssl-devel >= 0.9.7d}
 %{?with_pam:BuildRequires:		pam-devel}
 %{?with_pgsql:BuildRequires:	postgresql-devel}
