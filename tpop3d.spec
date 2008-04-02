@@ -15,25 +15,19 @@
 Summary:	POP3 server
 Summary(pl.UTF-8):	Serwer POP3
 Name:		tpop3d
-Version:	1.5.3
-Release:	32
+Version:	1.5.4
+Release:	1
 License:	GPL
 Group:		Networking/Daemons
-Source0:	http://www.ex-parrot.com/~chris/tpop3d/%{name}-%{version}.tar.gz
-# Source0-md5:	dd920c49f4e5879eb3caf7ea047622e9
+Source0:	http://download.savannah.nongnu.org/releases/tpop3d/%{name}-%{version}.tar.gz
+# Source0-md5:	2d96aad121fa5e3ab4c3c1fec0d64ab0
 Source1:	%{name}.pamd
 Source2:	%{name}.init
 Source3:	%{name}.conf
 Source4:	%{name}.sysconfig
-Patch0:		%{name}-ac_am_fixes.patch
-Patch1:		%{name}-cvs20060630.patch
-Patch2:		%{name}-resolv.patch
-Patch3:		%{name}-pam-vdomain.patch
-Patch5:		%{name}-sql-getpwuid-optional.patch
-Patch6:		%{name}-loglevel.patch
-Patch7:		%{name}-mysql-reconnect.patch
-Patch8:		%{name}-mailsize.patch
-URL:		http://www.ex-parrot.com/~chris/tpop3d/
+Patch1:		%{name}-pam-vdomain.patch
+Patch2:		%{name}-sql-getpwuid-optional.patch
+URL:		https://savannah.nongnu.org/projects/tpop3d
 BuildRequires:	autoconf
 BuildRequires:	automake
 %{?with_gdbm:BuildRequires:	gdbm-devel}
@@ -116,16 +110,10 @@ pomiędzy sesjami.
 
 %prep
 %setup -q
-%patch0 -p1
 %patch1 -p1
-%patch2 -p1
-%patch3 -p1
 %if %{with skipgetpwcheck}
-%patch5 -p0
+%patch2 -p0
 %endif
-%patch6 -p1
-%patch7 -p0
-%patch8 -p1
 
 %build
 %{__aclocal}
