@@ -1,0 +1,188 @@
+diff --git a/connection.c b/connection.c
+index f552cb9..8951ff5 100644
+--- a/connection.c
++++ b/connection.c
+@@ -105,7 +105,7 @@ static char *make_timestamp(const char *domain) {
+ 
+ /* connection_new:
+  * Create a connection object from a socket. */
+-connection connection_new(int s, const struct sockaddr_in *sin, listener L) {
++connection connection_new(int s, const struct sockaddr_in *sin, listener L, int *pfds_n) {
+     int n;
+     connection c = NULL;
+ 
+@@ -114,6 +114,9 @@ connection connection_new(int s, const struct sockaddr_in *sin, listener L) {
+     c->s = s;
+     c->sin = *sin;
+ 
++    (*pfds_n)++;
++    c->s_index = *pfds_n;
++
+     n = sizeof(c->sin_local);
+     if (getsockname(s, (struct sockaddr*)&(c->sin_local), &n) < 0) {
+         log_print(LOG_WARNING, "connection_new: getsockname: %m");
+diff --git a/connection.h b/connection.h
+index 74dd413..4a5e12c 100644
+--- a/connection.h
++++ b/connection.h
+@@ -48,6 +48,7 @@ struct ioabs;
+ 
+ typedef struct _connection {
+     int s;                  /* connected socket                 */
++    int s_index;            /* pfds index */
+     struct sockaddr_in sin; /* name of peer                     */
+     char *remote_ip;        /* ASCII remote IP address          */
+     struct sockaddr_in sin_local; /* name of local side         */
+@@ -165,7 +166,7 @@ typedef struct _pop3command {
+ } *pop3command;
+ 
+ /* Create/destroy connections */
+-connection connection_new(int s, const struct sockaddr_in *sin, listener L);
++connection connection_new(int s, const struct sockaddr_in *sin, listener L, int *pfds_n);
+ void connection_delete(connection c);
+ 
+ /* Read data out of the socket into the buffer */
+diff --git a/ioabs_tcp.c b/ioabs_tcp.c
+index 36d87d0..50f0250 100644
+--- a/ioabs_tcp.c
++++ b/ioabs_tcp.c
+@@ -78,13 +78,13 @@ static void ioabs_tcp_pre_select(connection c, int *n, struct pollfd *pfds) {
+     struct ioabs_tcp *io;
+     io = (struct ioabs_tcp*)c->io;
+ 
+-    pfds[c->s].fd = c->s;
+-    pfds[c->s].events |= POLLIN;
++    pfds[c->s_index].fd = c->s;
++    pfds[c->s_index].events |= POLLIN;
+     if (buffer_available(c->wrb) > 0)
+-       pfds[c->s].events |= POLLOUT;
+-    
+-    if (c->s > *n)
+-        *n = c->s;
++       pfds[c->s_index].events |= POLLOUT;
++
++    if (c->s_index > *n)
++       *n = c->s_index;
+ }
+ 
+ /* ioabs_tcp_post_select:
+@@ -95,7 +95,7 @@ static int ioabs_tcp_post_select(connection c, struct pollfd *pfds) {
+     struct ioabs_tcp *io;
+     io = (struct ioabs_tcp*)c->io;
+ 
+-    if (pfds[c->s].revents & (POLLIN | POLLHUP)) {
++    if (pfds[c->s_index].revents & (POLLIN | POLLHUP)) {
+         /* Can read data. */
+         do {
+             char *r;
+@@ -124,7 +124,7 @@ static int ioabs_tcp_post_select(connection c, struct pollfd *pfds) {
+         }
+     }
+ 
+-    if (pfds[c->s].revents & POLLOUT && buffer_available(c->wrb) > 0) {
++    if (pfds[c->s_index].revents & POLLOUT && buffer_available(c->wrb) > 0) {
+         /* Can write data. */
+         n = 1;
+         do {
+diff --git a/ioabs_tls.c b/ioabs_tls.c
+index 98ac7b7..1d77764 100644
+--- a/ioabs_tls.c
++++ b/ioabs_tls.c
+@@ -245,15 +245,15 @@ static void ioabs_tls_pre_select(connection c, int *n, struct pollfd *pfds) {
+     struct ioabs_tls *io;
+     io = (struct ioabs_tls*)c->io;
+ 
+-    pfds[c->s].fd = c->s;
+-    pfds[c->s].events |= POLLIN; /* always want to read */
++    pfds[c->s_index].fd = c->s;
++    pfds[c->s_index].events |= POLLIN; /* always want to read */
+     if (!io->write_blocked_on_read &&
+         (buffer_available(c->wrb) > 0 || io->accept_blocked_on_write
+          || io->read_blocked_on_write || io->shutdown_blocked_on_write))
+-        pfds[c->s].events |= POLLOUT;
++        pfds[c->s_index].events |= POLLOUT;
+ 
+-    if (c->s > *n)
+-        *n = c->s;
++    if (c->s_index > *n)
++        *n = c->s_index;
+ }
+ 
+ /* ioabs_tls_post_select:
+@@ -265,8 +265,8 @@ static int ioabs_tls_post_select(connection c, struct pollfd *pfds) {
+     struct ioabs_tls *io;
+     io = (struct ioabs_tls*)c->io;
+ 
+-    canread  = pfds[c->s].revents & (POLLIN | POLLHUP);
+-    canwrite = pfds[c->s].revents & POLLOUT;
++    canread  = pfds[c->s_index].revents & (POLLIN | POLLHUP);
++    canwrite = pfds[c->s_index].revents & POLLOUT;
+     
+     /* First, accept handling. */
+     if ((io->accept_blocked_on_read && canread) || (io->accept_blocked_on_write && canwrite)) {
+diff --git a/listener.h b/listener.h
+index e4d5ad8..fefc300 100644
+--- a/listener.h
++++ b/listener.h
+@@ -51,6 +51,7 @@ typedef struct _listener {
+     } tls;
+ #endif
+     int s;
++    int s_index;
+ } *listener;
+ 
+ /* the arguments of the constructor vary according to the particular
+diff --git a/netloop.c b/netloop.c
+index f39018b..0026c7d 100644
+--- a/netloop.c
++++ b/netloop.c
+@@ -121,23 +121,26 @@ static void remove_connection(connection c) {
+ /* listeners_pre_select:
+  * Called before the main select(2) so listening sockets can be polled. */
+ static void listeners_pre_select(int *n, struct pollfd *pfds) {
++    int i = 0;
+     item *t;
+     vector_iterate(listeners, t) {
+         int s = ((listener)t->v)->s;
+-       pfds[s].fd = s;
+-       pfds[s].events |= POLLIN;
+-        if (s > *n) *n = s;
++	pfds[i].fd = s;
++	pfds[i].events |= POLLIN;
++	((listener)t->v)->s_index = i;
++	if (i > *n) *n = i;
++	i++;
+     }
+ }
+ 
+ /* listeners_post_select:
+  * Called after the main select(2) to allow listening sockets to sort
+  * themselves out. */
+-static void listeners_post_select(struct pollfd *pfds) {
++static void listeners_post_select(struct pollfd *pfds, int *n) {
+     item *t;
+     vector_iterate(listeners, t) {
+         listener L = (listener)t->v;
+-       if (pfds[L->s].revents & (POLLIN | POLLHUP)) {
++       if (pfds[L->s_index].revents & (POLLIN | POLLHUP)) {
+             struct sockaddr_in sin, sinlocal;
+             size_t l = sizeof(sin);
+             static int tcp_send_buf = -1;
+@@ -190,7 +193,7 @@ static void listeners_post_select(struct pollfd *pfds) {
+                         log_print(LOG_WARNING, _("listeners_post_select: rejected connection from %s to local address %s:%d owing to high load"), inet_ntoa(sin.sin_addr), inet_ntoa(sinlocal.sin_addr), htons(sinlocal.sin_port));
+                     } else {
+                         /* Create connection object. */
+-                        if ((*J = connection_new(s, &sin, L)))
++                        if ((*J = connection_new(s, &sin, L, n)))
+                             log_print(LOG_INFO, _("listeners_post_select: client %s: connected to local address %s:%d"), (*J)->idstr, inet_ntoa(sinlocal.sin_addr), htons(sinlocal.sin_port));
+                         else
+                             /* This could be really bad, but all we can do is log the failure. */
+@@ -579,7 +582,7 @@ void net_loop(void) {
+             log_print(LOG_WARNING, "net_loop: poll: %m");
+         } else if (e >= 0) {
+             /* Check for new incoming connections */
+-            if (!post_fork) listeners_post_select(pfds);
++            if (!post_fork) listeners_post_select(pfds, &n);
+ 
+             /* Monitor existing connections */
+             connections_post_select(pfds);
