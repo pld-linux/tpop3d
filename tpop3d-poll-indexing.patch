@@ -133,7 +133,7 @@ index e4d5ad8..fefc300 100644
  
  /* the arguments of the constructor vary according to the particular
 diff --git a/netloop.c b/netloop.c
-index f39018b..0026c7d 100644
+index f39018b..df93b3a 100644
 --- a/netloop.c
 +++ b/netloop.c
 @@ -121,23 +121,26 @@ static void remove_connection(connection c) {
@@ -177,7 +177,39 @@ index f39018b..0026c7d 100644
                              log_print(LOG_INFO, _("listeners_post_select: client %s: connected to local address %s:%d"), (*J)->idstr, inet_ntoa(sinlocal.sin_addr), htons(sinlocal.sin_port));
                          else
                              /* This could be really bad, but all we can do is log the failure. */
-@@ -579,7 +582,7 @@ void net_loop(void) {
+@@ -549,6 +552,8 @@ void net_loop(void) {
+     extern int child_died_signal;
+     sigset_t chmask;
+     struct pollfd *pfds;
++    int max_listeners;
++    item *t;
+     
+     sigemptyset(&chmask);
+     sigaddset(&chmask, SIGCHLD);
+@@ -557,7 +562,12 @@ void net_loop(void) {
+     max_connections = 2 * max_running_children;
+     connections = (connection*)xcalloc(max_connections, sizeof(connection*));
+ 
+-    pfds = xmalloc(max_connections * sizeof *pfds);
++    /* find out number of listeners */
++    max_listeners = 0;
++    vector_iterate(listeners, t)
++	    max_listeners++;
++
++    pfds = xmalloc((max_listeners + max_connections) * sizeof *pfds);
+ 
+     log_print(LOG_INFO, _("net_loop: tpop3d version %s successfully started"), TPOP3D_VERSION);
+     
+@@ -565,7 +575,7 @@ void net_loop(void) {
+     while (!foad) {
+         int n = 0, e, i;
+ 
+-        for (i = 0; i < max_connections; ++i) {
++        for (i = 0; i < (max_listeners + max_connections); ++i) {
+             pfds[i].fd = -1;
+             pfds[i].events = pfds[i].revents = 0;
+         }
+@@ -579,7 +589,7 @@ void net_loop(void) {
              log_print(LOG_WARNING, "net_loop: poll: %m");
          } else if (e >= 0) {
              /* Check for new incoming connections */
