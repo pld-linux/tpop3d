@@ -50,6 +50,7 @@ Provides:	pop3daemon
 Obsoletes:	courier-imap-pop3
 Obsoletes:	imap-pop
 Obsoletes:	imap-pop3
+Obsoletes:	pop3daemon
 Obsoletes:	qpopper
 Obsoletes:	qpopper6
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
