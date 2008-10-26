@@ -18,7 +18,7 @@ Name:		tpop3d
 Version:	1.5.5
 Release:	1
 License:	GPL
-Group:		Networking/Daemons
+Group:		Networking/Daemons/POP3
 Source0:	http://download.savannah.nongnu.org/releases/tpop3d/%{name}-%{version}.tar.gz
 # Source0-md5:	febe9ca46b575fcf99fd410caff98f47
 Source1:	%{name}.pamd
