@@ -16,7 +16,7 @@ Summary:	POP3 server
 Summary(pl.UTF-8):	Serwer POP3
 Name:		tpop3d
 Version:	1.5.5
-Release:	3
+Release:	4
 License:	GPL
 Group:		Networking/Daemons/POP3
 Source0:	http://download.savannah.nongnu.org/releases/tpop3d/%{name}-%{version}.tar.gz
@@ -44,7 +44,6 @@ Requires:	pam >= 0.79.0
 Requires:	rc-scripts
 %if %{with perl}
 BuildRequires:	perl-devel
-Requires:	perl(DynaLoader) = %(%{__perl} -MDynaLoader -e 'print DynaLoader->VERSION')
 %endif
 Provides:	pop3daemon
 Obsoletes:	courier-imap-pop3
