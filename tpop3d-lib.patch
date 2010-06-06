@@ -1,0 +1,18 @@
+commit 3e9deb3864be47369f6bcb86ca2733cbd208212d
+Author: Arkadiusz Miśkiewicz <arekm@maven.pl>
+Date:   Sun Jun 6 12:35:31 2010 +0200
+
+    Look for libcrypto, too (needed for SHA1* functions).
+
+diff --git a/configure.in b/configure.in
+index db64849..1c0c2de 100644
+--- a/configure.in
++++ b/configure.in
+@@ -588,6 +588,7 @@ fi
+ if test x"$enable_tls" = x"yes" || test x"$enable_sha1_passwords" = x"yes"
+ then
+     AC_CHECK_LIB2(ssl, SSL_new, [], AC_MSG_ERROR([[TLS/SHA1 passwords enabled, but can't find libssl]]), -lcrypto)
++    AC_CHECK_LIB(crypto, SHA1_Init, [], AC_MSG_ERROR([[TLS/SHA1 passwords enabled, but can't find libcrypto]]) )
+ fi
+ 
+ # GNU dbm

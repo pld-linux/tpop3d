@@ -16,7 +16,7 @@ Summary:	POP3 server
 Summary(pl.UTF-8):	Serwer POP3
 Name:		tpop3d
 Version:	1.5.5
-Release:	6
+Release:	7
 License:	GPL
 Group:		Networking/Daemons/POP3
 Source0:	http://download.savannah.nongnu.org/releases/tpop3d/%{name}-%{version}.tar.gz
@@ -27,6 +27,7 @@ Source3:	%{name}.conf
 Source4:	%{name}.sysconfig
 Patch1:		%{name}-pam-vdomain.patch
 Patch2:		%{name}-sql-getpwuid-optional.patch
+Patch3:		%{name}-lib.patch
 URL:		https://savannah.nongnu.org/projects/tpop3d
 BuildRequires:	autoconf
 BuildRequires:	automake
@@ -114,6 +115,7 @@ pomiędzy sesjami.
 %if %{with skipgetpwcheck}
 %patch2 -p0
 %endif
+%patch3 -p1
 
 %build
 %{__aclocal}
