@@ -1,0 +1,11 @@
+--- tpop3d-1.5.5/tls.c~	2008-03-31 21:37:15.000000000 +0200
++++ tpop3d-1.5.5/tls.c	2011-05-27 13:32:43.301930932 +0200
+@@ -96,7 +96,7 @@
+ 
+     /* Load certificate, and, if specified, separate private key. */
+     SSL_CTX_set_default_passwd_cb_userdata(ctx, (void*)certfile);
+-    if ((ret = SSL_CTX_use_certificate_file(ctx, certfile, SSL_FILETYPE_PEM)) <= 0) {
++    if ((ret = SSL_CTX_use_certificate_chain_file(ctx, certfile)) <= 0) {
+         log_print(LOG_ERR, "tls_create_context: %s: %s", certfile, ERR_reason_error_string(ERR_get_error()));
+         SSL_CTX_free(ctx);
+         return NULL;
