@@ -16,3 +16,15 @@ index db64849..1c0c2de 100644
  fi
  
  # GNU dbm
+diff -urN tpop3d-1.5.5.org/configure.in tpop3d-1.5.5/configure.in
+--- tpop3d-1.5.5.org/configure.in	2008-07-12 17:12:39.000000000 +0200
++++ tpop3d-1.5.5/configure.in	2013-06-09 18:55:01.370497207 +0200
+@@ -11,7 +11,7 @@
+ 
+ AC_INIT(auth_mysql.c)
+ AC_CONFIG_AUX_DIR(config)
+-AM_CONFIG_HEADER(configuration.h)
++AC_CONFIG_HEADERS(configuration.h)
+ AM_INIT_AUTOMAKE(tpop3d, "1.5.5")
+ 
+ AC_DEFINE_UNQUOTED(TPOP3D_VERSION, "$VERSION", [The tpop3d version number])
