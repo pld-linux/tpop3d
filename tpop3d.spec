@@ -16,7 +16,7 @@ Summary:	POP3 server
 Summary(pl.UTF-8):	Serwer POP3
 Name:		tpop3d
 Version:	1.5.5
-Release:	17
+Release:	18
 License:	GPL
 Group:		Networking/Daemons/POP3
 Source0:	http://download.savannah.nongnu.org/releases/tpop3d/%{name}-%{version}.tar.gz
