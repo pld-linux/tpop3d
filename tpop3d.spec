@@ -31,6 +31,7 @@ Patch3:		%{name}-lib.patch
 Patch4:		%{name}-ssl-chain.patch
 Patch5:		%{name}-bug-33413.patch
 Patch6:		mod_perl.patch
+Patch7:		mysql8.patch
 URL:		https://savannah.nongnu.org/projects/tpop3d
 BuildRequires:	autoconf
 BuildRequires:	automake
@@ -122,6 +123,7 @@ pomiędzy sesjami.
 %patch -P4 -p1
 %patch -P5 -p1
 %patch -P6 -p1
+%patch -P7 -p1
 
 %build
 %{__aclocal}

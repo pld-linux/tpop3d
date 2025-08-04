@@ -1,0 +1,14 @@
+--- tpop3d-1.5.5/auth_mysql.c.orig	2008-03-31 21:42:29.000000000 +0200
++++ tpop3d-1.5.5/auth_mysql.c	2025-08-04 15:16:45.930459000 +0200
+@@ -99,7 +99,11 @@
+     static MYSQL mysql_handle;
+     char *password;
+     unsigned int timeout;
++#if defined(LIBMYSQL_VERSION_ID) && LIBMYSQL_VERSION_ID >= 80000
++    bool want_reconnect = 0;
++#else
+     my_bool want_reconnect = 0;
++#endif
+ 
+     if (mysql && mysql_ping(mysql) == 0)
+         /* The current server is up and running. */
