@@ -1,0 +1,24 @@
+--- tpop3d-1.5.5/auth_perl.c.orig	2008-03-31 21:37:15.000000000 +0200
++++ tpop3d-1.5.5/auth_perl.c	2025-08-04 14:56:59.583306884 +0200
+@@ -70,9 +70,9 @@
+ 
+ /* xs_init:
+  * Start up XS code in perl. */
+-extern void boot_DynaLoader(CV *cv);
++extern void boot_DynaLoader(pTHX_ CV *cv);
+ 
+-void xs_init(void) {
++void xs_init(pTHX) {
+     char *file = __FILE__;
+     newXS("DynaLoader::boot_DynaLoader", boot_DynaLoader, file);
+     newXS("TPOP3D::log_print", xs_log_print, file);
+--- tpop3d-1.5.5/auth_perl.h.orig	2008-03-31 21:37:15.000000000 +0200
++++ tpop3d-1.5.5/auth_perl.h	2025-08-04 14:59:21.817495692 +0200
+@@ -31,7 +31,6 @@
+ #include "stringmap.h"
+ 
+ /* auth_perl.c */
+-void xs_init(void);
+ int auth_perl_init(void);
+ void auth_perl_close(void);
+ void auth_perl_postfork(void);
